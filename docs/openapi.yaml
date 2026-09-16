@@ -1,0 +1,1127 @@
+﻿openapi: 3.0.3
+info:
+  title: Vacation Rental & Booking API
+  description: Starter OpenAPI 3.0.3 specification for a hybrid vacation rental platform combining Airbnb home-sharing with Booking.com accommodation mechanics.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/v1
+    description: Local Development Server
+  - url: https://api.stayhub.example.com/v1
+    description: Production Server
+
+paths:
+  /listings/search:
+    post:
+      summary: Search listings
+      description: Search property listings using geospatial filters, dates, guest capacity, price boundaries, amenities, and host criteria.
+      operationId: searchListings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListingSearchRequest'
+      responses:
+        '200':
+          description: Listings matching criteria returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+
+  /listings/{id}:
+    get:
+      summary: Get full listing details
+      description: Retrieve complete property details by listing identifier.
+      operationId: getListingById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the listing
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Full listing details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingDetail'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /listings/{id}/availability:
+    get:
+      summary: Get listing calendar and availability matrix
+      description: Fetch daily pricing, calendar availability blocks, and minimum night requirements for a given date window.
+      operationId: getListingAvailability
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the listing
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          required: true
+          description: Beginning of calendar window
+          schema:
+            type: string
+            format: date
+            example: '2026-10-01'
+        - name: end_date
+          in: query
+          required: true
+          description: End of calendar window
+          schema:
+            type: string
+            format: date
+            example: '2026-10-31'
+      responses:
+        '200':
+          description: Calendar availability schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingAvailabilityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+
+  /hosts/{id}/verification:
+    get:
+      summary: Get host trust and verification details
+      description: Check host verification status, identity verification badges, and response metrics.
+      operationId: getHostVerification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the host
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Host verification profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HostVerificationDetail'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /reservations:
+    post:
+      summary: Create a booking reservation
+      description: Execute an instant booking or submit a request-to-book for host approval.
+      operationId: createReservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReservationRequest'
+      responses:
+        '201':
+          description: Reservation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+
+  /reservations/{id}:
+    get:
+      summary: Get reservation details
+      description: Retrieve reservation status, payment summary, and booked dates.
+      operationId: getReservationById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the reservation
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reservation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /reservations/{id}/messages:
+    post:
+      summary: Send a message regarding a reservation
+      description: Unified guest-to-host or host-to-guest conversation thread messaging endpoint.
+      operationId: sendReservationMessage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the reservation
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMessageRequest'
+      responses:
+        '201':
+          description: Message dispatched and stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequestError:
+      description: Invalid request syntax or malformed parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnauthorizedError:
+      description: Authentication is required or has failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFoundError:
+      description: Requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ConflictError:
+      description: Resource conflict such as double-booking dates
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnprocessableEntityError:
+      description: Semantic validation failed on submitted fields
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
+          example: The requested resource could not be found.
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-09-16T07:30:00Z'
+
+    ValidationErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - field_errors
+      properties:
+        code:
+          type: string
+          example: VALIDATION_FAILED
+        message:
+          type: string
+          example: Validation failed on one or more submitted attributes.
+        field_errors:
+          type: array
+          items:
+            type: object
+            required:
+              - field
+              - error
+            properties:
+              field:
+                type: string
+                example: check_out_date
+              error:
+                type: string
+                example: check_out_date must be strictly after check_in_date
+
+    CoordinatePair:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: double
+          minimum: -90.0
+          maximum: 90.0
+          example: 37.774929
+        longitude:
+          type: number
+          format: double
+          minimum: -180.0
+          maximum: 180.0
+          example: -122.419416
+
+    GeoCircleSearch:
+      type: object
+      required:
+        - center
+        - radius_meters
+      properties:
+        center:
+          $ref: '#/components/schemas/CoordinatePair'
+        radius_meters:
+          type: integer
+          format: int32
+          minimum: 100
+          maximum: 100000
+          example: 5000
+
+    GeoPolygonSearch:
+      type: object
+      required:
+        - boundary_points
+      properties:
+        boundary_points:
+          type: array
+          minItems: 3
+          items:
+            $ref: '#/components/schemas/CoordinatePair'
+
+    Address:
+      type: object
+      required:
+        - street
+        - city
+        - state
+        - postal_code
+        - country_code
+        - neighborhood_id
+      properties:
+        street:
+          type: string
+          example: 742 Evergreen Terrace
+        city:
+          type: string
+          example: Springfield
+        state:
+          type: string
+          example: OR
+        postal_code:
+          type: string
+          example: '97477'
+        country_code:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: ISO 3166-1 alpha-2 country code
+          example: US
+        neighborhood_id:
+          type: string
+          example: neigh_downtown_01
+
+    PropertyCategory:
+      type: string
+      enum:
+        - entire_home
+        - private_room
+        - shared_room
+        - villa
+        - apartment
+        - cabin
+
+    Amenity:
+      type: string
+      enum:
+        - wifi
+        - pool
+        - hot_tub
+        - ev_charger
+        - workspace
+        - pet_friendly
+        - self_check_in
+        - air_conditioning
+
+    CapacityBreakdown:
+      type: object
+      required:
+        - max_guests
+        - bedrooms
+        - beds
+        - bathrooms
+      properties:
+        max_guests:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 4
+        bedrooms:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 2
+        beds:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 2
+        bathrooms:
+          type: number
+          format: double
+          minimum: 0.5
+          example: 1.5
+
+    HostDetails:
+      type: object
+      required:
+        - host_id
+        - name
+        - profile_photo_url
+        - response_rate
+        - response_time_minutes
+        - superhost_status
+        - verified_identity
+      properties:
+        host_id:
+          type: string
+          format: uuid
+          example: 9a78cd9c-c9c7-43cf-bc82-01967fa7e93b
+        name:
+          type: string
+          example: Elena Vance
+        profile_photo_url:
+          type: string
+          format: uri
+          example: https://images.example.com/hosts/elena.jpg
+        response_rate:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 100.0
+          example: 99.5
+        response_time_minutes:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 15
+        superhost_status:
+          type: boolean
+          example: true
+        verified_identity:
+          type: boolean
+          example: true
+
+    HostVerificationDetail:
+      type: object
+      required:
+        - host_id
+        - identity_status
+        - phone_verified
+        - email_verified
+        - government_id_verified
+        - background_check_cleared
+        - review_count
+        - aggregate_rating
+      properties:
+        host_id:
+          type: string
+          format: uuid
+        identity_status:
+          type: string
+          enum: [verified, pending, rejected]
+          example: verified
+        phone_verified:
+          type: boolean
+          example: true
+        email_verified:
+          type: boolean
+          example: true
+        government_id_verified:
+          type: boolean
+          example: true
+        background_check_cleared:
+          type: boolean
+          example: true
+        review_count:
+          type: integer
+          format: int32
+          example: 142
+        aggregate_rating:
+          type: number
+          format: double
+          example: 4.96
+
+    DynamicDiscounts:
+      type: object
+      required:
+        - weekly_discount_percent
+        - monthly_discount_percent
+        - early_bird_discount_percent
+      properties:
+        weekly_discount_percent:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 100.0
+          example: 10.0
+        monthly_discount_percent:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 100.0
+          example: 25.0
+        early_bird_discount_percent:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 100.0
+          example: 5.0
+
+    PricingMatrix:
+      type: object
+      required:
+        - currency
+        - base_nightly_rate
+        - cleaning_fee
+        - service_fee
+        - local_occupancy_tax
+        - security_deposit
+        - discounts
+      properties:
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: ISO 4217 Currency Code
+          example: USD
+        base_nightly_rate:
+          type: number
+          format: double
+          minimum: 0.0
+          example: 150.00
+        cleaning_fee:
+          type: number
+          format: double
+          minimum: 0.0
+          example: 75.00
+        service_fee:
+          type: number
+          format: double
+          minimum: 0.0
+          example: 22.50
+        local_occupancy_tax:
+          type: number
+          format: double
+          minimum: 0.0
+          example: 18.00
+        security_deposit:
+          type: number
+          format: double
+          minimum: 0.0
+          example: 200.00
+        discounts:
+          $ref: '#/components/schemas/DynamicDiscounts'
+
+    HouseRules:
+      type: object
+      required:
+        - quiet_hours_start
+        - quiet_hours_end
+        - smoking_allowed
+        - parties_allowed
+        - max_pets
+      properties:
+        quiet_hours_start:
+          type: string
+          pattern: '^([01]\\d|2[0-3]):[0-5]\\d$'
+          example: '22:00'
+        quiet_hours_end:
+          type: string
+          pattern: '^([01]\\d|2[0-3]):[0-5]\\d$'
+          example: '08:00'
+        smoking_allowed:
+          type: boolean
+          example: false
+        parties_allowed:
+          type: boolean
+          example: false
+        max_pets:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 1
+
+    ListingDetail:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - category
+        - coordinates
+        - address
+        - capacity
+        - amenities
+        - host
+        - pricing
+        - house_rules
+        - instant_book_enabled
+        - star_rating
+        - review_count
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: e14c1d68-0fa4-44bc-b17b-4b248a31e8fd
+        title:
+          type: string
+          example: Modern Sunlit Loft Near Historic Center
+        description:
+          type: string
+          example: Elegant open-plan studio loft featuring modern decor, dedicated workstation, high-speed fiber internet, and a private balcony.
+        category:
+          $ref: '#/components/schemas/PropertyCategory'
+        coordinates:
+          $ref: '#/components/schemas/CoordinatePair'
+        address:
+          $ref: '#/components/schemas/Address'
+        capacity:
+          $ref: '#/components/schemas/CapacityBreakdown'
+        amenities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Amenity'
+        host:
+          $ref: '#/components/schemas/HostDetails'
+        pricing:
+          $ref: '#/components/schemas/PricingMatrix'
+        house_rules:
+          $ref: '#/components/schemas/HouseRules'
+        instant_book_enabled:
+          type: boolean
+          example: true
+        star_rating:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 5.0
+          example: 4.88
+        review_count:
+          type: integer
+          format: int32
+          example: 87
+
+    ListingSearchRequest:
+      type: object
+      required:
+        - check_in_date
+        - check_out_date
+        - guests_count
+      properties:
+        check_in_date:
+          type: string
+          format: date
+          example: '2026-10-15'
+        check_out_date:
+          type: string
+          format: date
+          example: '2026-10-20'
+        guests_count:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 2
+        adults_count:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+          example: 2
+        children_count:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+          example: 0
+        infants_count:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+          example: 0
+        pets_count:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+          example: 0
+        min_price:
+          type: number
+          format: double
+          minimum: 0.0
+          example: 50.00
+        max_price:
+          type: number
+          format: double
+          minimum: 0.0
+          example: 300.00
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          default: USD
+          example: USD
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertyCategory'
+        required_amenities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Amenity'
+        circle_search:
+          $ref: '#/components/schemas/GeoCircleSearch'
+        polygon_search:
+          $ref: '#/components/schemas/GeoPolygonSearch'
+        min_bedrooms:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 1
+        min_beds:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 1
+        min_bathrooms:
+          type: number
+          format: double
+          minimum: 0.5
+          example: 1.0
+        superhost_only:
+          type: boolean
+          default: false
+          example: false
+        instant_book_only:
+          type: boolean
+          default: false
+          example: false
+        min_rating:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 5.0
+          example: 4.5
+        neighborhood_id:
+          type: string
+          example: neigh_downtown_01
+        sort_by:
+          type: string
+          enum: [price_asc, price_desc, rating_desc, distance_asc, popularity_desc]
+          default: popularity_desc
+          example: price_asc
+        page:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+          example: 1
+        page_size:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+
+    ListingSearchResponse:
+      type: object
+      required:
+        - page
+        - page_size
+        - total_records
+        - total_pages
+        - results
+      properties:
+        page:
+          type: integer
+          format: int32
+          example: 1
+        page_size:
+          type: integer
+          format: int32
+          example: 20
+        total_records:
+          type: integer
+          format: int32
+          example: 54
+        total_pages:
+          type: integer
+          format: int32
+          example: 3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingDetail'
+
+    DailyAvailability:
+      type: object
+      required:
+        - date
+        - is_available
+        - nightly_price
+        - minimum_stay_nights
+      properties:
+        date:
+          type: string
+          format: date
+          example: '2026-10-15'
+        is_available:
+          type: boolean
+          example: true
+        nightly_price:
+          type: number
+          format: double
+          example: 165.00
+        minimum_stay_nights:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 2
+        block_reason:
+          type: string
+          enum: [not_blocked, booked, host_reserved, maintenance]
+          default: not_blocked
+          example: not_blocked
+
+    ListingAvailabilityResponse:
+      type: object
+      required:
+        - listing_id
+        - start_date
+        - end_date
+        - days
+      properties:
+        listing_id:
+          type: string
+          format: uuid
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyAvailability'
+
+    PrimaryGuest:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - email
+        - phone_number
+      properties:
+        first_name:
+          type: string
+          example: Arthur
+        last_name:
+          type: string
+          example: Dent
+        email:
+          type: string
+          format: email
+          example: arthur.dent@example.com
+        phone_number:
+          type: string
+          example: '+14155552671'
+
+    ReservationStatus:
+      type: string
+      enum:
+        - pending_approval
+        - confirmed
+        - checked_in
+        - cancelled
+        - completed
+
+    BookingFlowType:
+      type: string
+      enum:
+        - instant_book
+        - request_to_book
+
+    PriceBreakdownItem:
+      type: object
+      required:
+        - description
+        - amount
+      properties:
+        description:
+          type: string
+          example: 5 Nights Base Accommodation
+        amount:
+          type: number
+          format: double
+          example: 750.00
+
+    ReservationPricingSummary:
+      type: object
+      required:
+        - currency
+        - base_price
+        - cleaning_fee
+        - service_fee
+        - local_occupancy_tax
+        - security_deposit
+        - discount_amount
+        - total_amount
+        - items
+      properties:
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: USD
+        base_price:
+          type: number
+          format: double
+          example: 750.00
+        cleaning_fee:
+          type: number
+          format: double
+          example: 75.00
+        service_fee:
+          type: number
+          format: double
+          example: 22.50
+        local_occupancy_tax:
+          type: number
+          format: double
+          example: 18.00
+        security_deposit:
+          type: number
+          format: double
+          example: 200.00
+        discount_amount:
+          type: number
+          format: double
+          example: 50.00
+        total_amount:
+          type: number
+          format: double
+          example: 1015.50
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceBreakdownItem'
+
+    CreateReservationRequest:
+      type: object
+      required:
+        - listing_id
+        - check_in_date
+        - check_out_date
+        - guests_count
+        - primary_guest
+        - payment_authorization_token
+        - booking_flow
+      properties:
+        listing_id:
+          type: string
+          format: uuid
+          example: e14c1d68-0fa4-44bc-b17b-4b248a31e8fd
+        check_in_date:
+          type: string
+          format: date
+          example: '2026-10-15'
+        check_out_date:
+          type: string
+          format: date
+          example: '2026-10-20'
+        guests_count:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 2
+        primary_guest:
+          $ref: '#/components/schemas/PrimaryGuest'
+        payment_authorization_token:
+          type: string
+          example: tok_visa_424242424242_auth789
+        booking_flow:
+          $ref: '#/components/schemas/BookingFlowType'
+        special_requests:
+          type: string
+          example: Late check-in requested around 20:00.
+
+    Reservation:
+      type: object
+      required:
+        - id
+        - listing_id
+        - host_id
+        - status
+        - booking_flow
+        - check_in_date
+        - check_out_date
+        - guests_count
+        - primary_guest
+        - pricing_summary
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3f7bf08e-1678-43d9-959c-6e6ad9d20c5b
+        listing_id:
+          type: string
+          format: uuid
+          example: e14c1d68-0fa4-44bc-b17b-4b248a31e8fd
+        host_id:
+          type: string
+          format: uuid
+          example: 9a78cd9c-c9c7-43cf-bc82-01967fa7e93b
+        status:
+          $ref: '#/components/schemas/ReservationStatus'
+        booking_flow:
+          $ref: '#/components/schemas/BookingFlowType'
+        check_in_date:
+          type: string
+          format: date
+          example: '2026-10-15'
+        check_out_date:
+          type: string
+          format: date
+          example: '2026-10-20'
+        guests_count:
+          type: integer
+          format: int32
+          example: 2
+        primary_guest:
+          $ref: '#/components/schemas/PrimaryGuest'
+        pricing_summary:
+          $ref: '#/components/schemas/ReservationPricingSummary'
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-09-16T07:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-09-16T07:30:00Z'
+
+    CreateMessageRequest:
+      type: object
+      required:
+        - sender_id
+        - sender_role
+        - message_body
+      properties:
+        sender_id:
+          type: string
+          format: uuid
+          example: 18b76c8d-2917-4861-b9cb-1718bf14bb44
+        sender_role:
+          type: string
+          enum: [guest, host]
+          example: guest
+        message_body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+          example: Hello Elena, will it be possible to drop off our luggage two hours early?
+
+    Message:
+      type: object
+      required:
+        - id
+        - reservation_id
+        - sender_id
+        - sender_role
+        - message_body
+        - sent_at
+        - read
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: cb0ee3e8-54c3-424f-a9db-c3f912e73546
+        reservation_id:
+          type: string
+          format: uuid
+          example: 3f7bf08e-1678-43d9-959c-6e6ad9d20c5b
+        sender_id:
+          type: string
+          format: uuid
+          example: 18b76c8d-2917-4861-b9cb-1718bf14bb44
+        sender_role:
+          type: string
+          enum: [guest, host]
+          example: guest
+        message_body:
+          type: string
+          example: Hello Elena, will it be possible to drop off our luggage two hours early?
+        sent_at:
+          type: string
+          format: date-time
+          example: '2026-09-16T07:31:00Z'
+        read:
+          type: boolean
+          example: false
