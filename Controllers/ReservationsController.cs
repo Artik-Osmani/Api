@@ -16,6 +16,12 @@ public class ReservationsController : ControllerBase
         _dataStore = dataStore;
     }
 
+    [HttpGet]
+    public ActionResult<List<Reservation>> GetAllReservations()
+    {
+        return Ok(_dataStore.Reservations.OrderByDescending(r => r.CreatedAt).ToList());
+    }
+
     [HttpPost]
     public ActionResult<Reservation> CreateReservation([FromBody] CreateReservationRequest request)
     {
@@ -82,6 +88,23 @@ public class ReservationsController : ControllerBase
         }
 
         return Ok(res);
+    }
+
+    [HttpGet("{id:guid}/messages")]
+    public ActionResult<List<Message>> GetReservationMessages(Guid id)
+    {
+        var res = _dataStore.Reservations.FirstOrDefault(r => r.Id == id);
+        if (res == null)
+        {
+            return NotFound(new { code = "RESOURCE_NOT_FOUND", message = $"Reservation {id} not found." });
+        }
+
+        var messages = _dataStore.Messages
+            .Where(m => m.ReservationId == id)
+            .OrderBy(m => m.SentAt)
+            .ToList();
+
+        return Ok(messages);
     }
 
     [HttpPost("{id:guid}/messages")]

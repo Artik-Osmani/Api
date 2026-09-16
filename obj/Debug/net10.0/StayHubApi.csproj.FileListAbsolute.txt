@@ -35,5 +35,6 @@ C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\StayHubApi.genruntimeconf
 C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\ref\StayHubApi.dll
 C:\Users\Nxensi\Documents\GitHub\Api\bin\Debug\net10.0\StayHubApi.staticwebassets.runtime.json
 C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\StayHubApi.sourcelink.json
-C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\mwid9xciob-{0}-d5c557vox0-d5c557vox0.gz
 C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\i05tib9chz-{0}-h1ubvzhgzn-h1ubvzhgzn.gz
+C:\Users\Nxensi\Documents\GitHub\Api\bin\Debug\net10.0\appsettings.Production.json
+C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\mwid9xciob-{0}-el1nr9whb1-el1nr9whb1.gz
