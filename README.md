@@ -1,7 +1,7 @@
 ﻿# Vacation Rental & Booking API (Starter Project)
 
 A complete, beginner-friendly starter API designed for school projects, combining features from **Airbnb** (home sharing, superhosts, custom amenities, host messaging) and **Booking.com** (real-time availability calendars, dynamic pricing matrices, occupancy taxes).
-
+//artik
 ---
 
 ## 📁 Project Structure
