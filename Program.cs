@@ -5,19 +5,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 builder.Services.AddSingleton<MockDataStore>();
 
 var app = builder.Build();
 
-// Enable static files (HTML, CSS, JS from wwwroot)
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Vacation Rental API v1");
-    c.RoutePrefix = "swagger"; // Swagger is at /swagger, Beautiful UI is at /
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "FatiHomes API v1");
+    c.RoutePrefix = "swagger";
+    c.DocumentTitle = "FatiHomes - Interactive API Docs";
+    c.InjectStylesheet("/swagger-custom.css");
+    c.DefaultModelsExpandDepth(-1);
+    c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
 });
 
 app.UseAuthorization();

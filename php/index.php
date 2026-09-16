@@ -1,6 +1,6 @@
 ﻿<?php
 /**
- * StayHub Vacation Rental Platform - PHP Frontend / Proxy
+ * FatiHomes Vacation Rental Platform - PHP Frontend / Proxy
  * Suitable for school projects using Apache / XAMPP / WAMP or PHP built-in server.
  */
 
@@ -33,7 +33,7 @@ if ($httpCode === 200 && $response) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StayHub (PHP Edition) - Vacation Rentals & Hotels</title>
+  <title>FatiHomes (PHP Edition) - Vacation Rentals & Hotels</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -96,7 +96,7 @@ if ($httpCode === 200 && $response) {
 </head>
 <body>
   <header>
-    <a href="#" class="brand">StayHub PHP</a>
+    <a href="#" class="brand">FatiHomes PHP</a>
     <a href="/swagger" target="_blank" style="text-decoration:none; color: #003580; font-weight: 600;">Swagger Docs</a>
   </header>
 
