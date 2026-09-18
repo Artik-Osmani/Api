@@ -1,4 +1,4 @@
-﻿namespace StayHubApi.Models;
+namespace StayHubApi.Models;
 
 public record CoordinatePair(double Latitude, double Longitude);
 
@@ -67,6 +67,7 @@ public class ListingDetail
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string ImageUrl { get; set; } = string.Empty;
     public string Category { get; set; } = "entire_home";
     public CoordinatePair Coordinates { get; set; } = default!;
     public Address Address { get; set; } = default!;

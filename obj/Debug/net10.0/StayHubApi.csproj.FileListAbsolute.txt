@@ -38,3 +38,4 @@ C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\StayHubApi.sourcelink.jso
 C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\i05tib9chz-{0}-h1ubvzhgzn-h1ubvzhgzn.gz
 C:\Users\Nxensi\Documents\GitHub\Api\bin\Debug\net10.0\appsettings.Production.json
 C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\mwid9xciob-{0}-el1nr9whb1-el1nr9whb1.gz
+C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\tv4lcr1yhu-{0}-wr8ygy3qrv-wr8ygy3qrv.gz
