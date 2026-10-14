@@ -53,7 +53,7 @@ Api/
 ---
 
 ## 📄 OpenAPI Specification File
-The complete OpenAPI specification is located at:
+The complete OpenAPI specification is located at:safsadsadasdasdaswdasdas
 - `docs/openapi.yaml`
 
 
