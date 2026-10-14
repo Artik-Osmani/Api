@@ -302,6 +302,9 @@
       <button class="nav-btn" id="btnTabReservations" onclick="switchView('reservations')">
         📋 3. Reservations & Chat
       </button>
+      <button class="nav-btn" id="btnTabContact" onclick="switchView('contact')">
+        📞 4. Contact
+      </button>
     </div>
     <a href="/swagger" target="_blank" class="badge-swagger">⚙️ Swagger Docs</a>
   </header>
@@ -418,6 +421,35 @@
     </main>
   </div>
 
+  <!-- VIEW 4: CONTACT -->
+  <div id="viewContact" class="view-section">
+    <main>
+      <h2 style="margin-bottom: 0.5rem;">📞 Contact FatiHomes</h2>
+      <p style="color:var(--text-muted); margin-bottom: 1.5rem;">Questions about a listing, a reservation, or hosting with us? We are here to help.</p>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.2rem; max-width:900px;">
+        <div style="background:#fff; border:1px solid var(--border); border-radius:16px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="font-size:1.6rem;">✉️</div>
+          <h3 style="font-size:1.05rem; margin:8px 0 4px;">Email</h3>
+          <p style="color:var(--text-muted); font-size:0.92rem;">support@fatihomes.com</p>
+          <p style="color:var(--text-muted); font-size:0.85rem;">Replies within 24 hours</p>
+        </div>
+        <div style="background:#fff; border:1px solid var(--border); border-radius:16px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="font-size:1.6rem;">📞</div>
+          <h3 style="font-size:1.05rem; margin:8px 0 4px;">Phone</h3>
+          <p style="color:var(--text-muted); font-size:0.92rem;">+383 38 000 000</p>
+          <p style="color:var(--text-muted); font-size:0.85rem;">Mon–Sun, 08:00–20:00</p>
+        </div>
+        <div style="background:#fff; border:1px solid var(--border); border-radius:16px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="font-size:1.6rem;">📍</div>
+          <h3 style="font-size:1.05rem; margin:8px 0 4px;">Office</h3>
+          <p style="color:var(--text-muted); font-size:0.92rem;">Rr. Dëshmorët e Kombit, Prishtinë</p>
+          <p style="color:var(--text-muted); font-size:0.85rem;">Visits by appointment</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
   <!-- Booking Modal -->
   <div class="modal" id="bookingModal">
     <div class="modal-content">
@@ -492,6 +524,9 @@
         document.getElementById('viewReservations').classList.add('active');
         document.getElementById('btnTabReservations').classList.add('active');
         loadReservations();
+      } else if (tab === 'contact') {
+        document.getElementById('viewContact').classList.add('active');
+        document.getElementById('btnTabContact').classList.add('active');
       }
     }
 
