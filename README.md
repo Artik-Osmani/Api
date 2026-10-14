@@ -55,3 +55,6 @@ Api/
 ## 📄 OpenAPI Specification File
 The complete OpenAPI specification is located at:
 - `docs/openapi.yaml`
+
+
+## This project is made by Artik Osmani, Arber Miftari, Dalmat Ademi, Arber Beqiri, Jon Ferizi
