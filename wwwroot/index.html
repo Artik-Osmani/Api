@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="images/logo.svg" />
   <title>FatiHomes - Vacation Rentals, Hosts & Reservations</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -40,6 +41,7 @@
       color: var(--primary);
       text-decoration: none;
     }
+    .brand img { display: block; width: 34px; height: 34px; }
     .nav-tabs {
       display: flex;
       gap: 8px;
@@ -288,7 +290,7 @@
   <!-- Top Navigation Bar -->
   <header>
     <a href="#" class="brand" onclick="switchView('listings')">
-      🏠 FatiHomes
+      <img src="images/logo.svg" alt="FatiHomes logo" width="34" height="34" /> FatiHomes
     </a>
     <div class="nav-tabs">
       <button class="nav-btn active" id="btnTabListings" onclick="switchView('listings')">
