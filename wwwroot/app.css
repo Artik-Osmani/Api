@@ -845,6 +845,266 @@ body {
   background: #fee2e2;
 }
 
+.btn-action-sm.primary {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.btn-action-sm.primary:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* ---------- SCRUM-22: Bookings toolbar (status tabs, search, sort) ---------- */
+.bookings-toolbar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.booking-status-tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+}
+
+.booking-status-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.booking-tab {
+  background: var(--bg-page);
+  border: 1px solid var(--border-light);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  transition: var(--spring);
+}
+
+.booking-tab:hover {
+  color: var(--text-main);
+  border-color: var(--border-focus);
+  transform: translateY(-2px);
+}
+
+.booking-tab.active {
+  background: var(--text-main);
+  color: var(--bg-card);
+  border-color: var(--text-main);
+  transform: scale(1.03);
+}
+
+.tab-count {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border-radius: var(--radius-full);
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.booking-tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--bg-card);
+}
+
+.booking-toolbar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.booking-search {
+  flex: 1;
+  min-width: 220px;
+  padding: 9px 18px;
+  background: var(--bg-page);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  color: var(--text-main);
+  outline: none;
+  transition: var(--transition);
+}
+
+.booking-search:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.15);
+}
+
+.booking-results-meta {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ---------- SCRUM-22: Booking card extras ---------- */
+.status-badge.checked_in {
+  background: #dbeafe;
+  color: var(--blue, #0284c7);
+}
+
+.status-badge.completed {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.res-booking-side {
+  text-align: right;
+}
+
+.res-booking-amount {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.res-booking-meta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.res-booking-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.flow-chip {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  background: var(--bg-page);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.res-cancel-reason {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--danger);
+}
+
+.res-actions-cell {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.bookings-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+}
+
+.bookings-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 0.8rem;
+}
+
+.bookings-empty .btn-secondary {
+  margin-top: 1rem;
+}
+
+/* ---------- SCRUM-22: Booking details & receipt modal ---------- */
+.booking-details-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.details-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.details-meta .status-badge,
+.details-meta .flow-chip {
+  margin-top: 0;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.details-block-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.details-grid p {
+  font-size: 0.88rem;
+  color: var(--text-main);
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.details-note {
+  background: var(--primary-light);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+
+.receipt-row-note {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+[data-theme="dark"] .status-badge.cancelled,
+[data-theme="dark"] .btn-action-sm.danger:hover {
+  background: #4c1d24;
+}
+
+[data-theme="dark"] .status-badge.checked_in {
+  background: #17293f;
+  color: #7dd3fc;
+}
+
+[data-theme="dark"] .status-badge.completed {
+  background: #2a2140;
+  color: #c4b5fd;
+}
+
+[data-theme="dark"] .booking-tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.18);
+}
+
 /* ---------- Host Cards Grid ---------- */
 .hosts-grid {
   display: grid;
@@ -2303,6 +2563,22 @@ body {
   }
   .compare-dock-actions {
     justify-content: space-between;
+  }
+  .res-booking-side {
+    text-align: left;
+    width: 100%;
+  }
+  .res-actions-cell {
+    justify-content: flex-start;
+  }
+  .booking-toolbar-controls {
+    align-items: stretch;
+  }
+  .booking-search {
+    min-width: 100%;
+  }
+  .details-grid {
+    grid-template-columns: 1fr;
   }
 }
 
