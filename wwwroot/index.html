@@ -352,16 +352,145 @@
   <!-- VIEW 2: WISHLIST / FAVORITES -->
   <main class="view-section" id="view-wishlist">
     <div class="content-container">
-      <div class="page-header">
-        <div>
-          <h2>❤️ Your Wishlist</h2>
-          <p class="text-muted">Properties you've saved for your future trips.</p>
+      
+      <!-- Wishlist Hero Banner -->
+      <div class="wishlist-hero-card">
+        <div class="wishlist-hero-content">
+          <div class="wishlist-hero-badge">
+            <span class="pulse-heart">❤️</span> Curated Trip Collection
+          </div>
+          <h2 class="wishlist-hero-title">Your Saved Escapes & Dream Stays</h2>
+          <p class="wishlist-hero-sub">
+            Organize your upcoming vacations, compare properties side-by-side, estimate total trip budgets, and share your favorite stays with friends & family.
+          </p>
         </div>
-        <button class="btn-secondary" onclick="switchView('listings')">Browse More Stays</button>
+        <div class="wishlist-hero-actions">
+          <button class="btn-wishlist-action" onclick="loadFavorites(true)" title="Sync latest saved properties">
+            <span>🔄</span> Refresh
+          </button>
+          <button class="btn-wishlist-action" onclick="openShareWishlistModal()" title="Share your wishlist with travel partners">
+            <span>📤</span> Share List
+          </button>
+          <button class="btn-wishlist-action danger" onclick="confirmClearWishlist()" title="Remove all saved stays">
+            <span>🗑️</span> Clear All
+          </button>
+          <button class="btn-primary" onclick="switchView('listings')">
+            <span>🔍 Browse More Stays</span>
+          </button>
+        </div>
       </div>
-      <div class="properties-grid" id="wishlistGrid">
+
+      <!-- Wishlist Metrics & Trip Budget Ribbon -->
+      <div class="wishlist-metrics-bar">
+        <div class="wishlist-metric-card">
+          <div class="w-metric-icon">🏡</div>
+          <div>
+            <div class="w-metric-val" id="wStatTotalCount">0</div>
+            <div class="w-metric-lbl">Saved Stays</div>
+          </div>
+        </div>
+        <div class="wishlist-metric-card">
+          <div class="w-metric-icon">💵</div>
+          <div>
+            <div class="w-metric-val" id="wStatAvgPrice">$0</div>
+            <div class="w-metric-lbl">Avg / Night</div>
+          </div>
+        </div>
+        <div class="wishlist-metric-card">
+          <div class="w-metric-icon">📍</div>
+          <div>
+            <div class="w-metric-val" id="wStatDestinations">—</div>
+            <div class="w-metric-lbl">Destinations</div>
+          </div>
+        </div>
+        <div class="wishlist-metric-card">
+          <div class="w-metric-icon">⭐</div>
+          <div>
+            <div class="w-metric-val" id="wStatTopRating">—</div>
+            <div class="w-metric-lbl">Top Rating</div>
+          </div>
+        </div>
+
+        <!-- Trip Budget Calculator Card -->
+        <div class="wishlist-budget-card">
+          <div class="budget-header">
+            <span class="budget-title">🧮 Estimated Trip Budget (<span id="wNightsCount">3</span> nights)</span>
+            <span class="budget-total" id="wEstBudgetVal">$0</span>
+          </div>
+          <div class="budget-slider-row">
+            <span class="slider-lbl">1n</span>
+            <input type="range" id="wNightsSlider" min="1" max="14" value="3" oninput="onTripNightsChanged(this.value)" />
+            <span class="slider-lbl">14n</span>
+          </div>
+          <div class="budget-hint">Calculated across your saved properties for estimated duration</div>
+        </div>
+      </div>
+
+      <!-- Collections / Boards Tabs -->
+      <div class="wishlist-collections-section">
+        <div class="collections-header">
+          <span class="collections-title">📂 Trip Boards & Folders</span>
+          <button class="btn-new-collection" onclick="openCreateCollectionModal()">+ New Board</button>
+        </div>
+        <div class="collections-strip" id="wishlistCollectionsStrip">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Filter, Search & View Controls Bar -->
+      <div class="wishlist-toolbar">
+        <div class="w-search-wrap">
+          <span class="w-search-icon">🔍</span>
+          <input type="text" id="wishlistSearchInput" placeholder="Filter saved stays by name, city, amenity..." oninput="onWishlistSearch(this.value)" />
+          <button class="w-search-clear" id="wSearchClearBtn" onclick="clearWishlistSearch()" style="display:none;">✕</button>
+        </div>
+
+        <div class="w-filters-group">
+          <!-- Category Select -->
+          <select id="wCategorySelect" class="w-select" onchange="onWishlistCategoryFilter(this.value)">
+            <option value="all">All Categories</option>
+            <option value="apartment">Apartments</option>
+            <option value="entire_home">Entire Homes</option>
+            <option value="cabin">Mountain Cabins</option>
+            <option value="villa">Luxury Villas</option>
+            <option value="private_room">Rooms</option>
+          </select>
+
+          <!-- Sort Select -->
+          <select id="wSortSelect" class="w-select" onchange="onWishlistSort(this.value)">
+            <option value="default">Sort: Recently Added</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="rating_desc">Rating: Highest First</option>
+            <option value="capacity_desc">Guests: Largest First</option>
+          </select>
+
+          <!-- Quick Filters -->
+          <button class="w-toggle-chip" id="wToggleSuperhost" onclick="toggleWishlistFilter('superhost')">
+            ⭐ Superhost
+          </button>
+          <button class="w-toggle-chip" id="wToggleInstant" onclick="toggleWishlistFilter('instant')">
+            ⚡ Instant Book
+          </button>
+
+          <!-- View Mode Toggle -->
+          <div class="w-view-toggle">
+            <button class="view-btn active" id="wViewGridBtn" onclick="setWishlistViewMode('grid')" title="Grid View">🔲</button>
+            <button class="view-btn" id="wViewListBtn" onclick="setWishlistViewMode('list')" title="List View">📑</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- The Main Wishlist Grid -->
+      <div class="properties-grid wishlist-mode" id="wishlistGrid">
         <!-- Injected via JavaScript -->
       </div>
+
+      <!-- Empty State (shown when wishlist or filtered wishlist is empty) -->
+      <div class="wishlist-empty-state" id="wishlistEmptyState" style="display:none;">
+        <!-- Injected via JavaScript -->
+      </div>
+
     </div>
   </main>
 
@@ -571,6 +700,135 @@
         <input type="text" id="chatInput" placeholder="Write a message to your host..." required />
         <button type="submit" class="btn-send">Send</button>
       </form>
+    </div>
+  </div>
+
+  <!-- Floating Comparison Dock -->
+  <div class="compare-dock" id="compareDock">
+    <div class="compare-dock-inner">
+      <div class="compare-dock-info">
+        <span class="compare-dock-icon">⚖️</span>
+        <div>
+          <div class="compare-dock-title">Side-by-Side Comparison (<span id="compareCount">0</span>/3 selected)</div>
+          <div class="compare-dock-sub">Compare rates, amenities, ratings & capacity</div>
+        </div>
+      </div>
+      <div class="compare-dock-thumbs" id="compareDockThumbs">
+        <!-- Injected thumbs -->
+      </div>
+      <div class="compare-dock-actions">
+        <button class="btn-compare-now" id="btnLaunchCompare" onclick="openCompareModal()">
+          Compare Now ➔
+        </button>
+        <button class="btn-compare-clear" onclick="clearCompareSelection()">
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side-by-Side Property Comparison Modal -->
+  <div class="modal" id="compareModal">
+    <div class="modal-backdrop" onclick="closeModal('compareModal')"></div>
+    <div class="modal-card modal-xl">
+      <button class="modal-close-btn" onclick="closeModal('compareModal')">✕</button>
+      <div class="modal-header">
+        <h3>⚖️ Compare Saved Stays</h3>
+        <p class="text-muted">Direct side-by-side comparison of nightly pricing, guest limits, verified hosts, and amenities.</p>
+      </div>
+      <div class="compare-table-wrapper" id="compareMatrixContainer">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Wishlist Modal -->
+  <div class="modal" id="shareWishlistModal">
+    <div class="modal-backdrop" onclick="closeModal('shareWishlistModal')"></div>
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="closeModal('shareWishlistModal')">✕</button>
+      <div class="modal-header">
+        <h3>📤 Share Your Wishlist</h3>
+        <p class="text-muted">Send your handpicked vacation stays to your travel companions.</p>
+      </div>
+      <div>
+        <label style="font-size:0.85rem; font-weight:700; color:var(--text-muted);">Shareable Link</label>
+        <div class="share-link-box">
+          <input type="text" id="shareWishlistUrl" class="share-link-input" readonly />
+          <button class="btn-primary" onclick="copyShareLink()">Copy Link</button>
+        </div>
+
+        <label style="font-size:0.85rem; font-weight:700; color:var(--text-muted); margin-top:1rem; display:block;">Quick Summary Preview</label>
+        <textarea id="shareWishlistSummary" class="share-link-input" rows="4" style="width:100%; margin-top:6px; resize:none;" readonly></textarea>
+
+        <div class="share-shortcuts">
+          <a id="btnShareWhatsApp" href="#" target="_blank" class="btn-share-shortcut">
+            <span>💬 WhatsApp</span>
+          </a>
+          <a id="btnShareEmail" href="#" target="_blank" class="btn-share-shortcut">
+            <span>✉️ Email</span>
+          </a>
+          <button class="btn-share-shortcut" onclick="copyShareSummary()">
+            <span>📋 Copy Summary</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create New Board Modal -->
+  <div class="modal" id="collectionModal">
+    <div class="modal-backdrop" onclick="closeModal('collectionModal')"></div>
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="closeModal('collectionModal')">✕</button>
+      <div class="modal-header">
+        <h3>📂 Create New Trip Board</h3>
+        <p class="text-muted">Organize your wishlist stays into dedicated trip collections.</p>
+      </div>
+      <form onsubmit="handleCreateCollection(event)">
+        <div style="margin-bottom:1.2rem;">
+          <label style="font-size:0.85rem; font-weight:700; display:block; margin-bottom:6px;">Board Name</label>
+          <input type="text" id="newCollectionName" placeholder="e.g. Ski Getaway 2027, Summer with Family" required
+            style="width:100%; padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-light); background:var(--bg-page); color:var(--text-main); font-size:0.9rem;" />
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <label style="font-size:0.85rem; font-weight:700; display:block; margin-bottom:6px;">Choose an Icon</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;" id="collectionIconChips">
+            <button type="button" class="coll-chip active" onclick="selectCollectionIcon(this, '🏖️')">🏖️ Beach</button>
+            <button type="button" class="coll-chip" onclick="selectCollectionIcon(this, '❄️')">❄️ Ski</button>
+            <button type="button" class="coll-chip" onclick="selectCollectionIcon(this, '🏔️')">🏔️ Mountain</button>
+            <button type="button" class="coll-chip" onclick="selectCollectionIcon(this, '🏙️')">🏙️ City</button>
+            <button type="button" class="coll-chip" onclick="selectCollectionIcon(this, '💎')">💎 Luxury</button>
+            <button type="button" class="coll-chip" onclick="selectCollectionIcon(this, '🌲')">🌲 Nature</button>
+            <button type="button" class="coll-chip" onclick="selectCollectionIcon(this, '🍷')">🍷 Romantic</button>
+            <button type="button" class="coll-chip" onclick="selectCollectionIcon(this, '⛵')">⛵ Island</button>
+          </div>
+          <input type="hidden" id="newCollectionIcon" value="🏖️" />
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn-secondary" onclick="closeModal('collectionModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Create Board</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Move to Board Modal -->
+  <div class="modal" id="assignBoardModal">
+    <div class="modal-backdrop" onclick="closeModal('assignBoardModal')"></div>
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="closeModal('assignBoardModal')">✕</button>
+      <div class="modal-header">
+        <h3>📌 Assign to Board</h3>
+        <p class="text-muted" id="assignBoardSubtitle">Select a board for this saved stay.</p>
+      </div>
+      <input type="hidden" id="assignBoardListingId" value="" />
+      <div id="assignBoardList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:1.5rem;">
+        <!-- Injected via JavaScript -->
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn-secondary" onclick="closeModal('assignBoardModal')">Close</button>
+      </div>
     </div>
   </div>
 

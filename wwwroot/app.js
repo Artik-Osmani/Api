@@ -1,4 +1,4 @@
-﻿/* ========================================================
+/* ========================================================
    StayHub / FatiHomes — Interactive Web Client (app.js)
    Full CRUD, Real-Time Availability, Reviews, Confetti & Chat
    Scroll Animations & Micro-Interactions
@@ -8,7 +8,26 @@
 
 const state = {
   listings: [],
+  wishlistItems: [],
   wishlistIds: new Set(),
+  wishlistCollections: [
+    { id: 'all', name: 'All Saved', icon: '✨' },
+    { id: 'summer', name: 'Summer Escapes', icon: '🏖️' },
+    { id: 'winter', name: 'Winter Cabins', icon: '❄️' },
+    { id: 'city', name: 'City Breaks', icon: '🏙️' },
+    { id: 'luxury', name: 'Luxury Villas', icon: '💎' }
+  ],
+  activeWishlistCollection: 'all',
+  wishlistSearch: '',
+  wishlistCategory: 'all',
+  wishlistSort: 'default',
+  wishlistSuperhostFilter: false,
+  wishlistInstantFilter: false,
+  wishlistTripNights: 3,
+  wishlistViewMode: 'grid',
+  wishlistCompareIds: new Set(),
+  wishlistNotes: {},
+  listingBoards: {},
   reservations: [],
   activeCategory: 'all',
   currentView: 'listings',
@@ -118,15 +137,14 @@ function switchView(view) {
   if (!availableViews.includes(view)) view = 'listings';
 
   state.currentView = view;
-  $$('.view-section').forEach(el => el.classList.remove('active'));
   $$('.nav-pill').forEach(el => {
-    const isActive = el.dataset.view === view;
+    const isActive = el.dataset.view === view || el.id === 'pill-' + view;
     el.classList.toggle('active', isActive);
     if (isActive) el.setAttribute('aria-current', 'page');
     else el.removeAttribute('aria-current');
   });
 
-  const viewEl = document.getElementById('view-' + view);
+  const viewEl = document.getElementById('view-' + view) || document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1));
   if (viewEl) viewEl.classList.add('active');
 
   if (location.hash !== `#${view}`) history.pushState({ view }, '', `#${view}`);
@@ -305,15 +323,50 @@ function renderListingsGrid(items, targetSelector) {
   }).join('');
 }
 
-// ---------- Wishlist ----------
-async function loadFavorites() {
+// ---------- Wishlist & Trip Collections ----------
+
+function loadWishlistLocalData() {
+  try {
+    const savedNotes = localStorage.getItem('sh_wishlist_notes');
+    if (savedNotes) state.wishlistNotes = JSON.parse(savedNotes);
+
+    const savedBoards = localStorage.getItem('sh_listing_boards');
+    if (savedBoards) state.listingBoards = JSON.parse(savedBoards);
+
+    const savedCollections = localStorage.getItem('sh_wishlist_collections');
+    if (savedCollections) state.wishlistCollections = JSON.parse(savedCollections);
+
+    const savedNights = localStorage.getItem('sh_wishlist_nights');
+    if (savedNights) state.wishlistTripNights = parseInt(savedNights) || 3;
+
+    const savedViewMode = localStorage.getItem('sh_wishlist_view_mode');
+    if (savedViewMode) state.wishlistViewMode = savedViewMode;
+  } catch {}
+}
+
+function saveWishlistLocalData() {
+  try {
+    localStorage.setItem('sh_wishlist_notes', JSON.stringify(state.wishlistNotes));
+    localStorage.setItem('sh_listing_boards', JSON.stringify(state.listingBoards));
+    localStorage.setItem('sh_wishlist_collections', JSON.stringify(state.wishlistCollections));
+    localStorage.setItem('sh_wishlist_nights', state.wishlistTripNights.toString());
+    localStorage.setItem('sh_wishlist_view_mode', state.wishlistViewMode);
+  } catch {}
+}
+
+async function loadFavorites(showToast = false) {
   try {
     const res = await fetch('/v1/favorites');
     if (!res.ok) return;
     const favs = await res.json();
+    state.wishlistItems = favs;
     state.wishlistIds = new Set(favs.map(f => f.id));
     $('#favCountBadge').textContent = state.wishlistIds.size;
-  } catch {}
+    if (showToast) toast('Wishlist updated with latest saved stays!', 'success');
+    if (state.currentView === 'wishlist') renderWishlist();
+  } catch {
+    if (showToast) toast('Failed to load favorites', 'error');
+  }
 }
 
 async function toggleWishlist(id) {
@@ -323,28 +376,712 @@ async function toggleWishlist(id) {
     const data = await res.json();
     if (data.favorited) {
       state.wishlistIds.add(id);
+      let item = state.listings.find(l => l.id === id);
+      if (!item) {
+        const itemRes = await fetch(`/v1/listings/${id}`);
+        if (itemRes.ok) item = await itemRes.json();
+      }
+      if (item && !state.wishlistItems.some(x => x.id === id)) {
+        state.wishlistItems.push(item);
+      }
       toast('Saved to your Wishlist!', 'success');
+      fireConfetti();
     } else {
       state.wishlistIds.delete(id);
+      state.wishlistItems = state.wishlistItems.filter(x => x.id !== id);
+      state.wishlistCompareIds.delete(id);
+      updateCompareDock();
       toast('Removed from Wishlist', 'info');
     }
     $('#favCountBadge').textContent = state.wishlistIds.size;
     renderListingsGrid(state.listings, '#listingsGrid');
     if (state.currentView === 'wishlist') renderWishlist();
+    loadSystemStats();
   } catch {
     toast('Error updating wishlist', 'error');
   }
 }
 
+async function removeWishlistListing(id) {
+  const card = document.getElementById(`w-card-${id}`);
+  if (card) {
+    card.classList.add('removing');
+  }
+
+  try {
+    const res = await fetch(`/v1/favorites/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error();
+    state.wishlistIds.delete(id);
+    state.wishlistItems = state.wishlistItems.filter(x => x.id !== id);
+    state.wishlistCompareIds.delete(id);
+    updateCompareDock();
+    $('#favCountBadge').textContent = state.wishlistIds.size;
+    toast('Removed from Wishlist', 'info');
+    setTimeout(() => {
+      renderWishlist();
+      renderListingsGrid(state.listings, '#listingsGrid');
+    }, 250);
+    loadSystemStats();
+  } catch {
+    toast('Error removing stay from wishlist', 'error');
+    if (card) card.classList.remove('removing');
+  }
+}
+
+async function confirmClearWishlist() {
+  if (state.wishlistIds.size === 0) {
+    toast('Your wishlist is already empty', 'info');
+    return;
+  }
+  if (!confirm('Are you sure you want to remove all saved stays from your wishlist?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/v1/favorites', { method: 'DELETE' });
+    if (!res.ok) throw new Error();
+    state.wishlistIds.clear();
+    state.wishlistItems = [];
+    state.wishlistCompareIds.clear();
+    updateCompareDock();
+    $('#favCountBadge').textContent = '0';
+    renderWishlist();
+    renderListingsGrid(state.listings, '#listingsGrid');
+    toast('All saved stays removed', 'info');
+    loadSystemStats();
+  } catch {
+    toast('Failed to clear wishlist', 'error');
+  }
+}
+
 function renderWishlist() {
-  const wishListItems = state.listings.filter(l => state.wishlistIds.has(l.id));
-  renderListingsGrid(wishListItems, '#wishlistGrid');
+  const grid = $('#wishlistGrid');
+  const emptyState = $('#wishlistEmptyState');
+  if (!grid || !emptyState) return;
+
+  const totalSaved = state.wishlistItems.length;
+
+  // 1. Update Metrics Ribbon
+  $('#wStatTotalCount').textContent = totalSaved;
+  if (totalSaved > 0) {
+    const avgPrice = Math.round(state.wishlistItems.reduce((acc, l) => acc + l.pricing.baseNightlyRate, 0) / totalSaved);
+    $('#wStatAvgPrice').textContent = `$${avgPrice}`;
+
+    const cities = [...new Set(state.wishlistItems.map(l => l.address.city))];
+    $('#wStatDestinations').textContent = cities.slice(0, 2).join(', ') + (cities.length > 2 ? ` +${cities.length - 2}` : '');
+    $('#wStatDestinations').title = cities.join(', ');
+
+    const topRating = Math.max(...state.wishlistItems.map(l => l.starRating)).toFixed(2);
+    $('#wStatTopRating').textContent = `★ ${topRating}`;
+
+    const estBudget = avgPrice * state.wishlistTripNights;
+    $('#wEstBudgetVal').textContent = `$${estBudget.toLocaleString()}`;
+  } else {
+    $('#wStatAvgPrice').textContent = '$0';
+    $('#wStatDestinations').textContent = '—';
+    $('#wStatTopRating').textContent = '—';
+    $('#wEstBudgetVal').textContent = '$0';
+  }
+
+  $('#wNightsCount').textContent = state.wishlistTripNights;
+  const slider = $('#wNightsSlider');
+  if (slider) slider.value = state.wishlistTripNights;
+
+  // 2. Render Collections / Boards Strip
+  renderWishlistCollectionsStrip();
+
+  // 3. Handle Completely Empty Wishlist
+  if (totalSaved === 0) {
+    grid.style.display = 'none';
+    emptyState.style.display = 'block';
+    renderWishlistEmptyState();
+    return;
+  }
+
+  // 4. Filter & Sort Items
+  let items = [...state.wishlistItems];
+
+  // Board Filter
+  if (state.activeWishlistCollection !== 'all') {
+    items = items.filter(l => state.listingBoards[l.id] === state.activeWishlistCollection);
+  }
+
+  // Search Filter
+  if (state.wishlistSearch.trim()) {
+    const q = state.wishlistSearch.toLowerCase().trim();
+    items = items.filter(l =>
+      l.title.toLowerCase().includes(q) ||
+      l.description.toLowerCase().includes(q) ||
+      l.address.city.toLowerCase().includes(q) ||
+      l.address.state.toLowerCase().includes(q) ||
+      l.category.toLowerCase().includes(q) ||
+      l.amenities.some(a => a.toLowerCase().includes(q)) ||
+      l.host.name.toLowerCase().includes(q)
+    );
+  }
+
+  // Category Filter
+  if (state.wishlistCategory !== 'all') {
+    items = items.filter(l => l.category === state.wishlistCategory);
+  }
+
+  // Quick Toggles
+  if (state.wishlistSuperhostFilter) {
+    items = items.filter(l => l.host.superhostStatus);
+  }
+  if (state.wishlistInstantFilter) {
+    items = items.filter(l => l.instantBookEnabled);
+  }
+
+  // Sort
+  if (state.wishlistSort === 'price_asc') {
+    items.sort((a, b) => a.pricing.baseNightlyRate - b.pricing.baseNightlyRate);
+  } else if (state.wishlistSort === 'price_desc') {
+    items.sort((a, b) => b.pricing.baseNightlyRate - a.pricing.baseNightlyRate);
+  } else if (state.wishlistSort === 'rating_desc') {
+    items.sort((a, b) => b.starRating - a.starRating);
+  } else if (state.wishlistSort === 'capacity_desc') {
+    items.sort((a, b) => b.capacity.maxGuests - a.capacity.maxGuests);
+  }
+
+  // 5. Handle Filtered Out Empty State
+  if (items.length === 0) {
+    grid.style.display = 'grid';
+    emptyState.style.display = 'none';
+    grid.innerHTML = `
+      <div style="grid-column: 1/-1; text-align: center; padding: 3.5rem 1rem; background:var(--bg-card); border-radius:var(--radius-lg); border:1px dashed var(--border-light);">
+        <div style="font-size: 2.8rem; margin-bottom: 0.8rem;">🔍</div>
+        <h3 style="font-size:1.3rem; font-weight:800;">No saved stays match your filters</h3>
+        <p class="text-muted" style="margin-top:6px; margin-bottom:1.5rem;">Try adjusting your board, search keywords, or property filters.</p>
+        <button class="btn-secondary" onclick="resetWishlistFilters()">Clear Filter Criteria</button>
+      </div>`;
+    return;
+  }
+
+  // 6. Render Wishlist Cards
+  grid.style.display = state.wishlistViewMode === 'list' ? 'flex' : 'grid';
+  grid.className = state.wishlistViewMode === 'list' ? 'properties-grid wishlist-mode list-mode' : 'properties-grid wishlist-mode';
+  emptyState.style.display = 'none';
+
+  grid.innerHTML = items.map(l => {
+    const isCompared = state.wishlistCompareIds.has(l.id);
+    const assignedBoardId = state.listingBoards[l.id] || 'all';
+    const assignedBoard = state.wishlistCollections.find(c => c.id === assignedBoardId) || { name: 'Saved Stay', icon: '📌' };
+    const userNote = state.wishlistNotes[l.id] || '';
+    const tripTotal = Math.round(l.pricing.baseNightlyRate * state.wishlistTripNights);
+
+    return `
+      <div class="wishlist-card property-card" id="w-card-${l.id}" onclick="openPropertyDetail('${l.id}')">
+        
+        <!-- Compare Checkbox Badge -->
+        <label class="card-compare-badge" onclick="event.stopPropagation();">
+          <input type="checkbox" class="card-compare-checkbox" ${isCompared ? 'checked' : ''} onchange="toggleWishlistCompare('${l.id}', this.checked)" />
+          <span>Compare</span>
+        </label>
+
+        <!-- Top Image with Badges & Unfavorite Button -->
+        <div class="card-img-wrapper">
+          <img src="${l.imageUrl}" alt="${l.title}" loading="lazy" />
+          <div class="card-top-badges">
+            ${l.host.superhostStatus ? '<span class="badge-tag superhost">⭐ Superhost</span>' : ''}
+            ${l.instantBookEnabled ? '<span class="badge-tag instant">⚡ Instant Book</span>' : ''}
+          </div>
+          <button class="card-heart-btn" title="Remove from wishlist" onclick="event.stopPropagation(); removeWishlistListing('${l.id}')">
+            ❤️
+          </button>
+        </div>
+
+        <!-- Card Content -->
+        <div class="card-content" style="padding: 1.3rem;">
+          
+          <!-- Board / Collection Tag -->
+          <div>
+            <button class="w-card-coll-tag" title="Move to another board" onclick="event.stopPropagation(); openAssignBoardModal('${l.id}')">
+              <span>${assignedBoard.icon}</span> <span>${assignedBoard.name}</span> <span>▾</span>
+            </button>
+          </div>
+
+          <!-- Title and Star Rating -->
+          <div class="card-header-row">
+            <div class="card-prop-title">${l.title}</div>
+            <div class="card-prop-rating">★ ${l.starRating.toFixed(2)} (${l.reviewCount})</div>
+          </div>
+
+          <div class="card-location-sub">📍 ${l.address.city}, ${l.address.state} · ${l.category.replace('_', ' ')}</div>
+          <div class="card-specs">👥 Up to ${l.capacity.maxGuests} guests · ${l.capacity.bedrooms} bed · ${l.capacity.bathrooms} bath</div>
+
+          <!-- Amenities Chips -->
+          <div class="amenities-pills">
+            ${l.amenities.slice(0, 3).map(a => `<span class="amenity-chip">✨ ${a.replace('_', ' ')}</span>`).join('')}
+          </div>
+
+          <!-- Estimated Total for Selected Nights -->
+          <div class="w-card-trip-estimate">
+            <span>⏱️ ${state.wishlistTripNights} nights estimate:</span>
+            <span>$${tripTotal} total</span>
+          </div>
+
+          <!-- Personal Trip Notes Box -->
+          <div class="w-card-note-box" onclick="event.stopPropagation();">
+            <div class="note-header">
+              <span>📝 Trip Note:</span>
+              <span style="font-size:0.7rem; font-weight:400;">Auto-saved</span>
+            </div>
+            <textarea class="note-input" rows="2" placeholder="Add personal note (e.g. check heated pool, ski trip)..."
+              oninput="saveWishlistNote('${l.id}', this.value)">${userNote}</textarea>
+          </div>
+
+          <!-- Footer with Rate and Actions -->
+          <div class="card-footer-row" style="margin-top:1.2rem;">
+            <div class="card-price-text">$${l.pricing.baseNightlyRate} <span>/ night</span></div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn-action-sm" title="Share this stay" onclick="event.stopPropagation(); shareSingleStay('${l.id}')">🔗</button>
+              <button class="btn-book-card" onclick="event.stopPropagation(); startBookingFlow('${l.id}')">Reserve</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updateCompareDock();
   setTimeout(triggerCardReveals, 100);
+}
+
+function renderWishlistCollectionsStrip() {
+  const strip = $('#wishlistCollectionsStrip');
+  if (!strip) return;
+
+  strip.innerHTML = state.wishlistCollections.map(c => {
+    let count = 0;
+    if (c.id === 'all') {
+      count = state.wishlistItems.length;
+    } else {
+      count = state.wishlistItems.filter(l => state.listingBoards[l.id] === c.id).length;
+    }
+
+    const isActive = state.activeWishlistCollection === c.id;
+    return `
+      <button class="coll-chip ${isActive ? 'active' : ''}" onclick="selectWishlistCollection('${c.id}')">
+        <span>${c.icon}</span>
+        <span>${c.name}</span>
+        <span class="coll-chip-badge">${count}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function renderWishlistEmptyState() {
+  const container = $('#wishlistEmptyState');
+  if (!container) return;
+
+  const trendingListings = (state.listings.length > 0 ? state.listings : state.wishlistItems).slice(0, 3);
+
+  container.innerHTML = `
+    <div class="empty-heart-icon">💖</div>
+    <h3 class="empty-title">Your Wishlist is Empty</h3>
+    <p class="empty-sub">
+      You haven't saved any vacation properties yet. Click the ❤️ icon on any stay while exploring to save it to your wishlist and compare later!
+    </p>
+    <button class="btn-primary" style="font-size:1rem; padding:12px 28px;" onclick="switchView('listings')">
+      🔍 Explore All Stays Now
+    </button>
+
+    ${trendingListings.length > 0 ? `
+      <div class="empty-trending-section">
+        <div class="empty-trending-title">
+          <span>✨ Trending Escapes You Might Love:</span>
+        </div>
+        <div class="properties-grid" style="margin-top:1rem;">
+          ${trendingListings.map(l => `
+            <div class="property-card reveal" onclick="openPropertyDetail('${l.id}')">
+              <div class="card-img-wrapper">
+                <img src="${l.imageUrl}" alt="${l.title}" />
+                <button class="card-heart-btn" onclick="event.stopPropagation(); toggleWishlist('${l.id}')">
+                  ${state.wishlistIds.has(l.id) ? '❤️' : '🤍'}
+                </button>
+              </div>
+              <div class="card-content">
+                <div class="card-header-row">
+                  <div class="card-prop-title">${l.title}</div>
+                  <div class="card-prop-rating">★ ${l.starRating.toFixed(2)}</div>
+                </div>
+                <div class="card-location-sub">📍 ${l.address.city}, ${l.address.state}</div>
+                <div class="card-footer-row" style="margin-top:10px;">
+                  <div class="card-price-text">$${l.pricing.baseNightlyRate} <span>/ night</span></div>
+                  <button class="btn-secondary" style="padding:6px 14px; font-size:0.8rem;" onclick="event.stopPropagation(); toggleWishlist('${l.id}')">
+                    + Add to Wishlist
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+  `;
+}
+
+function selectWishlistCollection(id) {
+  state.activeWishlistCollection = id;
+  renderWishlist();
+}
+
+function onWishlistSearch(val) {
+  state.wishlistSearch = val;
+  const clearBtn = $('#wSearchClearBtn');
+  if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+  renderWishlist();
+}
+
+function clearWishlistSearch() {
+  state.wishlistSearch = '';
+  const input = $('#wishlistSearchInput');
+  if (input) input.value = '';
+  const clearBtn = $('#wSearchClearBtn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  renderWishlist();
+}
+
+function onWishlistCategoryFilter(val) {
+  state.wishlistCategory = val;
+  renderWishlist();
+}
+
+function onWishlistSort(val) {
+  state.wishlistSort = val;
+  renderWishlist();
+}
+
+function toggleWishlistFilter(type) {
+  if (type === 'superhost') {
+    state.wishlistSuperhostFilter = !state.wishlistSuperhostFilter;
+    $('#wToggleSuperhost')?.classList.toggle('active', state.wishlistSuperhostFilter);
+  } else if (type === 'instant') {
+    state.wishlistInstantFilter = !state.wishlistInstantFilter;
+    $('#wToggleInstant')?.classList.toggle('active', state.wishlistInstantFilter);
+  }
+  renderWishlist();
+}
+
+function resetWishlistFilters() {
+  state.activeWishlistCollection = 'all';
+  state.wishlistSearch = '';
+  state.wishlistCategory = 'all';
+  state.wishlistSort = 'default';
+  state.wishlistSuperhostFilter = false;
+  state.wishlistInstantFilter = false;
+
+  const sInput = $('#wishlistSearchInput');
+  if (sInput) sInput.value = '';
+  const cSelect = $('#wCategorySelect');
+  if (cSelect) cSelect.value = 'all';
+  const sortSelect = $('#wSortSelect');
+  if (sortSelect) sortSelect.value = 'default';
+  $('#wToggleSuperhost')?.classList.remove('active');
+  $('#wToggleInstant')?.classList.remove('active');
+  const clearBtn = $('#wSearchClearBtn');
+  if (clearBtn) clearBtn.style.display = 'none';
+
+  renderWishlist();
+}
+
+function setWishlistViewMode(mode) {
+  state.wishlistViewMode = mode;
+  saveWishlistLocalData();
+  $('#wViewGridBtn')?.classList.toggle('active', mode === 'grid');
+  $('#wViewListBtn')?.classList.toggle('active', mode === 'list');
+  renderWishlist();
+}
+
+function onTripNightsChanged(val) {
+  state.wishlistTripNights = parseInt(val) || 1;
+  saveWishlistLocalData();
+  $('#wNightsCount').textContent = state.wishlistTripNights;
+  if (state.wishlistItems.length > 0) {
+    const avgPrice = Math.round(state.wishlistItems.reduce((acc, l) => acc + l.pricing.baseNightlyRate, 0) / state.wishlistItems.length);
+    $('#wEstBudgetVal').textContent = `$${(avgPrice * state.wishlistTripNights).toLocaleString()}`;
+  }
+  renderWishlist();
+}
+
+function saveWishlistNote(id, note) {
+  state.wishlistNotes[id] = note;
+  saveWishlistLocalData();
+}
+
+// ---------- Comparison Dock & Modal ----------
+function toggleWishlistCompare(id, checked) {
+  if (checked) {
+    if (state.wishlistCompareIds.size >= 3) {
+      toast('You can compare a maximum of 3 properties at once', 'info');
+      const cb = $(`#w-card-${id} .card-compare-checkbox`);
+      if (cb) cb.checked = false;
+      return;
+    }
+    state.wishlistCompareIds.add(id);
+    toast('Added to comparison deck', 'info');
+  } else {
+    state.wishlistCompareIds.delete(id);
+  }
+  updateCompareDock();
+}
+
+function updateCompareDock() {
+  const dock = $('#compareDock');
+  if (!dock) return;
+
+  const count = state.wishlistCompareIds.size;
+  $('#compareCount').textContent = count;
+
+  if (count > 0) {
+    dock.classList.add('visible');
+    const thumbs = $('#compareDockThumbs');
+    const selectedListings = state.wishlistItems.filter(l => state.wishlistCompareIds.has(l.id));
+
+    thumbs.innerHTML = selectedListings.map(l => `
+      <div class="dock-thumb-item" title="${l.title}">
+        <img src="${l.imageUrl}" alt="${l.title}" />
+        <button class="dock-thumb-remove" onclick="removeCompareListing('${l.id}')">✕</button>
+      </div>
+    `).join('');
+  } else {
+    dock.classList.remove('visible');
+  }
+}
+
+function removeCompareListing(id) {
+  state.wishlistCompareIds.delete(id);
+  const cb = $(`#w-card-${id} .card-compare-checkbox`);
+  if (cb) cb.checked = false;
+  updateCompareDock();
+}
+
+function clearCompareSelection() {
+  state.wishlistCompareIds.clear();
+  $$('.card-compare-checkbox').forEach(cb => cb.checked = false);
+  updateCompareDock();
+  toast('Comparison selection cleared', 'info');
+}
+
+function openCompareModal() {
+  if (state.wishlistCompareIds.size < 2) {
+    toast('Select at least 2 properties to compare side-by-side', 'info');
+    return;
+  }
+
+  const selectedListings = state.wishlistItems.filter(l => state.wishlistCompareIds.has(l.id));
+  const container = $('#compareMatrixContainer');
+  if (!container) return;
+
+  const amenitiesList = [
+    { key: 'wifi', label: 'High-Speed WiFi' },
+    { key: 'pool', label: 'Private / Shared Pool' },
+    { key: 'hot_tub', label: 'Hot Tub / Jacuzzi' },
+    { key: 'kitchen', label: 'Full Kitchen' },
+    { key: 'air_conditioning', label: 'Air Conditioning' },
+    { key: 'free_parking', label: 'Free Parking' },
+    { key: 'workspace', label: 'Dedicated Workspace' },
+    { key: 'self_check_in', label: 'Self Check-in' }
+  ];
+
+  container.innerHTML = `
+    <table class="compare-matrix">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          ${selectedListings.map(l => `
+            <th class="compare-col-header" style="min-width: 250px;">
+              <img src="${l.imageUrl}" class="compare-img-thumb" alt="${l.title}" />
+              <div style="font-weight:800; font-size:1.05rem; margin-bottom:4px;">${l.title}</div>
+              <div style="color:var(--text-muted); font-size:0.82rem; margin-bottom:8px;">📍 ${l.address.city}, ${l.address.state}</div>
+              <button class="btn-action-sm" onclick="removeCompareListing('${l.id}'); openCompareModal();">✕ Remove</button>
+            </th>
+          `).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Nightly Rate</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center;">
+              <div style="font-size:1.25rem; font-weight:800; color:var(--primary);">$${l.pricing.baseNightlyRate}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">per night</div>
+            </td>
+          `).join('')}
+        </tr>
+        <tr>
+          <td>Est. Total (${state.wishlistTripNights} nights)</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center; font-weight:800; font-size:1.1rem; color:var(--success);">
+              $${Math.round(l.pricing.baseNightlyRate * state.wishlistTripNights + l.pricing.cleaningFee + l.pricing.serviceFee + l.pricing.localOccupancyTax)}
+              <div style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">incl. fees & taxes</div>
+            </td>
+          `).join('')}
+        </tr>
+        <tr>
+          <td>Guest Rating</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center; font-weight:700;">★ ${l.starRating.toFixed(2)} <span style="color:var(--text-muted); font-weight:400;">(${l.reviewCount} reviews)</span></td>
+          `).join('')}
+        </tr>
+        <tr>
+          <td>Host Trust</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center;">
+              ${l.host.superhostStatus ? '⭐ Certified Superhost' : 'Verified Host'}
+              <div style="font-size:0.75rem; color:var(--text-muted);">${l.host.name} · ${l.host.responseRate}% response</div>
+            </td>
+          `).join('')}
+        </tr>
+        <tr>
+          <td>Capacity & Layout</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center; font-size:0.85rem;">
+              👥 ${l.capacity.maxGuests} guests<br>
+              🛏️ ${l.capacity.bedrooms} bedroom${l.capacity.bedrooms > 1 ? 's' : ''} (${l.capacity.beds} beds)<br>
+              🚿 ${l.capacity.bathrooms} bath
+            </td>
+          `).join('')}
+        </tr>
+        <tr>
+          <td>Booking Mode</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center;">
+              ${l.instantBookEnabled ? '<span class="status-badge confirmed">⚡ Instant Book</span>' : '<span class="status-badge pending_approval">Host Review</span>'}
+            </td>
+          `).join('')}
+        </tr>
+        ${amenitiesList.map(a => `
+          <tr>
+            <td>${a.label}</td>
+            ${selectedListings.map(l => {
+              const has = l.amenities.includes(a.key);
+              return `<td style="text-align:center;">${has ? '<span class="compare-check">✔ Yes</span>' : '<span class="compare-cross">✖ No</span>'}</td>`;
+            }).join('')}
+          </tr>
+        `).join('')}
+        <tr>
+          <td>Book Property</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center; padding:1.2rem;">
+              <button class="btn-book-card" style="width:100%;" onclick="closeModal('compareModal'); startBookingFlow('${l.id}');">
+                Reserve Stay
+              </button>
+            </td>
+          `).join('')}
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+  $('#compareModal').classList.add('open');
+}
+
+// ---------- Collections / Boards Modals ----------
+function openCreateCollectionModal() {
+  $('#newCollectionName').value = '';
+  $('#collectionModal').classList.add('open');
+}
+
+function selectCollectionIcon(btn, icon) {
+  $('#newCollectionIcon').value = icon;
+  $$('#collectionIconChips .coll-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function handleCreateCollection(e) {
+  e.preventDefault();
+  const name = $('#newCollectionName').value.trim();
+  const icon = $('#newCollectionIcon').value || '📁';
+  if (!name) return;
+
+  const id = 'coll_' + Date.now();
+  state.wishlistCollections.push({ id, name, icon });
+  saveWishlistLocalData();
+  closeModal('collectionModal');
+  toast(`Created board "${icon} ${name}"!`, 'success');
+  renderWishlist();
+}
+
+function openAssignBoardModal(listingId) {
+  const listing = state.wishlistItems.find(l => l.id === listingId) || state.listings.find(l => l.id === listingId);
+  if (!listing) return;
+
+  $('#assignBoardListingId').value = listingId;
+  $('#assignBoardSubtitle').textContent = `Assign "${listing.title}" to a trip board:`;
+
+  const container = $('#assignBoardList');
+  const currentBoardId = state.listingBoards[listingId] || 'all';
+
+  container.innerHTML = state.wishlistCollections.map(c => `
+    <button class="btn-action-sm ${currentBoardId === c.id ? 'active' : ''}"
+      style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:10px 16px;"
+      onclick="assignListingToBoard('${listingId}', '${c.id}')">
+      <span>${c.icon} ${c.name}</span>
+      ${currentBoardId === c.id ? '<span>✔ Active</span>' : '<span>Assign</span>'}
+    </button>
+  `).join('');
+
+  $('#assignBoardModal').classList.add('open');
+}
+
+function assignListingToBoard(listingId, boardId) {
+  state.listingBoards[listingId] = boardId;
+  saveWishlistLocalData();
+  closeModal('assignBoardModal');
+  const board = state.wishlistCollections.find(c => c.id === boardId);
+  toast(`Moved to "${board?.name || 'Board'}"`, 'success');
+  renderWishlist();
+}
+
+// ---------- Sharing Wishlist ----------
+function openShareWishlistModal() {
+  const url = window.location.origin + window.location.pathname + '?view=wishlist';
+  $('#shareWishlistUrl').value = url;
+
+  const count = state.wishlistItems.length;
+  let summary = `❤️ My FatiHomes & StayHub Wishlist (${count} saved stays):\n\n`;
+  state.wishlistItems.forEach((l, i) => {
+    summary += `${i + 1}. ${l.title} (${l.address.city}) - $${l.pricing.baseNightlyRate}/night - ★ ${l.starRating.toFixed(2)}\n`;
+  });
+  summary += `\nExplore properties here: ${url}`;
+
+  $('#shareWishlistSummary').value = summary;
+
+  const encodedSummary = encodeURIComponent(summary);
+  $('#btnShareWhatsApp').href = `https://api.whatsapp.com/send?text=${encodedSummary}`;
+  $('#btnShareEmail').href = `mailto:?subject=${encodeURIComponent('Check out my saved vacation stays on StayHub')}&body=${encodedSummary}`;
+
+  $('#shareWishlistModal').classList.add('open');
+}
+
+function copyShareLink() {
+  const input = $('#shareWishlistUrl');
+  input.select();
+  navigator.clipboard.writeText(input.value);
+  toast('Shareable link copied to clipboard!', 'success');
+}
+
+function copyShareSummary() {
+  const textarea = $('#shareWishlistSummary');
+  navigator.clipboard.writeText(textarea.value);
+  toast('Wishlist summary copied to clipboard!', 'success');
+}
+
+function shareSingleStay(id) {
+  const listing = state.wishlistItems.find(l => l.id === id) || state.listings.find(l => l.id === id);
+  if (!listing) return;
+
+  const url = `${window.location.origin}${window.location.pathname}?stay=${id}`;
+  navigator.clipboard.writeText(url);
+  toast(`Link for "${listing.title}" copied to clipboard!`, 'success');
 }
 
 // ---------- Property Detail Modal & Real Availability ----------
 async function openPropertyDetail(id) {
-  const listing = state.listings.find(l => l.id === id);
+  const listing = state.listings.find(l => l.id === id) || state.wishlistItems.find(l => l.id === id);
   if (!listing) return;
   state.selectedListing = listing;
 
@@ -464,7 +1201,7 @@ async function openPropertyDetail(id) {
 
 // ---------- Booking Flow ----------
 function startBookingFlow(id) {
-  const listing = state.listings.find(l => l.id === id);
+  const listing = state.listings.find(l => l.id === id) || state.wishlistItems.find(l => l.id === id);
   if (!listing) return;
   state.selectedListing = listing;
   state.bookingStep = 1;
@@ -765,11 +1502,21 @@ async function initApp() {
   initNavigation();
   initScrollEffects();
   renderCategories();
+  loadWishlistLocalData();
   await loadSystemStats();
   await loadFavorites();
   await executeSearch();
   const initialView = location.hash.slice(1);
-  if (initialView) switchView(initialView);
+  if (initialView) {
+    switchView(initialView);
+  } else {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('view') === 'wishlist') {
+      switchView('wishlist');
+    } else if (urlParams.get('stay')) {
+      openPropertyDetail(urlParams.get('stay'));
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initApp);

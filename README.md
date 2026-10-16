@@ -77,6 +77,8 @@ Api/
 | `GET` | `/v1/hosts/{id}/verification` | Verification status (ID, background check, response rate) |
 | `GET` | `/v1/favorites` | Get saved favorite properties |
 | `POST` | `/v1/favorites/{id}` | Toggle property favorite on/off |
+| `DELETE` | `/v1/favorites/{id}` | Remove property from favorites |
+| `DELETE` | `/v1/favorites` | Clear all saved favorites |
 
 ### ⚙️ System
 | Method | Path | Description |

@@ -163,6 +163,8 @@ public class MockDataStore
         };
 
         Listings.AddRange([listing1, listing2, listing3, listing4, listing5, listing6]);
+        FavoriteIds.Add(listing1.Id);
+        FavoriteIds.Add(listing2.Id);
 
         var resId = Guid.Parse("3f7bf08e-1678-43d9-959c-6e6ad9d20c5b");
         Reservations.Add(new Reservation
