@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>StayHubApi</name>
+    </assembly>
+    <members>
+        <member name="M:StayHubApi.Controllers.ListingsController.GetAllListings(System.Int32)">
+            <summary>
+            Retrieves all vacation rental listings with an optional limit.
+            </summary>
+        </member>
+        <member name="M:StayHubApi.Controllers.ListingsController.SearchListings(StayHubApi.Models.ListingSearchRequest)">
+            <summary>
+            Searches listings by text, date availability, price, room capacities, amenities, and custom sort order.
+            </summary>
+        </member>
+        <member name="T:Program">
+            <summary>
+            Auto-generated public partial Program class for top-level statement apps.
+            </summary>
+        </member>
+    </members>
+</doc>

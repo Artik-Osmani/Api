@@ -1,17 +1,45 @@
-﻿using StayHubApi.Models;
+using StayHubApi.Models;
 
 namespace StayHubApi.Services;
 
 public class MockDataStore
 {
+    private readonly object _lock = new();
+    public DateTime ServerStartTimeUtc { get; } = DateTime.UtcNow;
+
     public List<ListingDetail> Listings { get; } = [];
     public List<Reservation> Reservations { get; } = [];
     public List<Message> Messages { get; } = [];
+    public List<Review> Reviews { get; } = [];
     public HashSet<Guid> FavoriteIds { get; } = [];
 
     public MockDataStore()
     {
         SeedData();
+    }
+
+    public T Read<T>(Func<MockDataStore, T> action)
+    {
+        lock (_lock)
+        {
+            return action(this);
+        }
+    }
+
+    public void Modify(Action<MockDataStore> action)
+    {
+        lock (_lock)
+        {
+            action(this);
+        }
+    }
+
+    public T Modify<T>(Func<MockDataStore, T> action)
+    {
+        lock (_lock)
+        {
+            return action(this);
+        }
     }
 
     private void SeedData()
@@ -158,5 +186,39 @@ public class MockDataStore
 
         Messages.Add(new Message(Guid.NewGuid(), resId, Guid.Parse("18b76c8d-2917-4861-b9cb-1718bf14bb44"), "guest", "Hello Elena! Will it be possible to drop off our luggage two hours early?", DateTime.UtcNow.AddHours(-12), true));
         Messages.Add(new Message(Guid.NewGuid(), resId, hostId1, "host", "Hi Arthur! Of course, no problem. I can have the place ready by 1 PM. See you soon!", DateTime.UtcNow.AddHours(-11), true));
+
+        Reviews.Add(new Review(
+            Guid.NewGuid(),
+            listing1.Id,
+            Guid.NewGuid(),
+            "Sarah Jenkins",
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80",
+            5,
+            "Spotless loft with gorgeous morning light. The high speed fiber internet was great for remote work!",
+            DateTime.UtcNow.AddDays(-14)
+        ));
+
+        Reviews.Add(new Review(
+            Guid.NewGuid(),
+            listing1.Id,
+            Guid.NewGuid(),
+            "David Chen",
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80",
+            5,
+            "Elena is an outstanding host. Fast check-in and perfect central location in SF.",
+            DateTime.UtcNow.AddDays(-32)
+        ));
+
+        Reviews.Add(new Review(
+            Guid.NewGuid(),
+            listing2.Id,
+            Guid.NewGuid(),
+            "Chloe Miller",
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
+            5,
+            "The hot tub under the stars was unforgettable. Secluded, warm, and cozy mountain cabin.",
+            DateTime.UtcNow.AddDays(-7)
+        ));
     }
 }
+

@@ -37,5 +37,8 @@ C:\Users\Nxensi\Documents\GitHub\Api\bin\Debug\net10.0\StayHubApi.staticwebasset
 C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\StayHubApi.sourcelink.json
 C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\i05tib9chz-{0}-h1ubvzhgzn-h1ubvzhgzn.gz
 C:\Users\Nxensi\Documents\GitHub\Api\bin\Debug\net10.0\appsettings.Production.json
-C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\mwid9xciob-{0}-el1nr9whb1-el1nr9whb1.gz
-C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\tv4lcr1yhu-{0}-wr8ygy3qrv-wr8ygy3qrv.gz
+C:\Users\Nxensi\Documents\GitHub\Api\bin\Debug\net10.0\StayHubApi.xml
+C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\StayHubApi.xml
+C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\tv4lcr1yhu-{0}-s2e6pdqk8u-s2e6pdqk8u.gz
+C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\srg99foq37-{0}-5ojdtirekn-5ojdtirekn.gz
+C:\Users\Nxensi\Documents\GitHub\Api\obj\Debug\net10.0\compressed\mwid9xciob-{0}-3zlp10nw5a-3zlp10nw5a.gz
