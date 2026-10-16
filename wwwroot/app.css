@@ -484,7 +484,7 @@ body {
 
 .properties-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
   gap: 2rem;
 }
 
@@ -848,7 +848,7 @@ body {
 /* ---------- Host Cards Grid ---------- */
 .hosts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
   gap: 1.8rem;
 }
 
@@ -1408,6 +1408,33 @@ body {
     align-items: flex-start;
     gap: 1rem;
   }
+}
+
+/* The stats ribbon only fits next to the tabs on wide screens */
+@media (max-width: 1380px) {
+  .stats-ribbon { display: none; }
+}
+
+@media (max-width: 1100px) {
+  .search-cell { width: 100%; }
+  .search-cell input,
+  .search-cell select { width: 100%; }
+  .btn-search-cta { width: 100%; justify-content: center; margin-top: 6px; }
+}
+
+@media (max-width: 720px) {
+  .controls-section,
+  .grid-section,
+  .content-container { padding: 0 16px; }
+  .hero-section { padding: 3rem 16px; min-height: 0; }
+  .hero-title { font-size: 2rem; }
+  .hero-subtitle { font-size: 1rem; margin-bottom: 1.6rem; }
+  .sort-filter-bar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .filter-actions { flex-wrap: wrap; }
+  .select-sort { flex: 1 1 100%; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .properties-grid,
+  .hosts-grid { gap: 1.2rem; }
 }
 
 @media (max-width: 540px) {

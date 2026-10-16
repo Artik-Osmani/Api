@@ -300,7 +300,7 @@ function renderListingsGrid(items, targetSelector) {
             ${l.amenities.slice(0, 3).map(a => `<span class="amenity-chip">✨ ${a.replace('_', ' ')}</span>`).join('')}
           </div>
           <div class="card-footer-row">
-            <div class="card-price-text">$${l.pricing.baseNightlyRate} <span>/ night</span></div>
+            <div class="card-price-text">${formatRate(l.pricing)} <span>/ night</span></div>
             <button class="btn-book-card" onclick="event.stopPropagation(); startBookingFlow('${l.id}')">Reserve</button>
           </div>
         </div>
@@ -438,7 +438,7 @@ async function openPropertyDetail(id) {
       <div>
         <div style="background:var(--bg-page); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:1.5rem;">
           <div style="font-size:1.6rem; font-weight:800; color:var(--text-main);">
-            $${listing.pricing.baseNightlyRate} <span style="font-size:0.9rem; font-weight:400; color:var(--text-muted);">night</span>
+            ${formatRate(listing.pricing)} <span style="font-size:0.9rem; font-weight:400; color:var(--text-muted);">night</span>
           </div>
 
           <div style="margin: 1.2rem 0; border:1px solid var(--border-light); border-radius:var(--radius-sm); padding:10px; background:var(--bg-card);">
@@ -489,14 +489,15 @@ function startBookingFlow(id) {
   $('#summaryCheckOut').textContent = $('#checkOut').value;
   $('#summaryGuests').textContent = `${$('#guestsCount').value} Guests`;
 
+  const cur = listing.pricing.currency;
   $('#priceReceiptBox').innerHTML = `
-    <div class="receipt-row"><span>${nights} nights × $${listing.pricing.baseNightlyRate}</span> <span>$${base.toFixed(2)}</span></div>
-    <div class="receipt-row"><span>Cleaning fee</span> <span>$${clean.toFixed(2)}</span></div>
-    <div class="receipt-row"><span>StayHub service fee</span> <span>$${service.toFixed(2)}</span></div>
-    <div class="receipt-row"><span>Occupancy taxes</span> <span>$${tax.toFixed(2)}</span></div>
-    <div class="receipt-row total"><span>Total</span> <span>$${total.toFixed(2)}</span></div>
+    <div class="receipt-row"><span>${nights} nights × ${formatRate(listing.pricing)}</span> <span>${formatMoney(base, cur)}</span></div>
+    <div class="receipt-row"><span>Cleaning fee</span> <span>${formatMoney(clean, cur)}</span></div>
+    <div class="receipt-row"><span>StayHub service fee</span> <span>${formatMoney(service, cur)}</span></div>
+    <div class="receipt-row"><span>Occupancy taxes</span> <span>${formatMoney(tax, cur)}</span></div>
+    <div class="receipt-row total"><span>Total</span> <span>${formatMoney(total, cur)}</span></div>
   `;
-  $('#finalTotalAmount').textContent = `$${total.toFixed(2)}`;
+  $('#finalTotalAmount').textContent = formatMoney(total, cur);
 
   nextBookingStep(1);
   $('#bookingModal').classList.add('open');
@@ -596,6 +597,12 @@ function formatDay(str) {
 
 function formatMoney(amount, currency = 'USD') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+}
+
+// Nightly rate in the listing's own currency, without cents for whole amounts
+function formatRate(pricing) {
+  const whole = Number.isInteger(pricing.baseNightlyRate);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: pricing.currency || 'USD', minimumFractionDigits: whole ? 0 : 2 }).format(pricing.baseNightlyRate);
 }
 
 function nightsBetween(a, b) {
