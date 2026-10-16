@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FatiHomes logo">
+  <path d="M32 8 L58 32 L52 32 L52 52 L12 52 L12 32 L6 32 Z" fill="#ff385c"/>
+  <path d="M32 26 a8.5 8.5 0 0 0 -8.5 8.5 c0 6.3 8.5 14 8.5 14 s8.5 -7.7 8.5 -14 A8.5 8.5 0 0 0 32 26 Z" fill="#ffffff"/>
+  <circle cx="32" cy="34.5" r="3.2" fill="#0284c7"/>
+</svg>
