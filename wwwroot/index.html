@@ -21,51 +21,6 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
     body { background-color: #f8fafc; color: var(--dark); line-height: 1.5; }
-    header {
-      background: #fff;
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.9rem 5%;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: var(--primary);
-      text-decoration: none;
-    }
-    .brand img { display: block; width: 34px; height: 34px; }
-    .nav-tabs {
-      display: flex;
-      gap: 8px;
-    }
-    .nav-btn {
-      border: none;
-      background: transparent;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
-    .nav-btn:hover { background: var(--gray-light); color: var(--dark); }
-    .nav-btn.active {
-      background: var(--primary);
-      color: white !important;
-    }
     .badge-swagger {
       background: #003580;
       color: white !important;
@@ -275,45 +230,50 @@
   <!-- Scroll Progress Indicator -->
   <div class="scroll-progress" id="scrollProgressBar"></div>
 
-  <!-- Top Glassmorphism Navigation Bar -->
+  <!-- Primary navigation -->
   <header class="navbar" id="navbar">
-    <div class="nav-left">
-      <a href="#" class="brand" onclick="switchView('listings')">
-        <img src="images/logo.svg" alt="FatiHomes logo" width="34" height="34" />
-        <span class="brand-text">FatiHomes & StayHub</span>
-        <span class="brand-stage" id="stageBadge">DEV</span>
-      </a>
-      <div class="stats-ribbon" id="statsRibbon">
-        <span class="stat-pill"><span class="dot"></span> <span id="statProperties">6</span> Properties</span>
-        <span class="stat-pill"><span id="statReservations">1</span> Bookings</span>
-        <span class="stat-pill"><span id="statReviews">4</span> Reviews</span>
+    <div class="navbar-inner">
+      <div class="nav-left">
+        <a href="#listings" class="brand" onclick="switchView('listings'); return false;">
+          <img src="images/logo.svg" alt="" width="36" height="36" />
+          <span class="brand-text">FatiHomes</span>
+          <span class="brand-stage" id="stageBadge">DEV</span>
+        </a>
+        <div class="stats-ribbon" id="statsRibbon" aria-label="Platform statistics">
+          <span class="stat-pill"><span id="statProperties">6</span><span>stays</span></span>
+          <span class="stat-pill"><span id="statReservations">1</span><span>bookings</span></span>
+          <span class="stat-pill"><span id="statReviews">4</span><span>reviews</span></span>
+        </div>
       </div>
-    </div>
 
-    <nav class="nav-tabs">
-      <button class="nav-pill active" id="pill-listings" onclick="switchView('listings')">
+    <nav class="nav-tabs" id="primaryNavigation" aria-label="Main navigation">
+      <button class="nav-pill active" id="pill-listings" type="button" data-view="listings" aria-current="page" onclick="switchView('listings')">
         <span>🔍 Explore</span>
       </button>
-      <button class="nav-pill" id="pill-wishlist" onclick="switchView('wishlist')">
+      <button class="nav-pill" id="pill-wishlist" type="button" data-view="wishlist" onclick="switchView('wishlist')">
         <span>❤️ Wishlist</span>
         <span class="nav-badge" id="favCountBadge">0</span>
       </button>
-      <button class="nav-pill" id="pill-reservations" onclick="switchView('reservations')">
+      <button class="nav-pill" id="pill-reservations" type="button" data-view="reservations" onclick="switchView('reservations')">
         <span>📋 Bookings</span>
       </button>
-      <button class="nav-pill" id="pill-hosts" onclick="switchView('hosts')">
+      <button class="nav-pill" id="pill-hosts" type="button" data-view="hosts" onclick="switchView('hosts')">
         <span>🛡️ Trust & Hosts</span>
       </button>
-      <button class="nav-pill" id="pill-contact" onclick="switchView('contact')">
+      <button class="nav-pill" id="pill-contact" type="button" data-view="contact" onclick="switchView('contact')">
         <span>📞 Contact</span>
       </button>
     </nav>
 
     <div class="nav-right">
-      <button class="theme-btn" id="themeToggle" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode">🌙</button>
-      <a href="/swagger" target="_blank" class="swagger-pill" title="Open Interactive API Docs">
+      <a href="/swagger" target="_blank" rel="noopener noreferrer" class="swagger-pill" title="Open Interactive API Docs">
         <span>⚡ Swagger Docs</span>
       </a>
+      <button class="theme-btn" id="themeToggle" type="button" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">🌙</button>
+      <button class="nav-menu-toggle" id="navMenuToggle" type="button" aria-controls="primaryNavigation" aria-expanded="false" aria-label="Open navigation menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
     </div>
   </header>
 

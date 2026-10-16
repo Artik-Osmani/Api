@@ -117,20 +117,60 @@ function toggleDarkMode() {
 
 // ---------- Navigation ----------
 function switchView(view) {
+  const availableViews = ['listings', 'wishlist', 'reservations', 'hosts', 'contact'];
+  if (!availableViews.includes(view)) view = 'listings';
+
   state.currentView = view;
   $$('.view-section').forEach(el => el.classList.remove('active'));
-  $$('.nav-pill').forEach(el => el.classList.remove('active'));
+  $$('.nav-pill').forEach(el => {
+    const isActive = el.dataset.view === view;
+    el.classList.toggle('active', isActive);
+    if (isActive) el.setAttribute('aria-current', 'page');
+    else el.removeAttribute('aria-current');
+  });
 
   const viewEl = document.getElementById('view-' + view);
-  const pillEl = document.getElementById('pill-' + view);
   if (viewEl) viewEl.classList.add('active');
-  if (pillEl) pillEl.classList.add('active');
+
+  if (location.hash !== `#${view}`) history.pushState({ view }, '', `#${view}`);
+  closeNavigationMenu();
 
   if (view === 'wishlist') renderWishlist();
   if (view === 'reservations') loadReservations();
   if (view === 'hosts') renderHosts();
 
   setTimeout(triggerCardReveals, 100);
+}
+
+function closeNavigationMenu() {
+  const navbar = $('#navbar');
+  const toggle = $('#navMenuToggle');
+  if (!navbar || !toggle) return;
+  navbar.classList.remove('nav-open');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.setAttribute('aria-label', 'Open navigation menu');
+}
+
+function initNavigation() {
+  const toggle = $('#navMenuToggle');
+  toggle?.addEventListener('click', () => {
+    const isOpen = $('#navbar').classList.toggle('nav-open');
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    toggle.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+  });
+
+  window.addEventListener('hashchange', () => {
+    const view = location.hash.slice(1);
+    const availableViews = ['listings', 'wishlist', 'reservations', 'hosts', 'contact'];
+    if (availableViews.includes(view) && view !== state.currentView) {
+      history.replaceState({ view }, '', `#${view}`);
+      switchView(view);
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeNavigationMenu();
+  });
 }
 
 // ---------- System Stats & Stage ----------
@@ -927,11 +967,14 @@ function closeModal(id) {
 // ---------- Initializer ----------
 async function initApp() {
   initDarkMode();
+  initNavigation();
   initScrollEffects();
   renderCategories();
   await loadSystemStats();
   await loadFavorites();
   await executeSearch();
+  const initialView = location.hash.slice(1);
+  if (initialView) switchView(initialView);
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
