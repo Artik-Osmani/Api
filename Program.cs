@@ -1,4 +1,4 @@
-﻿using StayHubApi.Middleware;
+using StayHubApi.Middleware;
 using StayHubApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,7 +8,15 @@ var stageName = builder.Configuration.GetValue<string>("StageConfig:StageName")
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+});
 builder.Services.AddSingleton<MockDataStore>();
 
 builder.Services.AddCors(options =>
@@ -19,6 +27,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<RateLimitMiddleware>();
 
