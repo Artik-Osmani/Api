@@ -10,6 +10,9 @@ const state = {
   listings: [],
   wishlistIds: new Set(),
   reservations: [],
+  listingCache: {},
+  bookingFilter: 'all',
+  openReceipts: new Set(),
   activeCategory: 'all',
   currentView: 'listings',
   superhostFilter: false,
@@ -81,7 +84,7 @@ function initScrollEffects() {
 }
 
 function triggerCardReveals() {
-  const cards = $$('.property-card, .res-booking-card, .host-profile-card');
+  const cards = $$('.property-card, .res-booking-card, .bk-card, .host-profile-card');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -239,6 +242,7 @@ async function executeSearch() {
     if (!res.ok) throw new Error();
     const data = await res.json();
     state.listings = data.results || [];
+    state.listings.forEach(l => { state.listingCache[l.id] = l; });
     renderListingsGrid(state.listings, '#listingsGrid');
     $('#resultsCount').textContent = `${data.totalRecords} properties found`;
     setTimeout(triggerCardReveals, 100);
@@ -296,7 +300,7 @@ function renderListingsGrid(items, targetSelector) {
             ${l.amenities.slice(0, 3).map(a => `<span class="amenity-chip">✨ ${a.replace('_', ' ')}</span>`).join('')}
           </div>
           <div class="card-footer-row">
-            <div class="card-price-text">$${l.pricing.baseNightlyRate} <span>/ night</span></div>
+            <div class="card-price-text">${formatRate(l.pricing)} <span>/ night</span></div>
             <button class="btn-book-card" onclick="event.stopPropagation(); startBookingFlow('${l.id}')">Reserve</button>
           </div>
         </div>
@@ -434,7 +438,7 @@ async function openPropertyDetail(id) {
       <div>
         <div style="background:var(--bg-page); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:1.5rem;">
           <div style="font-size:1.6rem; font-weight:800; color:var(--text-main);">
-            $${listing.pricing.baseNightlyRate} <span style="font-size:0.9rem; font-weight:400; color:var(--text-muted);">night</span>
+            ${formatRate(listing.pricing)} <span style="font-size:0.9rem; font-weight:400; color:var(--text-muted);">night</span>
           </div>
 
           <div style="margin: 1.2rem 0; border:1px solid var(--border-light); border-radius:var(--radius-sm); padding:10px; background:var(--bg-card);">
@@ -485,14 +489,15 @@ function startBookingFlow(id) {
   $('#summaryCheckOut').textContent = $('#checkOut').value;
   $('#summaryGuests').textContent = `${$('#guestsCount').value} Guests`;
 
+  const cur = listing.pricing.currency;
   $('#priceReceiptBox').innerHTML = `
-    <div class="receipt-row"><span>${nights} nights × $${listing.pricing.baseNightlyRate}</span> <span>$${base.toFixed(2)}</span></div>
-    <div class="receipt-row"><span>Cleaning fee</span> <span>$${clean.toFixed(2)}</span></div>
-    <div class="receipt-row"><span>StayHub service fee</span> <span>$${service.toFixed(2)}</span></div>
-    <div class="receipt-row"><span>Occupancy taxes</span> <span>$${tax.toFixed(2)}</span></div>
-    <div class="receipt-row total"><span>Total</span> <span>$${total.toFixed(2)}</span></div>
+    <div class="receipt-row"><span>${nights} nights × ${formatRate(listing.pricing)}</span> <span>${formatMoney(base, cur)}</span></div>
+    <div class="receipt-row"><span>Cleaning fee</span> <span>${formatMoney(clean, cur)}</span></div>
+    <div class="receipt-row"><span>StayHub service fee</span> <span>${formatMoney(service, cur)}</span></div>
+    <div class="receipt-row"><span>Occupancy taxes</span> <span>${formatMoney(tax, cur)}</span></div>
+    <div class="receipt-row total"><span>Total</span> <span>${formatMoney(total, cur)}</span></div>
   `;
-  $('#finalTotalAmount').textContent = `$${total.toFixed(2)}`;
+  $('#finalTotalAmount').textContent = formatMoney(total, cur);
 
   nextBookingStep(1);
   $('#bookingModal').classList.add('open');
@@ -559,57 +564,263 @@ async function submitReservation() {
 }
 
 // ---------- Reservations Manager & Cancellation ----------
+const bookingFilters = [
+  { id: 'all', label: 'All', icon: '🗂️' },
+  { id: 'upcoming', label: 'Upcoming', icon: '🧳' },
+  { id: 'current', label: 'Current stay', icon: '🏡' },
+  { id: 'pending', label: 'Awaiting host', icon: '⏳' },
+  { id: 'past', label: 'Past', icon: '📸' },
+  { id: 'cancelled', label: 'Cancelled', icon: '🚫' }
+];
+
+const statusLabels = {
+  confirmed: '✓ Confirmed',
+  pending_approval: '⏳ Pending approval',
+  checked_in: '🔑 Checked in',
+  completed: '★ Completed',
+  cancelled: '✕ Cancelled'
+};
+
+function parseLocalDate(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function todayLocal() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function formatDay(str) {
+  return parseLocalDate(str).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function formatMoney(amount, currency = 'USD') {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+}
+
+// Nightly rate in the listing's own currency, without cents for whole amounts
+function formatRate(pricing) {
+  const whole = Number.isInteger(pricing.baseNightlyRate);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: pricing.currency || 'USD', minimumFractionDigits: whole ? 0 : 2 }).format(pricing.baseNightlyRate);
+}
+
+function nightsBetween(a, b) {
+  return Math.max(1, Math.round((parseLocalDate(b) - parseLocalDate(a)) / 86400000));
+}
+
+// Timeline phase of a booking relative to today: upcoming, current, past or cancelled
+function bookingPhase(r) {
+  if (r.status === 'cancelled') return 'cancelled';
+  if (r.status === 'completed') return 'past';
+  const today = todayLocal();
+  if (parseLocalDate(r.checkOutDate) <= today) return 'past';
+  if (parseLocalDate(r.checkInDate) <= today) return 'current';
+  return 'upcoming';
+}
+
+function matchesBookingFilter(r, filter) {
+  if (filter === 'all') return true;
+  if (filter === 'pending') return r.status === 'pending_approval';
+  return bookingPhase(r) === filter;
+}
+
+function bookingCountdown(r) {
+  const phase = bookingPhase(r);
+  const today = todayLocal();
+  if (phase === 'upcoming') {
+    const days = Math.round((parseLocalDate(r.checkInDate) - today) / 86400000);
+    return { cls: 'upcoming', text: days === 1 ? '🧳 Check-in is tomorrow' : `🧳 Starts in ${days} days` };
+  }
+  if (phase === 'current') {
+    const left = Math.round((parseLocalDate(r.checkOutDate) - today) / 86400000);
+    return { cls: 'current', text: `🏡 Stay in progress · ${left} night${left === 1 ? '' : 's'} left` };
+  }
+  if (phase === 'past') return { cls: 'past', text: '📸 Trip completed — hope you enjoyed it!' };
+  return { cls: 'cancelled', text: r.cancellationReason ? `🚫 ${r.cancellationReason}` : '🚫 This booking was cancelled' };
+}
+
+// Bookings can reference listings that are hidden by the current search filters,
+// so missing listings are fetched individually and cached.
+async function ensureBookingListings() {
+  const missing = [...new Set(state.reservations.map(r => r.listingId))]
+    .filter(id => !state.listingCache[id]);
+  await Promise.all(missing.map(async id => {
+    try {
+      const res = await fetch(`/v1/listings/${id}`);
+      if (res.ok) state.listingCache[id] = await res.json();
+    } catch {}
+  }));
+}
+
 async function loadReservations() {
+  const container = $('#reservationsList');
+  if (!state.reservations.length) {
+    container.innerHTML = '<div class="bk-skeleton"></div><div class="bk-skeleton"></div>';
+  }
   try {
     const res = await fetch('/v1/reservations');
     if (!res.ok) throw new Error();
     state.reservations = await res.json();
+    state.reservations.sort((a, b) => parseLocalDate(a.checkInDate) - parseLocalDate(b.checkInDate));
+    await ensureBookingListings();
     renderReservations();
-    setTimeout(triggerCardReveals, 100);
   } catch {
+    container.innerHTML = '';
     toast('Could not fetch reservations', 'error');
   }
 }
 
+function setBookingFilter(id) {
+  state.bookingFilter = id;
+  renderReservations();
+}
+
+function renderBookingStats() {
+  const active = state.reservations.filter(r => r.status !== 'cancelled');
+  const upcoming = active.filter(r => ['upcoming', 'current'].includes(bookingPhase(r))).length;
+  const nights = active.reduce((sum, r) => sum + nightsBetween(r.checkInDate, r.checkOutDate), 0);
+  const spent = active.reduce((sum, r) => sum + r.pricingSummary.totalAmount, 0);
+  const pending = state.reservations.filter(r => r.status === 'pending_approval').length;
+
+  const tiles = [
+    { icon: '🧳', value: upcoming, label: 'Upcoming & current trips', tone: 'primary' },
+    { icon: '🌙', value: nights, label: 'Nights booked', tone: 'blue' },
+    { icon: '💳', value: formatMoney(spent), label: 'Total trip value', tone: 'success' },
+    { icon: '⏳', value: pending, label: 'Awaiting host approval', tone: 'warning' }
+  ];
+
+  $('#bookingStats').innerHTML = tiles.map(t => `
+    <div class="bk-stat-tile ${t.tone}">
+      <div class="bk-stat-icon">${t.icon}</div>
+      <div>
+        <div class="bk-stat-value">${t.value}</div>
+        <div class="bk-stat-label">${t.label}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderBookingFilters() {
+  $('#bookingFilters').innerHTML = bookingFilters.map(f => {
+    const count = state.reservations.filter(r => matchesBookingFilter(r, f.id)).length;
+    return `
+      <button class="bk-filter ${state.bookingFilter === f.id ? 'active' : ''}" onclick="setBookingFilter('${f.id}')">
+        <span>${f.icon} ${f.label}</span>
+        <span class="bk-filter-count">${count}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function renderBookingCard(r) {
+  const listing = state.listingCache[r.listingId];
+  const title = listing ? listing.title : 'Vacation Stay';
+  const img = listing ? listing.imageUrl : 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80';
+  const location = listing ? `${listing.address.city}, ${listing.address.state}` : 'Location unavailable';
+  const host = listing ? listing.host : null;
+  const nights = nightsBetween(r.checkInDate, r.checkOutDate);
+  const p = r.pricingSummary;
+  const countdown = bookingCountdown(r);
+  const canCancel = !['cancelled', 'completed'].includes(r.status) && bookingPhase(r) !== 'past';
+  const isOpen = state.openReceipts.has(r.id);
+
+  const receiptRows = (p.items && p.items.length ? p.items : [
+    { description: `${nights} nights accommodation`, amount: p.basePrice },
+    { description: 'Cleaning fee', amount: p.cleaningFee },
+    { description: 'Service fee', amount: p.serviceFee },
+    { description: 'Occupancy tax', amount: p.localOccupancyTax }
+  ]).map(i => `<div class="receipt-row"><span>${i.description}</span><span>${formatMoney(i.amount, p.currency)}</span></div>`).join('');
+
+  return `
+    <article class="bk-card ${r.status === 'cancelled' ? 'is-cancelled' : ''}">
+      <div class="bk-card-media">
+        <img src="${img}" alt="${title}" loading="lazy" />
+        <span class="bk-status ${r.status}">${statusLabels[r.status] || r.status.replace('_', ' ')}</span>
+      </div>
+
+      <div class="bk-card-body">
+        <div class="bk-card-top">
+          <div>
+            <h3 class="bk-card-title">${title}</h3>
+            <div class="bk-card-meta">📍 ${location} · <span class="bk-code" title="${r.id}">#${r.id.substring(0, 8).toUpperCase()}</span></div>
+          </div>
+          <div class="bk-price">
+            <div class="bk-price-total">${formatMoney(p.totalAmount, p.currency)}</div>
+            <div class="bk-price-sub">${formatMoney(p.totalAmount / nights, p.currency)} avg / night</div>
+          </div>
+        </div>
+
+        <div class="bk-timeline">
+          <div class="bk-date">
+            <span class="bk-date-label">Check-in</span>
+            <span class="bk-date-value">${formatDay(r.checkInDate)}</span>
+          </div>
+          <div class="bk-timeline-line">
+            <span class="bk-nights">🌙 ${nights} night${nights === 1 ? '' : 's'}</span>
+          </div>
+          <div class="bk-date right">
+            <span class="bk-date-label">Check-out</span>
+            <span class="bk-date-value">${formatDay(r.checkOutDate)}</span>
+          </div>
+        </div>
+
+        <div class="bk-details">
+          <span class="bk-chip">👤 ${r.primaryGuest.firstName} ${r.primaryGuest.lastName}</span>
+          <span class="bk-chip">👥 ${r.guestsCount} guest${r.guestsCount === 1 ? '' : 's'}</span>
+          <span class="bk-chip">${r.bookingFlow === 'instant_book' ? '⚡ Instant book' : '📨 Request to book'}</span>
+          ${host ? `<span class="bk-chip host"><img src="${host.profilePhotoUrl}" alt="" /> Hosted by ${host.name}</span>` : ''}
+        </div>
+
+        <div class="bk-countdown ${countdown.cls}">${countdown.text}</div>
+
+        <div class="bk-actions">
+          <button class="bk-btn-primary sm" onclick="openChatModal('${r.id}')">💬 Message host</button>
+          <button class="btn-action-sm" onclick="toggleReceipt('${r.id}')">🧾 ${isOpen ? 'Hide' : 'Price'} details</button>
+          ${canCancel ? `<button class="btn-action-sm danger" onclick="cancelReservation('${r.id}')">Cancel booking</button>` : ''}
+        </div>
+
+        <div class="bk-receipt ${isOpen ? 'open' : ''}">
+          ${receiptRows}
+          ${p.discountAmount ? `<div class="receipt-row discount"><span>Discount</span><span>−${formatMoney(p.discountAmount, p.currency)}</span></div>` : ''}
+          ${p.securityDeposit ? `<div class="receipt-row muted"><span>Refundable security deposit</span><span>${formatMoney(p.securityDeposit, p.currency)}</span></div>` : ''}
+          <div class="receipt-row total"><span>Total (${p.currency})</span><span>${formatMoney(p.totalAmount, p.currency)}</span></div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
 function renderReservations() {
+  renderBookingStats();
+  renderBookingFilters();
+
   const container = $('#reservationsList');
-  if (state.reservations.length === 0) {
+  const items = state.reservations.filter(r => matchesBookingFilter(r, state.bookingFilter));
+  $('#bookingCount').textContent = `Showing ${items.length} of ${state.reservations.length} booking${state.reservations.length === 1 ? '' : 's'}`;
+
+  if (items.length === 0) {
+    const noneAtAll = state.reservations.length === 0;
     container.innerHTML = `
-      <div style="text-align:center; padding:4rem; background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-light);">
-        <div style="font-size:3rem; margin-bottom:0.8rem; animation: floatIcon 3s ease-in-out infinite;">🗓️</div>
-        <h3>No reservations yet</h3>
-        <p class="text-muted">Browse through listings to make your first booking!</p>
+      <div class="bk-empty">
+        <div class="bk-empty-icon">${noneAtAll ? '🗓️' : '🔎'}</div>
+        <h3>${noneAtAll ? 'No trips booked… yet!' : 'Nothing in this category'}</h3>
+        <p class="text-muted">${noneAtAll ? 'Your next getaway is a few clicks away. Explore handpicked stays and reserve your first one.' : 'Try another filter to see the rest of your bookings.'}</p>
+        <button class="bk-btn-primary" onclick="${noneAtAll ? "switchView('listings')" : "setBookingFilter('all')"}">
+          ${noneAtAll ? '🔍 Explore stays' : 'Show all bookings'}
+        </button>
       </div>`;
     return;
   }
 
-  container.innerHTML = state.reservations.map(r => {
-    const listing = state.listings.find(l => l.id === r.listingId);
-    const title = listing ? listing.title : 'Vacation Stay';
-    const img = listing ? listing.imageUrl : 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=300&q=80';
+  container.innerHTML = items.map(renderBookingCard).join('');
+  setTimeout(triggerCardReveals, 50);
+}
 
-    return `
-      <div class="res-booking-card">
-        <div class="res-main-info">
-          <img src="${img}" class="res-img-thumb" alt="thumb" />
-          <div>
-            <h4 style="font-weight:700;">${title}</h4>
-            <div style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
-              📅 ${r.checkInDate} → ${r.checkOutDate} · 👤 ${r.primaryGuest.firstName} ${r.primaryGuest.lastName} (${r.guestsCount} guests)
-            </div>
-            <span class="status-badge ${r.status}">${r.status.replace('_', ' ')}</span>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:1.3rem; font-weight:800; color:var(--text-main);">$${r.pricingSummary.totalAmount.toFixed(2)}</div>
-          <div class="res-actions-cell" style="margin-top:8px;">
-            <button class="btn-action-sm" onclick="openChatModal('${r.id}')">💬 Messages</button>
-            ${r.status !== 'cancelled' ? `<button class="btn-action-sm danger" onclick="cancelReservation('${r.id}')">Cancel</button>` : ''}
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+function toggleReceipt(id) {
+  if (state.openReceipts.has(id)) state.openReceipts.delete(id);
+  else state.openReceipts.add(id);
+  renderReservations();
 }
 
 async function cancelReservation(id) {
@@ -618,6 +829,7 @@ async function cancelReservation(id) {
     const res = await fetch(`/v1/reservations/${id}/cancel`, { method: 'POST' });
     if (!res.ok) throw new Error();
     toast('Reservation cancelled', 'info');
+    loadSystemStats();
     loadReservations();
   } catch {
     toast('Failed to cancel reservation', 'error');

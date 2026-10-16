@@ -246,23 +246,34 @@
         </div>
       </div>
 
-      <nav class="nav-tabs" id="primaryNavigation" aria-label="Main navigation">
-        <button class="nav-pill active" id="pill-listings" type="button" data-view="listings" aria-current="page" onclick="switchView('listings')">Explore</button>
-        <button class="nav-pill" id="pill-wishlist" type="button" data-view="wishlist" onclick="switchView('wishlist')">
-          Wishlist <span class="nav-badge" id="favCountBadge">0</span>
-        </button>
-        <button class="nav-pill" id="pill-reservations" type="button" data-view="reservations" onclick="switchView('reservations')">Bookings</button>
-        <button class="nav-pill" id="pill-hosts" type="button" data-view="hosts" onclick="switchView('hosts')">Hosts</button>
-        <button class="nav-pill" id="pill-contact" type="button" data-view="contact" onclick="switchView('contact')">Contact</button>
-      </nav>
+    <nav class="nav-tabs" id="primaryNavigation" aria-label="Main navigation">
+      <button class="nav-pill active" id="pill-listings" type="button" data-view="listings" aria-current="page" onclick="switchView('listings')">
+        <span>🔍 Explore</span>
+      </button>
+      <button class="nav-pill" id="pill-wishlist" type="button" data-view="wishlist" onclick="switchView('wishlist')">
+        <span>❤️ Wishlist</span>
+        <span class="nav-badge" id="favCountBadge">0</span>
+      </button>
+      <button class="nav-pill" id="pill-reservations" type="button" data-view="reservations" onclick="switchView('reservations')">
+        <span>📋 Bookings</span>
+      </button>
+      <button class="nav-pill" id="pill-hosts" type="button" data-view="hosts" onclick="switchView('hosts')">
+        <span>🛡️ Trust & Hosts</span>
+      </button>
+      <button class="nav-pill" id="pill-contact" type="button" data-view="contact" onclick="switchView('contact')">
+        <span>📞 Contact</span>
+      </button>
+    </nav>
 
-      <div class="nav-right">
-        <a href="/swagger" target="_blank" rel="noopener noreferrer" class="swagger-pill" title="Open Interactive API Docs">API Docs</a>
-        <button class="theme-btn" id="themeToggle" type="button" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">&#x1F319;</button>
-        <button class="nav-menu-toggle" id="navMenuToggle" type="button" aria-controls="primaryNavigation" aria-expanded="false" aria-label="Open navigation menu">
-          <span></span><span></span><span></span>
-        </button>
-      </div>
+    <div class="nav-right">
+      <a href="/swagger" target="_blank" rel="noopener noreferrer" class="swagger-pill" title="Open Interactive API Docs">
+        <span>⚡ Swagger Docs</span>
+      </a>
+      <button class="theme-btn" id="themeToggle" type="button" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">🌙</button>
+      <button class="nav-menu-toggle" id="navMenuToggle" type="button" aria-controls="primaryNavigation" aria-expanded="false" aria-label="Open navigation menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
     </div>
   </header>
 
@@ -367,19 +378,37 @@
 
   <!-- VIEW 3: RESERVATIONS MANAGER -->
   <main class="view-section" id="view-reservations">
-    <div class="content-container">
-      <div class="page-header">
+    <!-- Bookings Hero Banner -->
+    <section class="bk-hero">
+      <div class="bk-hero-inner">
         <div>
-          <h2>📋 My Bookings & Itinerary</h2>
-          <p class="text-muted">Manage your bookings, inspect payment breakdowns, and chat with hosts.</p>
+          <span class="bk-eyebrow">✈️ Your trips</span>
+          <h2 class="bk-hero-title">My Bookings & Itinerary</h2>
+          <p class="bk-hero-sub">Manage your stays, review payment breakdowns, and chat with your hosts.</p>
         </div>
-        <div class="header-btns">
-          <button class="btn-secondary" onclick="loadReservations()">🔄 Refresh Bookings</button>
+        <div class="bk-hero-actions">
+          <button class="bk-btn-ghost" onclick="loadReservations()">🔄 Refresh</button>
+          <button class="bk-btn-primary" onclick="switchView('listings')">＋ Book a new stay</button>
         </div>
+      </div>
+    </section>
+
+    <div class="content-container bk-container">
+      <!-- Summary Stats -->
+      <div class="bk-stats" id="bookingStats">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="bk-toolbar">
+        <div class="bk-filters" id="bookingFilters">
+          <!-- Injected via JavaScript -->
+        </div>
+        <span class="bk-count text-muted" id="bookingCount"></span>
       </div>
 
       <!-- Reservations List -->
-      <div class="reservations-container" id="reservationsList">
+      <div class="bk-list" id="reservationsList">
         <!-- Injected via JavaScript -->
       </div>
     </div>
