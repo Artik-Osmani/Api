@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("StayHubApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+09ca6d5778f604af4c272bee04337097bcaa3d7d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+62c03fb9e596cdf6f0d255353e7021bc044f5e8a")]
 [assembly: System.Reflection.AssemblyProductAttribute("StayHubApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("StayHubApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

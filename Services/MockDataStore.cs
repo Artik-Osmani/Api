@@ -1,17 +1,45 @@
-﻿using StayHubApi.Models;
+using StayHubApi.Models;
 
 namespace StayHubApi.Services;
 
 public class MockDataStore
 {
+    private readonly object _lock = new();
+    public DateTime ServerStartTimeUtc { get; } = DateTime.UtcNow;
+
     public List<ListingDetail> Listings { get; } = [];
     public List<Reservation> Reservations { get; } = [];
     public List<Message> Messages { get; } = [];
+    public List<Review> Reviews { get; } = [];
     public HashSet<Guid> FavoriteIds { get; } = [];
 
     public MockDataStore()
     {
         SeedData();
+    }
+
+    public T Read<T>(Func<MockDataStore, T> action)
+    {
+        lock (_lock)
+        {
+            return action(this);
+        }
+    }
+
+    public void Modify(Action<MockDataStore> action)
+    {
+        lock (_lock)
+        {
+            action(this);
+        }
+    }
+
+    public T Modify<T>(Func<MockDataStore, T> action)
+    {
+        lock (_lock)
+        {
+            return action(this);
+        }
     }
 
     private void SeedData()
@@ -134,7 +162,239 @@ public class MockDataStore
             ReviewCount = 129
         };
 
-        Listings.AddRange([listing1, listing2, listing3, listing4, listing5, listing6]);
+        var hostId4 = Guid.Parse("d4e5f6a7-b8c9-40d1-e2f3-a4b5c6d7e8f9");
+        var hostArben = new HostDetails(hostId4, "Arben Krasniqi", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&q=80", 98.0, 20, true, true);
+
+        var listing7 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Old Town Stone House by the Prizren Fortress",
+            Description = "Restored Ottoman-era stone house a short walk from the Shadërvan square and the Lumbardhi river. Wooden ceilings, a quiet courtyard, and fortress views from the terrace.",
+            Category = "entire_home",
+            ImageUrl = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80",
+            Coordinates = new CoordinatePair(42.2139, 20.7397),
+            Address = new Address("Rruga e Shadërvanit 7", "Prizren", "Kosovo", "20000", "XK", "neigh_oldtown"),
+            Capacity = new CapacityBreakdown(5, 2, 3, 1.5),
+            Amenities = ["wifi", "air_conditioning", "self_check_in", "workspace"],
+            Host = hostArben,
+            Pricing = new PricingMatrix("EUR", 75.00m, 30.00m, 11.25m, 4.00m, 100.00m, new DynamicDiscounts(10.0, 25.0, 5.0)),
+            HouseRules = new HouseRules("22:00", "08:00", false, false, 1),
+            InstantBookEnabled = true,
+            StarRating = 4.94,
+            ReviewCount = 58
+        };
+
+        var listing8 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Rugova Valley Log Cabin with Mountain Views",
+            Description = "Wooden cabin at the edge of the Rugova canyon, close to hiking trails, the via ferrata and the Accursed Mountains. Wood stove, sauna, and a deck facing the peaks.",
+            Category = "cabin",
+            ImageUrl = "https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?w=800&q=80",
+            Coordinates = new CoordinatePair(42.6950, 20.1900),
+            Address = new Address("Rruga e Rugovës km 14", "Peja", "Kosovo", "30000", "XK", "neigh_rugova"),
+            Capacity = new CapacityBreakdown(6, 2, 4, 1.0),
+            Amenities = ["wifi", "hot_tub", "pet_friendly", "self_check_in"],
+            Host = hostArben,
+            Pricing = new PricingMatrix("EUR", 90.00m, 35.00m, 13.50m, 4.00m, 150.00m, new DynamicDiscounts(12.0, 30.0, 6.0)),
+            HouseRules = new HouseRules("22:00", "08:00", false, false, 2),
+            InstantBookEnabled = true,
+            StarRating = 4.97,
+            ReviewCount = 91
+        };
+
+        var listing9 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Ionian Sea Villa with Private Pool in Sarandë",
+            Description = "Hillside villa above Sarandë bay with a private pool, sunset terrace, and views across to Corfu. Ten minutes from Ksamil beaches and the Butrint ruins.",
+            Category = "villa",
+            ImageUrl = "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80",
+            Coordinates = new CoordinatePair(39.8661, 20.0050),
+            Address = new Address("Rruga Butrinti 22", "Sarandë", "Albania", "9701", "AL", "neigh_ksamilroad"),
+            Capacity = new CapacityBreakdown(8, 4, 5, 3.0),
+            Amenities = ["wifi", "pool", "air_conditioning", "ev_charger"],
+            Host = new HostDetails(hostId3, "Sofia Marekis", "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&q=80", 100.0, 5, true, true),
+            Pricing = new PricingMatrix("EUR", 260.00m, 90.00m, 39.00m, 10.00m, 400.00m, new DynamicDiscounts(10.0, 25.0, 8.0)),
+            HouseRules = new HouseRules("23:00", "09:00", true, true, 0),
+            InstantBookEnabled = false,
+            StarRating = 4.91,
+            ReviewCount = 37
+        };
+
+        var listing10 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Guesthouse Room in Theth National Park",
+            Description = "Private room in a traditional stone guesthouse in the Theth valley, with home-cooked breakfast and dinner. Trailhead for the Blue Eye and the Valbona pass hike.",
+            Category = "private_room",
+            ImageUrl = "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+            Coordinates = new CoordinatePair(42.3956, 19.7745),
+            Address = new Address("Fshati Theth", "Theth", "Albania", "4301", "AL", "neigh_thethvalley"),
+            Capacity = new CapacityBreakdown(2, 1, 1, 1.0),
+            Amenities = ["wifi", "pet_friendly"],
+            Host = new HostDetails(hostId2, "Marcus Reeve", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80", 97.0, 30, true, true),
+            Pricing = new PricingMatrix("EUR", 40.00m, 10.00m, 6.00m, 2.00m, 50.00m, new DynamicDiscounts(5.0, 15.0, 3.0)),
+            HouseRules = new HouseRules("22:00", "07:00", false, false, 0),
+            InstantBookEnabled = true,
+            StarRating = 4.89,
+            ReviewCount = 144
+        };
+
+        var listing11 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Lakeside Home on the Shores of Lake Ohrid",
+            Description = "Bright family home steps from the lake, with a garden, kayaks, and a short stroll along the promenade to the old town and the Church of St. John at Kaneo.",
+            Category = "entire_home",
+            ImageUrl = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+            Coordinates = new CoordinatePair(41.1172, 20.8016),
+            Address = new Address("Kej Makedonija 15", "Ohrid", "North Macedonia", "6000", "MK", "neigh_lakefront"),
+            Capacity = new CapacityBreakdown(6, 3, 4, 2.0),
+            Amenities = ["wifi", "air_conditioning", "workspace", "self_check_in"],
+            Host = new HostDetails(hostId1, "Elena Vance", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&q=80", 99.5, 15, true, true),
+            Pricing = new PricingMatrix("EUR", 110.00m, 40.00m, 16.50m, 5.00m, 150.00m, new DynamicDiscounts(10.0, 22.0, 5.0)),
+            HouseRules = new HouseRules("22:00", "08:00", false, false, 1),
+            InstantBookEnabled = true,
+            StarRating = 4.86,
+            ReviewCount = 73
+        };
+
+        var listing12 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Central Prishtina Apartment near Mother Teresa Boulevard",
+            Description = "Modern apartment in the heart of Prishtina, steps from the boulevard's cafes, the NEWBORN monument and the National Library. Fast internet and a dedicated desk.",
+            Category = "apartment",
+            ImageUrl = "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",
+            Coordinates = new CoordinatePair(42.6629, 21.1655),
+            Address = new Address("Bulevardi Nënë Tereza 30", "Prishtina", "Kosovo", "10000", "XK", "neigh_center"),
+            Capacity = new CapacityBreakdown(3, 1, 2, 1.0),
+            Amenities = ["wifi", "air_conditioning", "workspace", "self_check_in"],
+            Host = hostArben,
+            Pricing = new PricingMatrix("EUR", 55.00m, 20.00m, 8.25m, 3.00m, 80.00m, new DynamicDiscounts(8.0, 20.0, 4.0)),
+            HouseRules = new HouseRules("23:00", "08:00", false, false, 0),
+            InstantBookEnabled = true,
+            StarRating = 4.83,
+            ReviewCount = 112
+        };
+
+        var listing13 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Ski Chalet in Brezovica with Slope Access",
+            Description = "Warm alpine chalet at the foot of the Sharr Mountains, a few minutes from the Brezovica lifts. Fireplace, boot room, and a hot tub for après-ski evenings.",
+            Category = "cabin",
+            ImageUrl = "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80",
+            Coordinates = new CoordinatePair(42.2042, 21.0098),
+            Address = new Address("Rruga e Brezovicës 3", "Brezovica", "Kosovo", "73000", "XK", "neigh_sharrmountains"),
+            Capacity = new CapacityBreakdown(8, 3, 5, 2.0),
+            Amenities = ["wifi", "hot_tub", "self_check_in", "pet_friendly"],
+            Host = hostArben,
+            Pricing = new PricingMatrix("EUR", 120.00m, 45.00m, 18.00m, 5.00m, 200.00m, new DynamicDiscounts(10.0, 25.0, 7.0)),
+            HouseRules = new HouseRules("22:00", "08:00", false, false, 1),
+            InstantBookEnabled = true,
+            StarRating = 4.90,
+            ReviewCount = 64
+        };
+
+        var listing14 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Traditional Home near the Gjakova Grand Bazaar",
+            Description = "Family home with a walled garden, two streets from the Çarshia e Madhe and the Hadum Mosque. Breakfast with local produce available on request.",
+            Category = "entire_home",
+            ImageUrl = "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=800&q=80",
+            Coordinates = new CoordinatePair(42.3803, 20.4308),
+            Address = new Address("Rruga Ismail Qemali 12", "Gjakova", "Kosovo", "50000", "XK", "neigh_bazaar"),
+            Capacity = new CapacityBreakdown(6, 3, 4, 2.0),
+            Amenities = ["wifi", "air_conditioning", "workspace", "self_check_in"],
+            Host = hostArben,
+            Pricing = new PricingMatrix("EUR", 65.00m, 25.00m, 9.75m, 3.00m, 80.00m, new DynamicDiscounts(8.0, 20.0, 5.0)),
+            HouseRules = new HouseRules("22:00", "08:00", false, false, 1),
+            InstantBookEnabled = true,
+            StarRating = 4.87,
+            ReviewCount = 41
+        };
+
+        var listing15 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Room with Castle View in Berat's Mangalem Quarter",
+            Description = "Whitewashed Ottoman house in the 'city of a thousand windows', with a terrace facing Berat castle and the Osum river. Breakfast included.",
+            Category = "private_room",
+            ImageUrl = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80",
+            Coordinates = new CoordinatePair(40.7058, 19.9522),
+            Address = new Address("Lagjja Mangalem 18", "Berat", "Albania", "5001", "AL", "neigh_mangalem"),
+            Capacity = new CapacityBreakdown(2, 1, 1, 1.0),
+            Amenities = ["wifi", "air_conditioning"],
+            Host = new HostDetails(hostId2, "Marcus Reeve", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80", 97.0, 30, true, true),
+            Pricing = new PricingMatrix("EUR", 45.00m, 10.00m, 6.75m, 2.00m, 50.00m, new DynamicDiscounts(5.0, 15.0, 3.0)),
+            HouseRules = new HouseRules("22:00", "08:00", false, false, 0),
+            InstantBookEnabled = true,
+            StarRating = 4.93,
+            ReviewCount = 188
+        };
+
+        var listing16 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Clifftop Villa above Dhërmi Beach",
+            Description = "Contemporary villa on the Albanian Riviera with an infinity pool hanging over the Ionian Sea, outdoor kitchen, and a path down to Dhërmi's white-pebble beach.",
+            Category = "villa",
+            ImageUrl = "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+            Coordinates = new CoordinatePair(40.1531, 19.6386),
+            Address = new Address("Rruga e Plazhit 5", "Dhërmi", "Albania", "9404", "AL", "neigh_riviera"),
+            Capacity = new CapacityBreakdown(10, 5, 6, 4.0),
+            Amenities = ["wifi", "pool", "air_conditioning", "ev_charger"],
+            Host = new HostDetails(hostId3, "Sofia Marekis", "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&q=80", 100.0, 5, true, true),
+            Pricing = new PricingMatrix("EUR", 340.00m, 110.00m, 51.00m, 12.00m, 500.00m, new DynamicDiscounts(12.0, 30.0, 10.0)),
+            HouseRules = new HouseRules("23:00", "09:00", false, true, 0),
+            InstantBookEnabled = false,
+            StarRating = 4.98,
+            ReviewCount = 29
+        };
+
+        var listing17 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Colorful Blloku Apartment in Central Tirana",
+            Description = "Renovated apartment in Tirana's lively Blloku district, surrounded by cafes and bars, a short walk from Skanderbeg Square and the Grand Park lake.",
+            Category = "apartment",
+            ImageUrl = "https://images.unsplash.com/photo-1494526585095-c41746248156?w=800&q=80",
+            Coordinates = new CoordinatePair(41.3189, 19.8150),
+            Address = new Address("Rruga Pjetër Bogdani 21", "Tirana", "Albania", "1019", "AL", "neigh_blloku"),
+            Capacity = new CapacityBreakdown(4, 2, 2, 1.0),
+            Amenities = ["wifi", "air_conditioning", "workspace", "self_check_in"],
+            Host = new HostDetails(hostId1, "Elena Vance", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&q=80", 99.5, 15, true, true),
+            Pricing = new PricingMatrix("EUR", 70.00m, 25.00m, 10.50m, 3.00m, 100.00m, new DynamicDiscounts(8.0, 20.0, 4.0)),
+            HouseRules = new HouseRules("23:00", "08:00", false, false, 0),
+            InstantBookEnabled = true,
+            StarRating = 4.81,
+            ReviewCount = 97
+        };
+
+        var listing18 = new ListingDetail
+        {
+            Id = Guid.NewGuid(),
+            Title = "Stone Cottage in the Valbona Valley",
+            Description = "Quiet stone cottage by the Valbona river, surrounded by the peaks of the Accursed Mountains. Start of the classic Valbona–Theth hike, with transfers arranged.",
+            Category = "cabin",
+            ImageUrl = "https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?w=800&q=80",
+            Coordinates = new CoordinatePair(42.4553, 19.8889),
+            Address = new Address("Fshati Valbonë", "Valbona", "Albania", "8707", "AL", "neigh_valbonavalley"),
+            Capacity = new CapacityBreakdown(4, 2, 3, 1.0),
+            Amenities = ["wifi", "pet_friendly", "self_check_in"],
+            Host = hostArben,
+            Pricing = new PricingMatrix("EUR", 60.00m, 20.00m, 9.00m, 2.00m, 80.00m, new DynamicDiscounts(10.0, 20.0, 5.0)),
+            HouseRules = new HouseRules("22:00", "07:00", false, false, 2),
+            InstantBookEnabled = true,
+            StarRating = 4.95,
+            ReviewCount = 76
+        };
+
+        Listings.AddRange([listing1, listing2, listing3, listing4, listing5, listing6, listing7, listing8, listing9, listing10, listing11, listing12,
+            listing13, listing14, listing15, listing16, listing17, listing18]);
 
         var resId = Guid.Parse("3f7bf08e-1678-43d9-959c-6e6ad9d20c5b");
         Reservations.Add(new Reservation
@@ -158,5 +418,39 @@ public class MockDataStore
 
         Messages.Add(new Message(Guid.NewGuid(), resId, Guid.Parse("18b76c8d-2917-4861-b9cb-1718bf14bb44"), "guest", "Hello Elena! Will it be possible to drop off our luggage two hours early?", DateTime.UtcNow.AddHours(-12), true));
         Messages.Add(new Message(Guid.NewGuid(), resId, hostId1, "host", "Hi Arthur! Of course, no problem. I can have the place ready by 1 PM. See you soon!", DateTime.UtcNow.AddHours(-11), true));
+
+        Reviews.Add(new Review(
+            Guid.NewGuid(),
+            listing1.Id,
+            Guid.NewGuid(),
+            "Sarah Jenkins",
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80",
+            5,
+            "Spotless loft with gorgeous morning light. The high speed fiber internet was great for remote work!",
+            DateTime.UtcNow.AddDays(-14)
+        ));
+
+        Reviews.Add(new Review(
+            Guid.NewGuid(),
+            listing1.Id,
+            Guid.NewGuid(),
+            "David Chen",
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80",
+            5,
+            "Elena is an outstanding host. Fast check-in and perfect central location in SF.",
+            DateTime.UtcNow.AddDays(-32)
+        ));
+
+        Reviews.Add(new Review(
+            Guid.NewGuid(),
+            listing2.Id,
+            Guid.NewGuid(),
+            "Chloe Miller",
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
+            5,
+            "The hot tub under the stars was unforgettable. Secluded, warm, and cozy mountain cabin.",
+            DateTime.UtcNow.AddDays(-7)
+        ));
     }
 }
+

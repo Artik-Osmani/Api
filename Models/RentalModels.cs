@@ -86,8 +86,9 @@ public record GeoPolygonSearch(List<CoordinatePair> BoundaryPoints);
 
 public class ListingSearchRequest
 {
-    public DateOnly CheckInDate { get; set; }
-    public DateOnly CheckOutDate { get; set; }
+    public string? Query { get; set; }
+    public DateOnly? CheckInDate { get; set; }
+    public DateOnly? CheckOutDate { get; set; }
     public int GuestsCount { get; set; } = 1;
     public int AdultsCount { get; set; } = 1;
     public int ChildrenCount { get; set; } = 0;
@@ -107,7 +108,7 @@ public class ListingSearchRequest
     public bool InstantBookOnly { get; set; } = false;
     public double? MinRating { get; set; }
     public string? NeighborhoodId { get; set; }
-    public string SortBy { get; set; } = "popularity_desc";
+    public string SortBy { get; set; } = "popularity_desc"; // popularity_desc, price_asc, price_desc, rating_desc, reviews_desc
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
 }
@@ -120,6 +121,61 @@ public class ListingSearchResponse
     public int TotalPages { get; set; }
     public List<ListingDetail> Results { get; set; } = [];
 }
+
+public class CreateListingRequest
+{
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string ImageUrl { get; set; } = string.Empty;
+    public string Category { get; set; } = "entire_home";
+    public CoordinatePair Coordinates { get; set; } = default!;
+    public Address Address { get; set; } = default!;
+    public CapacityBreakdown Capacity { get; set; } = default!;
+    public List<string> Amenities { get; set; } = [];
+    public HostDetails Host { get; set; } = default!;
+    public PricingMatrix Pricing { get; set; } = default!;
+    public HouseRules HouseRules { get; set; } = default!;
+    public bool InstantBookEnabled { get; set; } = true;
+}
+
+public class UpdateListingRequest
+{
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public string? ImageUrl { get; set; }
+    public string? Category { get; set; }
+    public CapacityBreakdown? Capacity { get; set; }
+    public List<string>? Amenities { get; set; }
+    public PricingMatrix? Pricing { get; set; }
+    public HouseRules? HouseRules { get; set; }
+    public bool? InstantBookEnabled { get; set; }
+}
+
+public record Review(
+    Guid Id,
+    Guid ListingId,
+    Guid AuthorId,
+    string AuthorName,
+    string? AuthorAvatarUrl,
+    int Rating,
+    string Comment,
+    DateTime CreatedAt
+);
+
+public class CreateReviewRequest
+{
+    public string AuthorName { get; set; } = string.Empty;
+    public string? AuthorAvatarUrl { get; set; }
+    public int Rating { get; set; }
+    public string Comment { get; set; } = string.Empty;
+}
+
+public record ReviewsResponse(
+    Guid ListingId,
+    double AverageRating,
+    int TotalReviews,
+    List<Review> Reviews
+);
 
 public record DailyAvailability(
     DateOnly Date,
@@ -145,6 +201,19 @@ public record HostVerificationDetail(
     bool BackgroundCheckCleared,
     int ReviewCount,
     double AggregateRating
+);
+
+public record HostProfileResponse(
+    Guid HostId,
+    string Name,
+    string ProfilePhotoUrl,
+    double ResponseRate,
+    int ResponseTimeMinutes,
+    bool SuperhostStatus,
+    bool VerifiedIdentity,
+    int TotalProperties,
+    double AggregateRating,
+    int TotalReviewsReceived
 );
 
 public record PrimaryGuest(
@@ -180,6 +249,12 @@ public class CreateReservationRequest
     public string? SpecialRequests { get; set; }
 }
 
+public class UpdateReservationStatusRequest
+{
+    public string Status { get; set; } = string.Empty; // pending_approval, confirmed, checked_in, cancelled, completed
+    public string? Reason { get; set; }
+}
+
 public class Reservation
 {
     public Guid Id { get; set; }
@@ -192,6 +267,7 @@ public class Reservation
     public int GuestsCount { get; set; }
     public PrimaryGuest PrimaryGuest { get; set; } = default!;
     public ReservationPricingSummary PricingSummary { get; set; } = default!;
+    public string? CancellationReason { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
@@ -210,4 +286,14 @@ public record Message(
     string MessageBody,
     DateTime SentAt,
     bool Read
+);
+
+public record SystemStatsResponse(
+    int TotalListings,
+    int TotalReservations,
+    int TotalReviews,
+    int TotalFavorites,
+    string SystemVersion,
+    DateTime ServerTimeUtc,
+    TimeSpan Uptime
 );
