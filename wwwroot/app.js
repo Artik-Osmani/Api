@@ -285,7 +285,7 @@ function renderListingsGrid(items, targetSelector) {
             ${l.host.superhostStatus ? '<span class="badge-tag superhost">⭐ Superhost</span>' : ''}
             ${l.instantBookEnabled ? '<span class="badge-tag instant">⚡ Instant Book</span>' : ''}
           </div>
-          <button class="card-heart-btn" onclick="event.stopPropagation(); toggleWishlist('${l.id}')">
+          <button class="card-heart-btn" data-listing-id="${l.id}" onclick="event.stopPropagation(); toggleWishlist('${l.id}')">
             ${isFav ? '❤️' : '🤍'}
           </button>
         </div>
@@ -333,7 +333,11 @@ async function toggleWishlist(id) {
       toast('Removed from Wishlist', 'info');
     }
     $('#favCountBadge').textContent = state.wishlistIds.size;
-    renderListingsGrid(state.listings, '#listingsGrid');
+    // Update the hearts in place: re-rendering the grid would reset the
+    // cards' reveal animation and leave them invisible
+    $$(`.card-heart-btn[data-listing-id="${id}"]`).forEach(btn => {
+      btn.textContent = data.favorited ? '❤️' : '🤍';
+    });
     if (state.currentView === 'wishlist') renderWishlist();
   } catch {
     toast('Error updating wishlist', 'error');
