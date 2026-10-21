@@ -244,7 +244,7 @@ async function executeSearch() {
     state.listings = data.results || [];
     state.listings.forEach(l => { state.listingCache[l.id] = l; });
     renderListingsGrid(state.listings, '#listingsGrid');
-    $('#resultsCount').textContent = `${data.totalRecords} properties found`;
+    $('#resultsCount').textContent = `${data.totalRecords} ${data.totalRecords === 1 ? 'property' : 'properties'} found`;
     setTimeout(triggerCardReveals, 100);
   } catch (err) {
     toast('Failed to search properties', 'error');
@@ -285,7 +285,7 @@ function renderListingsGrid(items, targetSelector) {
             ${l.host.superhostStatus ? '<span class="badge-tag superhost">⭐ Superhost</span>' : ''}
             ${l.instantBookEnabled ? '<span class="badge-tag instant">⚡ Instant Book</span>' : ''}
           </div>
-          <button class="card-heart-btn" onclick="event.stopPropagation(); toggleWishlist('${l.id}')">
+          <button class="card-heart-btn" data-listing-id="${l.id}" onclick="event.stopPropagation(); toggleWishlist('${l.id}')">
             ${isFav ? '❤️' : '🤍'}
           </button>
         </div>
@@ -294,10 +294,10 @@ function renderListingsGrid(items, targetSelector) {
             <div class="card-prop-title">${l.title}</div>
             <div class="card-prop-rating">★ ${l.starRating.toFixed(2)}</div>
           </div>
-          <div class="card-location-sub">📍 ${l.address.city}, ${l.address.state} · ${l.category.replace('_', ' ')}</div>
+          <div class="card-location-sub">📍 ${l.address.city}, ${l.address.state} · ${l.category.replaceAll('_', ' ')}</div>
           <div class="card-specs">👥 Up to ${l.capacity.maxGuests} guests · ${l.capacity.bedrooms} bed · ${l.capacity.bathrooms} bath</div>
           <div class="amenities-pills">
-            ${l.amenities.slice(0, 3).map(a => `<span class="amenity-chip">✨ ${a.replace('_', ' ')}</span>`).join('')}
+            ${l.amenities.slice(0, 3).map(a => `<span class="amenity-chip">✨ ${a.replaceAll('_', ' ')}</span>`).join('')}
           </div>
           <div class="card-footer-row">
             <div class="card-price-text">${formatRate(l.pricing)} <span>/ night</span></div>
@@ -333,7 +333,11 @@ async function toggleWishlist(id) {
       toast('Removed from Wishlist', 'info');
     }
     $('#favCountBadge').textContent = state.wishlistIds.size;
-    renderListingsGrid(state.listings, '#listingsGrid');
+    // Update the hearts in place: re-rendering the grid would reset the
+    // cards' reveal animation and leave them invisible
+    $$(`.card-heart-btn[data-listing-id="${id}"]`).forEach(btn => {
+      btn.textContent = data.favorited ? '❤️' : '🤍';
+    });
     if (state.currentView === 'wishlist') renderWishlist();
   } catch {
     toast('Error updating wishlist', 'error');
@@ -395,7 +399,7 @@ async function openPropertyDetail(id) {
         <div style="margin: 1.5rem 0;">
           <h4 class="detail-section-title">Amenities</h4>
           <div class="amenities-pills">
-            ${listing.amenities.map(a => `<span class="amenity-chip">✨ ${a.replace('_', ' ')}</span>`).join('')}
+            ${listing.amenities.map(a => `<span class="amenity-chip">✨ ${a.replaceAll('_', ' ')}</span>`).join('')}
           </div>
         </div>
 
@@ -680,13 +684,19 @@ function renderBookingStats() {
   const active = state.reservations.filter(r => r.status !== 'cancelled');
   const upcoming = active.filter(r => ['upcoming', 'current'].includes(bookingPhase(r))).length;
   const nights = active.reduce((sum, r) => sum + nightsBetween(r.checkInDate, r.checkOutDate), 0);
-  const spent = active.reduce((sum, r) => sum + r.pricingSummary.totalAmount, 0);
+  // Bookings can be in different currencies, so totals are kept per currency
+  const spentByCurrency = {};
+  active.forEach(r => {
+    const cur = r.pricingSummary.currency || 'USD';
+    spentByCurrency[cur] = (spentByCurrency[cur] || 0) + r.pricingSummary.totalAmount;
+  });
+  const spent = Object.entries(spentByCurrency).map(([cur, amt]) => formatMoney(amt, cur)).join(' + ') || formatMoney(0);
   const pending = state.reservations.filter(r => r.status === 'pending_approval').length;
 
   const tiles = [
     { icon: '🧳', value: upcoming, label: 'Upcoming & current trips', tone: 'primary' },
     { icon: '🌙', value: nights, label: 'Nights booked', tone: 'blue' },
-    { icon: '💳', value: formatMoney(spent), label: 'Total trip value', tone: 'success' },
+    { icon: '💳', value: spent, label: 'Total trip value', tone: 'success' },
     { icon: '⏳', value: pending, label: 'Awaiting host approval', tone: 'warning' }
   ];
 
@@ -724,6 +734,8 @@ function renderBookingCard(r) {
   const countdown = bookingCountdown(r);
   const canCancel = !['cancelled', 'completed'].includes(r.status) && bookingPhase(r) !== 'past';
   const isOpen = state.openReceipts.has(r.id);
+  // A confirmed stay whose check-out has passed reads as completed
+  const displayStatus = r.status === 'confirmed' && bookingPhase(r) === 'past' ? 'completed' : r.status;
 
   const receiptRows = (p.items && p.items.length ? p.items : [
     { description: `${nights} nights accommodation`, amount: p.basePrice },
@@ -736,7 +748,7 @@ function renderBookingCard(r) {
     <article class="bk-card ${r.status === 'cancelled' ? 'is-cancelled' : ''}">
       <div class="bk-card-media">
         <img src="${img}" alt="${title}" loading="lazy" />
-        <span class="bk-status ${r.status}">${statusLabels[r.status] || r.status.replace('_', ' ')}</span>
+        <span class="bk-status ${displayStatus}">${statusLabels[displayStatus] || displayStatus.replaceAll('_', ' ')}</span>
       </div>
 
       <div class="bk-card-body">
@@ -923,16 +935,26 @@ async function sendChatMessage(e) {
 }
 
 // ---------- Hosts View ----------
-function renderHosts() {
+// Host stats come from the full catalog, not the current search results
+async function renderHosts() {
+  let allListings = state.listings;
+  try {
+    const res = await fetch('/v1/listings?limit=100');
+    if (res.ok) allListings = await res.json();
+  } catch {}
+
   const hostsMap = {};
-  state.listings.forEach(l => {
+  allListings.forEach(l => {
     if (!hostsMap[l.host.hostId]) {
-      hostsMap[l.host.hostId] = { host: l.host, listings: 0, rating: l.starRating, reviews: l.reviewCount };
+      hostsMap[l.host.hostId] = { host: l.host, listings: 0, ratingSum: 0, reviews: 0 };
     }
-    hostsMap[l.host.hostId].listings++;
+    const h = hostsMap[l.host.hostId];
+    h.listings++;
+    h.ratingSum += l.starRating;
+    h.reviews += l.reviewCount;
   });
 
-  const list = Object.values(hostsMap);
+  const list = Object.values(hostsMap).map(h => ({ ...h, rating: h.ratingSum / h.listings }));
   $('#hostGrid').innerHTML = list.map(({ host, listings, rating, reviews }) => `
     <div class="host-profile-card">
       <div class="host-card-header">
@@ -971,12 +993,28 @@ function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
 
+// Default the search to a 5-night trip starting a week from today,
+// so the page never offers dates that have already passed
+function setDefaultTripDates() {
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const today = todayLocal();
+  const checkIn = new Date(today); checkIn.setDate(today.getDate() + 7);
+  const checkOut = new Date(checkIn); checkOut.setDate(checkIn.getDate() + 5);
+  $('#checkIn').min = iso(today);
+  $('#checkOut').min = iso(today);
+  if (!$('#checkIn').value || parseLocalDate($('#checkIn').value) < today) {
+    $('#checkIn').value = iso(checkIn);
+    $('#checkOut').value = iso(checkOut);
+  }
+}
+
 // ---------- Initializer ----------
 async function initApp() {
   initDarkMode();
   initNavigation();
   initScrollEffects();
   renderCategories();
+  setDefaultTripDates();
   await loadSystemStats();
   await loadFavorites();
   await executeSearch();
