@@ -1,0 +1,23 @@
+{
+  "name": "FatiHomes",
+  "short_name": "FatiHomes",
+  "description": "Eighteen homes across Kosovo, Albania and the coast, chosen for their location and their hosts.",
+  "start_url": "/#/explore",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F2F3EE",
+  "theme_color": "#101713",
+  "icons": [
+    {
+      "src": "/images/logo-mark-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

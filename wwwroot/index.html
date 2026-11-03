@@ -1,608 +1,419 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/svg+xml" href="images/logo.svg" />
-  <title>FatiHomes & StayHub — Luxury Vacation Rentals & Hotels</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/app.css" />
-  <style>
-    :root {
-      --primary: #ff385c;
-      --primary-hover: #e00b41;
-      --blue: #0284c7;
-      --dark: #1e293b;
-      --gray-light: #f8fafc;
-      --border: #e2e8f0;
-      --text-muted: #64748b;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-    body { background-color: #f8fafc; color: var(--dark); line-height: 1.5; }
-    .badge-swagger {
-      background: #003580;
-      color: white !important;
-      text-decoration: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .hero {
-      background: linear-gradient(rgba(15, 23, 42, 0.45), rgba(15, 23, 42, 0.45)), url('https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1600&q=80') center/cover;
-      padding: 3.5rem 5%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      color: white;
-    }
-    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 6px; }
-    .hero p { font-size: 1rem; margin-bottom: 1.5rem; opacity: 0.9; }
-    .search-card {
-      background: #fff;
-      padding: 1rem;
-      border-radius: 40px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      color: var(--dark);
-      max-width: 900px;
-      width: 100%;
-    }
-    .search-group {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-width: 130px;
-      padding: 0 12px;
-      border-right: 1px solid var(--border);
-    }
-    .search-group:last-of-type { border-right: none; }
-    .search-group label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
-    .search-group input, .search-group select {
-      border: none;
-      outline: none;
-      font-size: 0.92rem;
-      font-weight: 600;
-      background: transparent;
-      margin-top: 4px;
-    }
-    .btn-search {
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 30px;
-      padding: 10px 22px;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-    }
-    main { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1.8rem;
-    }
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      display: flex;
-      flex-direction: column;
-    }
-    .card-img-wrap {
-      position: relative;
-      height: 220px;
-      background: #eee;
-    }
-    .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
-    .card-body { padding: 1.2rem; flex: 1; display: flex; flex-direction: column; }
-    .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-    .tag { font-size: 0.75rem; background: var(--gray-light); padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); }
-    .host-badge-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--blue);
-      cursor: pointer;
-      margin-top: 6px;
-    }
-    .host-badge-chip:hover { text-decoration: underline; }
-    .card-footer {
-      margin-top: auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-top: 1px solid var(--border);
-      padding-top: 12px;
-    }
-    .btn-action {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      font-weight: 700;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .btn-secondary {
-      background: white;
-      color: var(--dark);
-      border: 1px solid var(--border);
-      padding: 8px 14px;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .table-card {
-      background: #fff;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-    table { width: 100%; border-collapse: collapse; text-align: left; }
-    th { background: #f1f5f9; padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
-    td { padding: 14px 16px; border-top: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
-    .status-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-    .status-confirmed { background: #dcfce7; color: #15803d; }
-    .status-pending { background: #fef9c3; color: #a16207; }
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-    .modal.open { display: flex; }
-    .modal-content {
-      background: #fff;
-      border-radius: 16px;
-      max-width: 580px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 2rem;
-      position: relative;
-    }
-    .modal-close {
-      position: absolute;
-      top: 16px;
-      right: 18px;
-      font-size: 1.5rem;
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
-    .chat-box {
-      max-height: 280px;
-      overflow-y: auto;
-      background: #f8fafc;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      margin: 1rem 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .chat-bubble {
-      padding: 8px 12px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      max-width: 80%;
-    }
-    .chat-bubble.guest {
-      background: #e0f2fe;
-      align-self: flex-start;
-      border-bottom-left-radius: 2px;
-    }
-    .chat-bubble.host {
-      background: #fee2e2;
-      align-self: flex-end;
-      border-bottom-right-radius: 2px;
-    }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FatiHomes | Stays in Kosovo and Albania</title>
+  <meta name="description" content="Eighteen homes across Kosovo, Albania and the coast, chosen for their location and their hosts.">
+  <link rel="canonical" href="http://localhost:5047/">
+  <meta name="theme-color" content="#F2F3EE" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0B110E" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FatiHomes">
+  <meta property="og:title" content="FatiHomes | Stays in Kosovo and Albania">
+  <meta property="og:description" content="Eighteen homes across Kosovo, Albania and the coast, chosen for their location and their hosts.">
+  <meta property="og:image" content="/images/og.webp">
+  <meta property="og:url" content="http://localhost:5047/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/images/logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fonts/geist-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/schibsted-grotesk-500.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+  <link rel="stylesheet" href="/css/motion.css">
 </head>
 <body>
-  <!-- Scroll Progress Indicator -->
-  <div class="scroll-progress" id="scrollProgressBar"></div>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="scroll-sentinel" aria-hidden="true"></div>
 
-  <!-- Primary navigation -->
-  <header class="navbar" id="navbar">
-    <div class="navbar-inner">
-      <div class="nav-left">
-        <a href="#listings" class="brand" onclick="switchView('listings'); return false;">
-          <img src="images/logo.svg" alt="" width="36" height="36" />
-          <span class="brand-text">FatiHomes</span>
-          <span class="brand-stage" id="stageBadge">DEV</span>
-        </a>
-        <div class="stats-ribbon" id="statsRibbon" aria-label="Platform statistics">
-          <span class="stat-pill"><span id="statProperties">6</span><span>stays</span></span>
-          <span class="stat-pill"><span id="statReservations">1</span><span>bookings</span></span>
-          <span class="stat-pill"><span id="statReviews">4</span><span>reviews</span></span>
-        </div>
-      </div>
+  <div class="offline-banner" id="offline-banner" hidden>
+    <p>You are offline. Showing the last loaded stays.</p>
+    <button type="button" class="icon-btn icon-btn-plain" data-action="dismiss-offline" aria-label="Dismiss offline notice">
+      <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-x"></use></svg>
+    </button>
+  </div>
 
-    <nav class="nav-tabs" id="primaryNavigation" aria-label="Main navigation">
-      <button class="nav-pill active" id="pill-listings" type="button" data-view="listings" aria-current="page" onclick="switchView('listings')">
-        <span>🔍 Explore</span>
-      </button>
-      <button class="nav-pill" id="pill-wishlist" type="button" data-view="wishlist" onclick="switchView('wishlist')">
-        <span>❤️ Wishlist</span>
-        <span class="nav-badge" id="favCountBadge">0</span>
-      </button>
-      <button class="nav-pill" id="pill-reservations" type="button" data-view="reservations" onclick="switchView('reservations')">
-        <span>📋 Bookings</span>
-      </button>
-      <button class="nav-pill" id="pill-hosts" type="button" data-view="hosts" onclick="switchView('hosts')">
-        <span>🛡️ Trust & Hosts</span>
-      </button>
-      <button class="nav-pill" id="pill-contact" type="button" data-view="contact" onclick="switchView('contact')">
-        <span>📞 Contact</span>
-      </button>
-    </nav>
-
-    <div class="nav-right">
-      <a href="/swagger" target="_blank" rel="noopener noreferrer" class="swagger-pill" title="Open Interactive API Docs">
-        <span>⚡ Swagger Docs</span>
+  <header class="site-header" id="site-header" data-scrolled="false">
+    <div class="shell header-inner">
+      <a class="brand" href="#/explore" aria-label="FatiHomes, go to Explore">
+        <img class="brand-mark" src="/images/logo.svg" alt="" width="30" height="30">
+        <span class="brand-name">FatiHomes</span>
       </a>
-      <button class="theme-btn" id="themeToggle" type="button" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">🌙</button>
-      <button class="nav-menu-toggle" id="navMenuToggle" type="button" aria-controls="primaryNavigation" aria-expanded="false" aria-label="Open navigation menu">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
+
+      <span class="view-name" id="view-name" aria-hidden="true">Explore</span>
+
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="#/explore" data-nav="explore">Explore</a>
+        <a href="#/trips" data-nav="trips">Trips</a>
+        <a href="#/saved" data-nav="saved">Saved <span class="nav-count" data-saved-count hidden>0</span></a>
+        <a href="#/hosts" data-nav="hosts">Hosts</a>
+        <a href="#/contact" data-nav="contact">Contact</a>
+      </nav>
+
+      <div class="header-right">
+        <a class="api-link" href="/swagger" target="_blank" rel="noopener">
+          <svg class="icon icon-16" aria-hidden="true"><use href="/images/icons.svg#icon-arrow-square-out"></use></svg>
+          <span>API</span>
+        </a>
+      </div>
     </div>
   </header>
 
-  <!-- Notification Toast Container -->
-  <div class="toast-container" id="toastContainer"></div>
-  <div class="confetti-container" id="confettiContainer"></div>
+  <main id="main" tabindex="-1"></main>
 
-  <!-- VIEW 1: EXPLORE & LISTINGS -->
-  <main class="view-section active" id="view-listings">
-    <!-- Hero Banner with Advanced Search Bar -->
-    <section class="hero-section">
-      <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <h1 class="hero-title">Find unforgettable stays everywhere</h1>
-        <p class="hero-subtitle">Discover handpicked villas, mountain cabins, lofts, and boutique homes.</p>
+  <footer class="site-footer">
+    <div class="shell">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="#/explore">
+            <img class="brand-mark" src="/images/logo.svg" alt="" width="30" height="30">
+            <span class="brand-name">FatiHomes</span>
+          </a>
+          <p class="muted">Eighteen homes across Kosovo, Albania and the coast, chosen for their location and their hosts.</p>
+        </div>
 
-        <!-- Floating Search Console -->
-        <div class="search-console">
-          <div class="search-cell">
-            <span class="cell-label">Where</span>
-            <input type="text" id="searchInput" placeholder="Search city, cabin, villa..." />
+        <nav class="footer-links" aria-label="Product">
+          <h2>Product</h2>
+          <a href="#/explore">Explore</a>
+          <a href="#/trips">Trips</a>
+          <a href="#/saved">Saved</a>
+        </nav>
+
+        <nav class="footer-links" aria-label="Project">
+          <h2>Project</h2>
+          <a href="https://github.com/Artik-Osmani/Api#readme" target="_blank" rel="noopener">README</a>
+          <a href="/swagger" target="_blank" rel="noopener">API documentation</a>
+          <a href="https://github.com/Artik-Osmani/Api" target="_blank" rel="noopener">Source</a>
+        </nav>
+      </div>
+
+      <div class="footer-credit">
+        <span>FatiHomes, a course project. Built with .NET 10 and vanilla web.</span>
+        <div class="appearance">
+          <span class="appearance-label" id="appearance-label">Appearance</span>
+          <div class="segmented" role="group" aria-labelledby="appearance-label">
+            <button type="button" data-appearance="system" aria-pressed="true">System</button>
+            <button type="button" data-appearance="light" aria-pressed="false">Light</button>
+            <button type="button" data-appearance="dark" aria-pressed="false">Dark</button>
           </div>
-          <div class="search-divider"></div>
-          <div class="search-cell">
-            <span class="cell-label">Check in</span>
-            <input type="date" id="checkIn" value="2026-10-15" />
-          </div>
-          <div class="search-divider"></div>
-          <div class="search-cell">
-            <span class="cell-label">Check out</span>
-            <input type="date" id="checkOut" value="2026-10-20" />
-          </div>
-          <div class="search-divider"></div>
-          <div class="search-cell">
-            <span class="cell-label">Guests</span>
-            <select id="guestsCount">
-              <option value="1">1 Guest</option>
-              <option value="2" selected>2 Guests</option>
-              <option value="3">3 Guests</option>
-              <option value="4">4 Guests</option>
-              <option value="6">6+ Guests</option>
-            </select>
-          </div>
-          <button class="btn-search-cta" onclick="executeSearch()">
-            <span>🔍 Search</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <nav class="tab-bar" aria-label="Primary mobile">
+    <a href="#/explore" data-nav="explore">
+      <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-magnifying-glass"></use></svg>
+      Explore
+    </a>
+    <a href="#/trips" data-nav="trips">
+      <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-receipt"></use></svg>
+      Trips
+    </a>
+    <a href="#/saved" data-nav="saved">
+      <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-heart"></use></svg>
+      Saved
+      <span class="nav-count" data-saved-count hidden>0</span>
+    </a>
+    <a href="#/hosts" data-nav="hosts">
+      <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-users"></use></svg>
+      Hosts
+    </a>
+    <a href="#/contact" data-nav="contact">
+      <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-chat-circle"></use></svg>
+      Contact
+    </a>
+  </nav>
+
+  <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
+  <div class="visually-hidden" id="live-region" aria-live="polite" aria-atomic="true"></div>
+
+  <template id="tpl-search-sheet">
+    <dialog class="dialog-center search-sheet" aria-labelledby="search-sheet-title">
+      <div class="dialog-body">
+        <div class="dialog-head">
+          <h2 id="search-sheet-title">Where and when</h2>
+          <button type="button" class="icon-btn" data-action="close-search" aria-label="Close search">
+            <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-x"></use></svg>
           </button>
         </div>
+        <form class="search-panel-fields" data-role="search-form" novalidate>
+          <div class="field">
+            <label class="label" for="mobile-where">Where</label>
+            <input class="input" id="mobile-where" name="query" type="search" maxlength="120" placeholder="Prizren, Tirana, the coast">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label class="label" for="mobile-checkin">Check in</label>
+              <input class="input" id="mobile-checkin" name="checkIn" type="date">
+            </div>
+            <div class="field">
+              <label class="label" for="mobile-checkout">Check out</label>
+              <input class="input" id="mobile-checkout" name="checkOut" type="date">
+            </div>
+          </div>
+          <p class="field-error" data-role="search-error"></p>
+          <div class="field">
+            <span class="label" id="mobile-guests-label">Guests</span>
+            <div class="stepper" role="group" aria-labelledby="mobile-guests-label">
+              <button type="button" data-action="search-guests-minus" aria-label="One guest fewer">
+                <svg class="icon icon-16" aria-hidden="true"><use href="/images/icons.svg#icon-minus"></use></svg>
+              </button>
+              <output data-role="search-guests">2</output>
+              <button type="button" data-action="search-guests-plus" aria-label="One guest more">
+                <svg class="icon icon-16" aria-hidden="true"><use href="/images/icons.svg#icon-plus"></use></svg>
+              </button>
+            </div>
+          </div>
+          <div class="u-between u-mt-4">
+            <button type="button" class="btn btn-quiet" data-action="clear-search">Clear</button>
+            <button type="submit" class="btn btn-primary">Search stays</button>
+          </div>
+        </form>
       </div>
-    </section>
+    </dialog>
+  </template>
 
-    <!-- Filter Strip & Controls -->
-    <section class="controls-section">
-      <div class="category-strip" id="categoryStrip">
-        <!-- Injected via JavaScript -->
-      </div>
-
-      <div class="sort-filter-bar">
-        <div class="results-meta">
-          <span id="resultsCount">Loading properties...</span>
-        </div>
-        <div class="filter-actions">
-          <select id="sortBy" class="select-sort" onchange="executeSearch()">
-            <option value="popularity_desc">🔥 Most Popular</option>
-            <option value="price_asc">💵 Price: Low to High</option>
-            <option value="price_desc">💎 Price: High to Low</option>
-            <option value="rating_desc">⭐ Highest Rated</option>
-            <option value="reviews_desc">💬 Most Reviewed</option>
-          </select>
-          <button class="btn-pill-filter" onclick="toggleSuperhostFilter(this)">
-            ⭐ Superhosts Only
+  <template id="tpl-booking">
+    <dialog class="sheet sheet-booking" aria-labelledby="booking-title">
+      <div class="sheet-inner">
+        <header class="sheet-head">
+          <div class="booking-title">
+            <p class="eyebrow">Book your stay</p>
+            <h2 id="booking-title" data-role="booking-title"></h2>
+            <p class="booking-dates" data-role="booking-dates"></p>
+          </div>
+          <button type="button" class="icon-btn" data-action="close-booking" aria-label="Close booking">
+            <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-x"></use></svg>
           </button>
-          <button class="btn-pill-filter" onclick="toggleInstantBookFilter(this)">
-            ⚡ Instant Book
+        </header>
+
+        <ol class="booking-steps" data-role="booking-steps">
+          <li data-step="1" data-index="1" aria-current="step">Dates</li>
+          <li data-step="2" data-index="2">Guest details</li>
+          <li data-step="3" data-index="3">Review and pay</li>
+        </ol>
+
+        <div class="sheet-body">
+          <section class="step-panel" data-panel="1">
+            <h3 tabindex="-1">Dates</h3>
+            <div class="field-row">
+              <div class="field">
+                <label class="label" for="booking-checkin">Check in</label>
+                <input class="input" id="booking-checkin" name="checkIn" type="date" required>
+                <p class="field-error" data-error-for="checkIn"></p>
+              </div>
+              <div class="field">
+                <label class="label" for="booking-checkout">Check out</label>
+                <input class="input" id="booking-checkout" name="checkOut" type="date" required>
+                <p class="field-error" data-error-for="checkOut"></p>
+              </div>
+            </div>
+            <div class="field">
+              <span class="label" id="booking-guests-label">Guests</span>
+              <div class="stepper" role="group" aria-labelledby="booking-guests-label">
+                <button type="button" data-action="guests-minus" aria-label="One guest fewer">
+                  <svg class="icon icon-16" aria-hidden="true"><use href="/images/icons.svg#icon-minus"></use></svg>
+                </button>
+                <output data-role="guests-count">2</output>
+                <button type="button" data-action="guests-plus" aria-label="One guest more">
+                  <svg class="icon icon-16" aria-hidden="true"><use href="/images/icons.svg#icon-plus"></use></svg>
+                </button>
+              </div>
+              <p class="field-hint" data-role="guests-hint"></p>
+            </div>
+            <div class="quote-panel" data-role="quote-panel" aria-live="polite"></div>
+            <p class="field-error" data-role="booking-error"></p>
+          </section>
+
+          <section class="step-panel" data-panel="2" hidden>
+            <h3 tabindex="-1">Guest details</h3>
+            <div class="form-summary" data-role="form-summary" hidden></div>
+            <div class="booking-fields">
+              <div class="field-row">
+                <div class="field">
+                  <label class="label" for="booking-first">First name</label>
+                  <input class="input" id="booking-first" name="firstName" autocomplete="given-name" required minlength="2" maxlength="80">
+                  <p class="field-error" data-error-for="firstName"></p>
+                </div>
+                <div class="field">
+                  <label class="label" for="booking-last">Last name</label>
+                  <input class="input" id="booking-last" name="lastName" autocomplete="family-name" required minlength="2" maxlength="80">
+                  <p class="field-error" data-error-for="lastName"></p>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label" for="booking-email">Email</label>
+                <input class="input" id="booking-email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
+                <p class="field-error" data-error-for="email"></p>
+              </div>
+              <div class="field">
+                <label class="label" for="booking-phone">Phone</label>
+                <input class="input" id="booking-phone" name="phone" type="tel" autocomplete="tel" required minlength="7" maxlength="20" placeholder="+383 44 123 456">
+                <p class="field-error" data-error-for="phone"></p>
+              </div>
+              <div class="field">
+                <label class="label" for="booking-requests">Special requests</label>
+                <textarea class="textarea" id="booking-requests" name="requests" maxlength="500" rows="3"></textarea>
+                <p class="field-hint">Optional. Late arrival, a cot, or anything else the host should know.</p>
+                <p class="char-count" data-role="requests-count">0 / 500</p>
+                <p class="field-error" data-error-for="requests"></p>
+              </div>
+            </div>
+            <label class="checkbox-row" data-role="request-toggle" hidden>
+              <input type="checkbox" id="booking-request">
+              <span>Request to book. The host has 24 hours to confirm and your card is not charged.</span>
+            </label>
+          </section>
+
+          <section class="step-panel" data-panel="3" hidden>
+            <h3 tabindex="-1">Review and pay</h3>
+            <div class="quote-panel" data-role="review-quote"></div>
+            <p class="field-hint">Free cancellation until 7 days before check-in. After that, the first night is non-refundable.</p>
+            <label class="checkbox-row">
+              <input type="checkbox" id="booking-rules">
+              <span>I agree to the house rules.
+                <button type="button" class="btn-quiet" data-action="show-rules">Read the rules</button>
+              </span>
+            </label>
+            <p class="payment-note">
+              <svg class="icon icon-16" aria-hidden="true"><use href="/images/icons.svg#icon-shield-check"></use></svg>
+              You will not be charged. This is a demo payment.
+            </p>
+            <p class="field-error" data-role="submit-error"></p>
+          </section>
+
+          <section class="step-panel" data-panel="4" hidden>
+            <div class="booking-success">
+              <svg class="check-mark" viewBox="0 0 52 52" aria-hidden="true">
+                <circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+                <path d="M15 27l7 7 15-16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+              <h3 tabindex="-1">Booking confirmed</h3>
+              <p data-role="success-text"></p>
+              <p class="reference" data-role="success-reference"></p>
+              <div class="quote-list" data-role="success-details"></div>
+              <a class="btn btn-primary" href="#/trips" data-action="view-trip">View trip</a>
+            </div>
+          </section>
+        </div>
+
+        <footer class="sheet-foot" data-role="booking-foot">
+          <button type="button" class="btn btn-quiet" data-action="booking-back" hidden>Back</button>
+          <button type="button" class="btn btn-primary" data-action="booking-next">Continue</button>
+        </footer>
+      </div>
+    </dialog>
+  </template>
+
+  <template id="tpl-review">
+    <dialog class="dialog-center" aria-labelledby="review-title">
+      <div class="dialog-body">
+        <div class="dialog-head">
+          <div>
+            <h2 id="review-title">Write a review</h2>
+            <p class="field-hint">Tell future guests what stood out.</p>
+          </div>
+          <button type="button" class="icon-btn" data-action="close-review" aria-label="Close review">
+            <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-x"></use></svg>
           </button>
         </div>
-      </div>
-    </section>
-
-    <!-- Property Card Grid -->
-    <section class="grid-section">
-      <div class="properties-grid" id="listingsGrid">
-        <!-- Injected via JavaScript -->
-      </div>
-    </section>
-  </main>
-
-  <!-- VIEW 2: WISHLIST / FAVORITES -->
-  <main class="view-section" id="view-wishlist">
-    <div class="content-container">
-      <div class="page-header">
-        <div>
-          <h2>❤️ Your Wishlist</h2>
-          <p class="text-muted">Properties you've saved for your future trips.</p>
-        </div>
-        <button class="btn-secondary" onclick="switchView('listings')">Browse More Stays</button>
-      </div>
-      <div class="properties-grid" id="wishlistGrid">
-        <!-- Injected via JavaScript -->
-      </div>
-    </div>
-  </main>
-
-  <!-- VIEW 3: RESERVATIONS MANAGER -->
-  <main class="view-section" id="view-reservations">
-    <!-- Bookings Hero Banner -->
-    <section class="bk-hero">
-      <div class="bk-hero-inner">
-        <div>
-          <span class="bk-eyebrow">✈️ Your trips</span>
-          <h2 class="bk-hero-title">My Bookings & Itinerary</h2>
-          <p class="bk-hero-sub">Manage your stays, review payment breakdowns, and chat with your hosts.</p>
-        </div>
-        <div class="bk-hero-actions">
-          <button class="bk-btn-ghost" onclick="loadReservations()">🔄 Refresh</button>
-          <button class="bk-btn-primary" onclick="switchView('listings')">＋ Book a new stay</button>
-        </div>
-      </div>
-    </section>
-
-    <div class="content-container bk-container">
-      <!-- Summary Stats -->
-      <div class="bk-stats" id="bookingStats">
-        <!-- Injected via JavaScript -->
-      </div>
-
-      <!-- Filter Tabs -->
-      <div class="bk-toolbar">
-        <div class="bk-filters" id="bookingFilters">
-          <!-- Injected via JavaScript -->
-        </div>
-        <span class="bk-count text-muted" id="bookingCount"></span>
-      </div>
-
-      <!-- Reservations List -->
-      <div class="bk-list" id="reservationsList">
-        <!-- Injected via JavaScript -->
-      </div>
-    </div>
-  </main>
-
-  <!-- VIEW 4: HOST TRUST & DIRECTORY -->
-  <main class="view-section" id="view-hosts">
-    <div class="content-container">
-      <div class="page-header">
-        <div>
-          <h2>🛡️ Verified Hosts & Safety Hub</h2>
-          <p class="text-muted">Every host undergoes background clearance and verification before hosting.</p>
-        </div>
-      </div>
-      <div class="hosts-grid" id="hostGrid">
-        <!-- Injected via JavaScript -->
-      </div>
-    </div>
-  </main>
-
-  <!-- ================= MODALS ================= -->
-
-  <!-- Property Detail & Booking Modal -->
-  <div class="modal" id="propertyModal">
-    <div class="modal-backdrop" onclick="closeModal('propertyModal')"></div>
-    <div class="modal-card modal-lg">
-      <button class="modal-close-btn" onclick="closeModal('propertyModal')">✕</button>
-      <div class="property-detail-body" id="propertyDetailContent">
-        <!-- Injected via JavaScript -->
-      </div>
-    </div>
-  </div>
-
-  <!-- VIEW 4: CONTACT -->
-  <div id="view-contact" class="view-section">
-    <main>
-      <h2 style="margin-bottom: 0.5rem;">📞 Contact FatiHomes</h2>
-      <p style="color:var(--text-muted); margin-bottom: 1.5rem;">Questions about a listing, a reservation, or hosting with us? We are here to help.</p>
-
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.2rem; max-width:900px;">
-        <div style="background:#fff; border:1px solid var(--border); border-radius:16px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-          <div style="font-size:1.6rem;">✉️</div>
-          <h3 style="font-size:1.05rem; margin:8px 0 4px;">Email</h3>
-          <p style="color:var(--text-muted); font-size:0.92rem;">support@fatihomes.com</p>
-          <p style="color:var(--text-muted); font-size:0.85rem;">Replies within 24 hours</p>
-        </div>
-        <div style="background:#fff; border:1px solid var(--border); border-radius:16px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-          <div style="font-size:1.6rem;">📞</div>
-          <h3 style="font-size:1.05rem; margin:8px 0 4px;">Phone</h3>
-          <p style="color:var(--text-muted); font-size:0.92rem;">+383 38 000 000</p>
-          <p style="color:var(--text-muted); font-size:0.85rem;">Mon–Sun, 08:00–20:00</p>
-        </div>
-        <div style="background:#fff; border:1px solid var(--border); border-radius:16px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-          <div style="font-size:1.6rem;">📍</div>
-          <h3 style="font-size:1.05rem; margin:8px 0 4px;">Office</h3>
-          <p style="color:var(--text-muted); font-size:0.92rem;">Rr. Dëshmorët e Kombit, Prishtinë</p>
-          <p style="color:var(--text-muted); font-size:0.85rem;">Visits by appointment</p>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <!-- Multi-Step Booking Modal -->
-  <div class="modal" id="bookingModal">
-    <div class="modal-backdrop" onclick="closeModal('bookingModal')"></div>
-    <div class="modal-card">
-      <button class="modal-close-btn" onclick="closeModal('bookingModal')">✕</button>
-      <div class="modal-header">
-        <h3 id="bookModalTitle">Confirm and Book</h3>
-        <p class="text-muted" id="bookModalSub"></p>
-      </div>
-
-      <div class="checkout-steps">
-        <div class="step-indicator active" id="step1Dot">1. Review</div>
-        <div class="step-indicator" id="step2Dot">2. Guest Details</div>
-        <div class="step-indicator" id="step3Dot">3. Payment</div>
-      </div>
-
-      <div class="checkout-step-body" id="step1Panel">
-        <div class="checkout-dates-box">
-          <div><strong>Check-In:</strong> <span id="summaryCheckIn"></span></div>
-          <div><strong>Check-Out:</strong> <span id="summaryCheckOut"></span></div>
-          <div><strong>Guests:</strong> <span id="summaryGuests"></span></div>
-        </div>
-
-        <div class="price-receipt" id="priceReceiptBox">
-          <!-- Price breakdown items injected -->
-        </div>
-
-        <button class="btn-cta-full" onclick="nextBookingStep(2)">Continue to Guest Info →</button>
-      </div>
-
-      <div class="checkout-step-body" id="step2Panel" style="display:none;">
-        <div class="form-row">
-          <div class="form-group">
-            <label>First Name</label>
-            <input type="text" id="gFirst" value="Arthur" required />
+        <form class="stack" data-role="review-form" novalidate>
+          <fieldset class="star-picker" data-role="star-picker">
+            <legend>Rating</legend>
+            <label class="star-option" data-star="1">
+              <input type="radio" name="rating" value="1">
+              <span class="visually-hidden">1 star</span>
+              <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-star"></use></svg>
+            </label>
+            <label class="star-option" data-star="2">
+              <input type="radio" name="rating" value="2">
+              <span class="visually-hidden">2 stars</span>
+              <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-star"></use></svg>
+            </label>
+            <label class="star-option" data-star="3">
+              <input type="radio" name="rating" value="3">
+              <span class="visually-hidden">3 stars</span>
+              <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-star"></use></svg>
+            </label>
+            <label class="star-option" data-star="4">
+              <input type="radio" name="rating" value="4">
+              <span class="visually-hidden">4 stars</span>
+              <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-star"></use></svg>
+            </label>
+            <label class="star-option" data-star="5">
+              <input type="radio" name="rating" value="5" checked>
+              <span class="visually-hidden">5 stars</span>
+              <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-star"></use></svg>
+            </label>
+          </fieldset>
+          <div class="field">
+            <label class="label" for="review-name">Your name</label>
+            <input class="input" id="review-name" name="authorName" autocomplete="name" required minlength="2" maxlength="80">
+            <p class="field-error" data-error-for="authorName"></p>
           </div>
-          <div class="form-group">
-            <label>Last Name</label>
-            <input type="text" id="gLast" value="Dent" required />
+          <div class="field">
+            <label class="label" for="review-comment">Review</label>
+            <textarea class="textarea" id="review-comment" name="comment" required minlength="20" maxlength="1200" rows="5"></textarea>
+            <p class="char-count" data-role="review-count">0 / 1200</p>
+            <p class="field-error" data-error-for="comment"></p>
           </div>
-        </div>
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="gEmail" value="arthur.dent@example.com" required />
-        </div>
-        <div class="form-group">
-          <label>Phone Number</label>
-          <input type="tel" id="gPhone" value="+1 (415) 555-0199" required />
-        </div>
-        <div class="form-group">
-          <label>Booking Flow</label>
-          <select id="bookingFlow">
-            <option value="instant_book">Instant Book (Instant confirmation)</option>
-            <option value="request_to_book">Request to Book (Requires host review)</option>
-          </select>
-        </div>
-
-        <div class="modal-actions-split">
-          <button class="btn-secondary" onclick="nextBookingStep(1)">← Back</button>
-          <button class="btn-cta-full" onclick="nextBookingStep(3)">Review & Pay →</button>
-        </div>
-      </div>
-
-      <div class="checkout-step-body" id="step3Panel" style="display:none;">
-        <div class="payment-preview">
-          <div class="card-icon">💳 Mock Secured Card Payment</div>
-          <p class="text-muted" style="font-size:0.85rem; margin-top:4px;">No charge will be made. Protected by 256-bit SSL encryption.</p>
-          <div class="final-total-row">
-            <span>Amount Due:</span>
-            <strong id="finalTotalAmount" style="color:var(--primary); font-size:1.3rem;">.00</strong>
+          <div class="form-summary" data-role="review-error" hidden></div>
+          <div class="row-actions">
+            <button type="button" class="btn btn-secondary" data-action="close-review">Cancel</button>
+            <button type="submit" class="btn btn-primary">Publish review</button>
           </div>
-        </div>
-        <div class="modal-actions-split">
-          <button class="btn-secondary" onclick="nextBookingStep(2)">← Back</button>
-          <button class="btn-cta-full" id="btnConfirmPay" onclick="submitReservation()">🔒 Complete Reservation</button>
-        </div>
+        </form>
       </div>
-    </div>
-  </div>
+    </dialog>
+  </template>
 
-  <!-- Review Submission Modal -->
-  <div class="modal" id="reviewModal">
-    <div class="modal-backdrop" onclick="closeModal('reviewModal')"></div>
-    <div class="modal-card">
-      <button class="modal-close-btn" onclick="closeModal('reviewModal')">✕</button>
-      <div class="modal-header">
-        <h3>Write a Review</h3>
-        <p class="text-muted">Share your experience with future guests.</p>
+  <template id="tpl-lightbox">
+    <dialog class="lightbox" aria-label="Photo viewer">
+      <div class="lightbox-inner">
+        <button type="button" class="icon-btn lightbox-close" data-action="close-lightbox" aria-label="Close photos">
+          <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-x"></use></svg>
+        </button>
+        <button type="button" class="icon-btn lightbox-prev" data-action="prev-photo" aria-label="Previous photo">
+          <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-caret-left"></use></svg>
+        </button>
+        <img data-role="lightbox-image" alt="">
+        <button type="button" class="icon-btn lightbox-next" data-action="next-photo" aria-label="Next photo">
+          <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-caret-right"></use></svg>
+        </button>
+        <p class="lightbox-counter" data-role="lightbox-counter"></p>
       </div>
-      <form onsubmit="submitReview(event)">
-        <input type="hidden" id="reviewListingId" />
-        <div class="form-group">
-          <label>Your Name</label>
-          <input type="text" id="revAuthor" value="Alex Smith" required />
-        </div>
-        <div class="form-group">
-          <label>Rating</label>
-          <div class="star-rating-select" id="starRatingSelect">
-            <span class="star-opt" data-val="5" onclick="setReviewRating(5)">⭐ 5 - Exceptional</span>
-            <span class="star-opt" data-val="4" onclick="setReviewRating(4)">⭐ 4 - Very Good</span>
-            <span class="star-opt" data-val="3" onclick="setReviewRating(3)">⭐ 3 - Average</span>
+    </dialog>
+  </template>
+
+  <template id="tpl-chat">
+    <dialog class="sheet sheet-chat" aria-labelledby="chat-title">
+      <div class="sheet-inner">
+        <header class="sheet-head">
+          <div>
+            <p class="eyebrow">Messages</p>
+            <h2 id="chat-title" data-role="chat-title"></h2>
           </div>
-          <input type="hidden" id="revRatingVal" value="5" />
-        </div>
-        <div class="form-group">
-          <label>Review Comment</label>
-          <textarea id="revComment" rows="4" placeholder="How was your stay? How were the amenities, cleanliness, and communication?" required></textarea>
-        </div>
-        <button type="submit" class="btn-cta-full">Submit Review</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Chat Drawer / Modal -->
-  <div class="modal" id="chatModal">
-    <div class="modal-backdrop" onclick="closeModal('chatModal')"></div>
-    <div class="modal-card">
-      <button class="modal-close-btn" onclick="closeModal('chatModal')">✕</button>
-      <div class="modal-header">
-        <h3>💬 Host & Guest Chat</h3>
-        <p class="text-muted" id="chatSubTitle">Connected to host</p>
+          <button type="button" class="icon-btn" data-action="close-chat" aria-label="Close messages">
+            <svg class="icon" aria-hidden="true"><use href="/images/icons.svg#icon-x"></use></svg>
+          </button>
+        </header>
+        <div class="sheet-body" data-role="thread" aria-live="polite"></div>
+        <form class="composer" data-role="chat-form">
+          <label class="visually-hidden" for="chat-input">Message</label>
+          <input class="input" id="chat-input" name="message" autocomplete="off" maxlength="2000" required>
+          <button type="submit" class="btn btn-primary">Send</button>
+        </form>
       </div>
-      <div class="chat-feed" id="chatMessages">
-        <!-- Injected via JavaScript -->
-      </div>
-      <form onsubmit="sendChatMessage(event)" class="chat-input-bar">
-        <input type="text" id="chatInput" placeholder="Write a message to your host..." required />
-        <button type="submit" class="btn-send">Send</button>
-      </form>
-    </div>
-  </div>
+    </dialog>
+  </template>
 
-  <script src="/app.js"></script>
+  <script type="module" src="/js/main.js"></script>
 </body>
 </html>

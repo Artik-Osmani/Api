@@ -1,6 +1,137 @@
-@StayHubApi_HostAddress = http://localhost:5047
+@host = http://localhost:5047
+@listingId = e14c1d68-0fa4-44bc-b17b-4b248a31e8fd
+@secondListingId = 9e6a0619-a3d8-536b-a869-cd205a948d7b
+@hostId = 9a78cd9c-c9c7-43cf-bc82-01967fa7e93b
+@reservationId = 3f7bf08e-1678-43d9-959c-6e6ad9d20c5b
 
-GET {{StayHubApi_HostAddress}}/weatherforecast/
+### Health
+GET {{host}}/v1/system/health
 Accept: application/json
 
-###
+### Stats
+GET {{host}}/v1/system/stats
+Accept: application/json
+
+### Search, all stays
+POST {{host}}/v1/listings/search
+Content-Type: application/json
+
+{
+  "guestsCount": 2,
+  "pageSize": 5,
+  "sortBy": "recommended"
+}
+
+### Search around Pristina, within 40 km
+POST {{host}}/v1/listings/search
+Content-Type: application/json
+
+{
+  "circleSearch": {
+    "center": { "latitude": 42.6629, "longitude": 21.1655 },
+    "radiusMeters": 40000
+  },
+  "sortBy": "distance_asc"
+}
+
+### One stay
+GET {{host}}/v1/listings/{{listingId}}
+Accept: application/json
+
+### Availability for a week
+GET {{host}}/v1/listings/{{listingId}}/availability?start_date=2027-05-01&end_date=2027-05-07
+Accept: application/json
+
+### Quote, six nights
+POST {{host}}/v1/reservations/quote
+Content-Type: application/json
+
+{
+  "listingId": "{{listingId}}",
+  "checkInDate": "2027-05-01",
+  "checkOutDate": "2027-05-07",
+  "guestsCount": 2
+}
+
+### Create a reservation
+POST {{host}}/v1/reservations
+Content-Type: application/json
+
+{
+  "listingId": "{{listingId}}",
+  "checkInDate": "2027-05-01",
+  "checkOutDate": "2027-05-07",
+  "guestsCount": 2,
+  "primaryGuest": {
+    "firstName": "Lena",
+    "lastName": "Hoffmann",
+    "email": "lena.hoffmann@example.com",
+    "phoneNumber": "+383 44 123 456"
+  },
+  "bookingFlow": "instant_book",
+  "paymentAuthorizationToken": "demo-simulated-payment",
+  "specialRequests": "Late arrival, around 21:00."
+}
+
+### Conflict with the seeded upcoming booking
+POST {{host}}/v1/reservations
+Content-Type: application/json
+
+{
+  "listingId": "{{listingId}}",
+  "checkInDate": "2026-11-17",
+  "checkOutDate": "2026-11-19",
+  "guestsCount": 2,
+  "primaryGuest": {
+    "firstName": "Ana",
+    "lastName": "Test",
+    "email": "ana@example.com",
+    "phoneNumber": "12345678"
+  }
+}
+
+### Cancel a booking
+POST {{host}}/v1/reservations/{{reservationId}}/cancel?reason=Plans%20changed
+Accept: application/json
+
+### Illegal status transition, expect 409
+PATCH {{host}}/v1/reservations/{{reservationId}}/status
+Content-Type: application/json
+
+{
+  "status": "completed"
+}
+
+### Reviews
+GET {{host}}/v1/listings/{{secondListingId}}/reviews?page=1&pageSize=5
+Accept: application/json
+
+### Add a review
+POST {{host}}/v1/listings/{{secondListingId}}/reviews
+Content-Type: application/json
+
+{
+  "authorName": "Nora Test",
+  "rating": 4,
+  "comment": "Clean, quiet, and exactly the size advertised. The bakery below is a bonus."
+}
+
+### Favorites
+GET {{host}}/v1/favorites
+Accept: application/json
+
+### Toggle a favorite
+POST {{host}}/v1/favorites/{{listingId}}
+Accept: application/json
+
+### Hosts
+GET {{host}}/v1/hosts
+Accept: application/json
+
+### One host and their verification flags
+GET {{host}}/v1/hosts/{{hostId}}/verification
+Accept: application/json
+
+### Reset the in-memory store, Development only
+POST {{host}}/v1/system/reset
+Accept: application/json

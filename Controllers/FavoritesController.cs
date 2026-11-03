@@ -4,46 +4,36 @@ using StayHubApi.Services;
 
 namespace StayHubApi.Controllers;
 
+/// <summary>
+/// Saved stays. The list is independent of the current search: it returns full listings ordered by
+/// title, and the toggle is atomic.
+/// </summary>
 [ApiController]
 [Route("v1/favorites")]
 [Produces("application/json")]
 public class FavoritesController : ControllerBase
 {
-    private readonly MockDataStore _store;
-    public FavoritesController(MockDataStore store) => _store = store;
+    private readonly FavoriteService _favorites;
 
+    public FavoritesController(FavoriteService favorites)
+    {
+        _favorites = favorites;
+    }
+
+    /// <summary>Saved stays as full listings, ordered by title.</summary>
+    /// <response code="200">The saved stays.</response>
     [HttpGet]
     [ProducesResponseType(typeof(List<ListingDetail>), StatusCodes.Status200OK)]
-    public ActionResult<List<ListingDetail>> GetFavorites()
-    {
-        var favs = _store.Read(db => db.Listings.Where(l => db.FavoriteIds.Contains(l.Id)).ToList());
-        return Ok(favs);
-    }
+    public ActionResult<List<ListingDetail>> GetAll()
+        => Ok(_favorites.GetAll());
 
+    /// <summary>Toggles one stay. Adding and removing both return 200 with the new state.</summary>
+    /// <param name="listingId">Listing GUID.</param>
+    /// <response code="200">The new state.</response>
+    /// <response code="404">No stay has that id.</response>
     [HttpPost("{listingId:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult ToggleFavorite(Guid listingId)
-    {
-        var exists = _store.Read(db => db.Listings.Any(l => l.Id == listingId));
-        if (!exists)
-            return NotFound(new { code = "RESOURCE_NOT_FOUND", message = "Listing not found" });
-
-        bool isFav = _store.Modify(db =>
-        {
-            if (db.FavoriteIds.Contains(listingId))
-            {
-                db.FavoriteIds.Remove(listingId);
-                return false;
-            }
-            else
-            {
-                db.FavoriteIds.Add(listingId);
-                return true;
-            }
-        });
-
-        return Ok(new { listingId, favorited = isFav });
-    }
+    [ProducesResponseType(typeof(FavoriteToggleResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status404NotFound)]
+    public ActionResult<FavoriteToggleResponse> Toggle(Guid listingId)
+        => Ok(_favorites.Toggle(listingId));
 }
-
