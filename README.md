@@ -11,7 +11,7 @@ A small, finished stays catalogue for Kosovo, Albania and the coast, with a book
 - **Course artefacts:** [read.md](read.md) (Albanian), [docs/openapi.yaml](docs/openapi.yaml), [php/index.php](php/index.php), [docs/course/UshtrimiAdili.md](docs/course/UshtrimiAdili.md)
 - **Brief:** [UPGRADE_PROMPT.md](UPGRADE_PROMPT.md) is the specification this iteration implements
 
-Line numbers in the code-map tables were verified on 2026-11-03 against the upgrade/ui working tree based on commit d057351. They will drift. Every row includes a searchable symbol, so use `Ctrl+F` on the symbol when a line is stale.
+Line numbers verified at commit b95d3d0 on 2026-11-03; search for the symbol if they drift. They will drift. Every row includes a searchable symbol, so use `Ctrl+F` on the symbol when a line is stale.
 
 ---
 
@@ -274,8 +274,8 @@ Additional verification files: `scripts/browser-audit.mjs`, `scripts/interaction
 | Toast and live region | [ui.js](wwwroot/js/ui.js#L6) | `export function toast` |
 | Dialog helpers | [dialog.js](wwwroot/js/dialog.js#L9) | `export function openDialog` |
 | Reveal and reduced motion | [motion.js](wwwroot/js/motion.js#L7) | `export function reveal` |
-| Repeatable browser and axe audit | [browser-audit.mjs](scripts/browser-audit.mjs#L1) | `async function audit` |
-| Empty, keyboard, zoom and Swagger checks | [interaction-check.mjs](scripts/interaction-check.mjs#L1) | `async function visit` |
+| Repeatable browser and axe audit | [browser-audit.mjs](scripts/browser-audit.mjs#L36) | `async function audit` |
+| Empty, keyboard, zoom and Swagger checks | [interaction-check.mjs](scripts/interaction-check.mjs#L12) | `async function visit` |
 | Quote controller | [quote.js](wwwroot/js/quote.js#L70) | `createQuoteController` |
 | Calendar component | [calendar.js](wwwroot/js/calendar.js#L23) | `createCalendar` |
 | Booking sheet logic | [booking.js](wwwroot/js/booking.js#L29) | `openBookingSheet` |

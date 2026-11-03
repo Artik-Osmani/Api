@@ -1,6 +1,6 @@
 # File-by-file upgrade changes
 
-Compared with pre-upgrade commit `5080a85`. The initial implementation is commit `d057351`; final verification repairs are on `upgrade/ui`. Each row describes one added, modified or removed file. Build artefacts appear only as removed entries.
+Compared with pre-upgrade commit `5080a85`. The initial implementation is commit `d057351`; final verification repairs are commit `b95d3d0` on `upgrade/ui`. Each row describes one added, modified or removed file. Build artefacts appear only as removed entries.
 
 | Change | File | Purpose |
 | --- | --- | --- |
@@ -389,3 +389,7 @@ Compared with pre-upgrade commit `5080a85`. The initial implementation is commit
 | A | [wwwroot/manifest.webmanifest](../wwwroot/manifest.webmanifest) | Project configuration, documentation or repository hygiene for the upgrade. |
 | A | [wwwroot/robots.txt](../wwwroot/robots.txt) | Project configuration, documentation or repository hygiene for the upgrade. |
 | M | [wwwroot/swagger-custom.css](../wwwroot/swagger-custom.css) | Project configuration, documentation or repository hygiene for the upgrade. |
+| A | [output/playwright/restore.txt](../output/playwright/restore.txt) | Final command output or xUnit result evidence. |
+| A | [output/playwright/build.txt](../output/playwright/build.txt) | Final command output or xUnit result evidence. |
+| A | [output/playwright/tests.txt](../output/playwright/tests.txt) | Final command output or xUnit result evidence. |
+| A | [output/playwright/verification-final.trx](../output/playwright/verification-final.trx) | Final command output or xUnit result evidence. |

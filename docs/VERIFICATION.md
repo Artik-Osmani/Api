@@ -1,6 +1,6 @@
 # Upgrade verification
 
-Verified on 2026-11-03, Windows, .NET SDK 10.0.302, Node 24.15.0, Chrome headless, Lighthouse 13.6.0. The supplied brief remains [UPGRADE_PROMPT.md](../UPGRADE_PROMPT.md). No deployment was performed.
+Verified on 2026-11-03, Windows, .NET SDK 10.0.302, Node 24.15.0, Chrome headless, Lighthouse 13.6.0. The supplied brief remains [UPGRADE_PROMPT.md](../UPGRADE_PROMPT.md). Implementation and browser evidence are committed in `b95d3d0` on `upgrade/ui`. No deployment was performed.
 
 ## Results
 
