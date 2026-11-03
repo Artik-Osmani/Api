@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 const { chromium } = await import(process.env.FH_PLAYWRIGHT_MODULE ?? "playwright");
 const axeSource = readFileSync(process.env.FH_AXE_SOURCE, "utf8");
 const base = process.env.FH_BASE_URL ?? "http://localhost:5047";
-const output = "output/playwright";
+const output = process.env.FH_OUTPUT_DIR ?? "output/playwright";
 mkdirSync(output, { recursive: true });
 const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
 const context = await browser.newContext();

@@ -8,6 +8,8 @@ Projekti është punë kursi. Të dhënat mbahen në memorie dhe rivendosen në 
 
 ## Çfarë përmban
 
+Për kodin e menusë, hero-s, footer-it dhe API-së, përdor [hartën e shkurtër në README](README.md). Përmirësimi i fundit shton filtra të avancuar, zgjedhje sipas destinacionit, shfaqje graduale të rezultateve dhe animacione që respektojnë preferencën për lëvizje të reduktuar. [Rezultatet dhe provat e testimit](docs/UI_UX_V2_RESULTS.md).
+
 - 18 shtëpi në 9 vende: Prishtinë, Prizren, Pejë, Gjakovë, Brezovicë, Tiranë, Berat, Sarandë dhe Dhërmi.
 - 4 hostë me biografi, vite pritjeje dhe flamuj verifikimi.
 - Kërkim me tekst, data, numër mysafirësh, kafshë, çmim, dhoma, komoditete, vlerësim, lagje, host, rreth gjeografik dhe poligon.

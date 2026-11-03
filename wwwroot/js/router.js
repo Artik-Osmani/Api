@@ -25,6 +25,8 @@ const NAV_FOR_VIEW = {
 let notFoundHandler = null;
 let current = null;
 let navigating = false;
+let revision = 0;
+let activeTransition = null;
 
 export function register(pattern, handler) {
   const keys = [];
@@ -96,6 +98,9 @@ function match(path) {
 }
 
 export async function render(options = {}) {
+  const renderId = ++revision;
+  activeTransition?.skipTransition();
+  current?.cleanup?.();
   const { restoreScroll = false } = options;
   const rawPath = readHash();
   const path = normalise(rawPath);
@@ -109,6 +114,7 @@ export async function render(options = {}) {
   }
 
   const update = async () => {
+    if (renderId !== revision) return;
     closeAllDialogs();
 
     const main = document.getElementById("main");
@@ -126,8 +132,14 @@ export async function render(options = {}) {
         ? await found.route.handler({ params: found.params, path })
         : await notFoundHandler?.({ params: { path }, path });
     } catch (error) {
+      if (renderId !== revision) return;
       console.error("Route render failed", error);
       result = renderFatal(main);
+    }
+
+    if (renderId !== revision) {
+      result?.cleanup?.();
+      return;
     }
 
     main.removeAttribute("aria-busy");
@@ -147,7 +159,7 @@ export async function render(options = {}) {
       announce(meta.announce);
     }
 
-    reveal(main);
+    const stopReveals = reveal(main);
 
     if (restoreScroll) {
       const saved = scrollMemory.get(path) ?? 0;
@@ -156,22 +168,30 @@ export async function render(options = {}) {
       window.scrollTo({ top: 0, behavior: "instant" });
     }
 
-    current = { path, name: meta.name };
+    current = { path, name: meta.name, cleanup: () => { result?.cleanup?.(); stopReveals(); } };
   };
 
   if (!reducedMotion() && typeof document.startViewTransition === "function") {
     const transition = document.startViewTransition(() => update());
+    activeTransition = transition;
+    // Never hold a screenshot over a slow API request. The loading view remains interactive.
+    const timeout = window.setTimeout(() => transition.skipTransition(), 500);
+    transition.ready.catch(() => {});
     try {
       await transition.finished;
     } catch {
       // A skipped transition is not an error.
     }
-    clearSharedImages();
+    window.clearTimeout(timeout);
+    if (renderId === revision) {
+      activeTransition = null;
+      clearSharedImages();
+    }
     return;
   }
 
   await update();
-  clearSharedImages();
+  if (renderId === revision) clearSharedImages();
 }
 
 function renderFatal(main) {

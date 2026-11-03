@@ -18,6 +18,7 @@ import {
 import { setFilters, upsertReservation } from "./store.js";
 import { navigate } from "./router.js";
 import { toast } from "./ui.js";
+import { changeFeedback } from "./motion.js";
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -232,6 +233,7 @@ export function openBookingSheet(options) {
   function goTo(step) {
     state.step = step;
     renderSteps();
+    changeFeedback(q(`[data-panel="${step}"]`));
     updateFooter();
 
     const panel = elements.panels.find((item) => Number(item.dataset.panel) === step);

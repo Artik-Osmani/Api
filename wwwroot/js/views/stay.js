@@ -1,6 +1,6 @@
 import { el, icon, initials, setChildren } from "../dom.js";
 import { api } from "../api.js";
-import { stayCard, avatar } from "../cards.js";
+import { stayCard, avatar, heartButton } from "../cards.js";
 import { createCalendar } from "../calendar.js";
 import { createQuoteController, quoteTable, quoteErrorMessage } from "../quote.js";
 import { openBookingSheet } from "../booking.js";
@@ -20,7 +20,7 @@ import {
 } from "../format.js";
 import { amenityGroups, amenityIcon, amenityLabel, categoryLabel, placeLabel } from "../icons.js";
 import { cacheListing, getState, setReservations } from "../store.js";
-import { shareImage } from "../motion.js";
+import { shareImage, changeFeedback, reducedMotion } from "../motion.js";
 import { errorPanel, toast } from "../ui.js";
 
 export async function renderStay({ params }) {
@@ -33,7 +33,7 @@ export async function renderStay({ params }) {
 
   let listing;
   try {
-    listing = await api.listing(params.id);
+    listing = getState().listingCache.get(params.id) ?? await api.listing(params.id);
   } catch (error) {
     if (error.status === 404) {
       paintMissing(view, params.id);
@@ -56,12 +56,13 @@ export async function renderStay({ params }) {
 
   cacheListing(listing);
   view.replaceChildren();
-  buildStay(view, listing);
+  const cleanup = buildStay(view, listing);
 
   return {
     title: `${listing.title} | FatiHomes`,
     name: "Stay",
-    announce: `Stay detail, ${listing.title}`
+    announce: `Stay detail, ${listing.title}`,
+    cleanup
   };
 }
 
@@ -102,10 +103,14 @@ function paintMissing(view, id) {
 }
 
 function buildStay(view, listing) {
+  const filters = getState().filters;
+  const requestedIn = parseDate(filters.checkIn);
+  const requestedOut = parseDate(filters.checkOut);
+  const hasRequestedDates = requestedIn && requestedOut && requestedIn >= today() && requestedOut > requestedIn;
   const state = {
-    checkIn: toIso(addDays(today(), 7)),
-    checkOut: toIso(addDays(today(), 7 + Math.max(3, listing.pricing.minNights ?? 2))),
-    guests: Math.min(2, listing.capacity.maxGuests),
+    checkIn: hasRequestedDates ? filters.checkIn : toIso(addDays(today(), 7)),
+    checkOut: hasRequestedDates ? filters.checkOut : toIso(addDays(today(), 7 + Math.max(3, listing.pricing.minNights ?? 2))),
+    guests: Math.max(1, Math.min(filters.guests || 2, listing.capacity.maxGuests)),
     quote: null,
     quoteStatus: "idle",
     quoteError: null
@@ -152,6 +157,7 @@ function buildStay(view, listing) {
       listing.host.superhostStatus ? el("span", { class: "superhost-label", text: "Superhost" }) : null
     )
   );
+  header.append(heartButton(listing, "heart-btn stay-save"));
 
   const hostRow = el(
     "div",
@@ -196,13 +202,13 @@ function buildStay(view, listing) {
     rail.element
   );
 
-  const shell = el("div", { class: "shell" }, gallery.desktop, gallery.mobile, header, hostRow, layout);
+  const shell = el("div", { class: "shell" }, gallery.desktop, gallery.mobile, gallery.controls, header, hostRow, layout);
   const similar = el("div", { class: "shell" });
   const mobileReserve = buildMobileReserve(listing, state);
 
   view.append(topbar, shell, similar, mobileReserve, gallery.lightbox);
 
-  wireGallery(gallery, photos);
+  const stopGallery = wireGallery(gallery, photos);
   wireRail(listing, state, rail);
   wireCalendar(listing, state, rail, content);
   loadReviews(listing, reviewsState, content);
@@ -211,21 +217,26 @@ function buildStay(view, listing) {
   requestQuote(listing, state, rail);
 
   shareImage(gallery.desktop.querySelector(".gallery-main img"), listing.id);
+  return () => {
+    stopGallery();
+    content.querySelector("[aria-labelledby='availability-heading']")?._calendar?.destroy();
+    rail.quoteController?.cancel();
+  };
 }
 
 function photoSet(listing) {
   const base = String(listing.imageUrl ?? "").replace(/-\d+\.webp$/, "");
   return [
-    { src: `${base}-1200.webp`, alt: `${listing.title}, main room` },
-    { src: `${base}-d1.webp`, alt: `${listing.title}, seating area` },
-    { src: `${base}-d2.webp`, alt: `${listing.title}, detail of the space` }
+    { src: `${base}-1200.webp`, alt: `${listing.title}, illustrative photograph` },
+    { src: `${base}-d1.webp`, alt: `${listing.title}, closer crop` },
+    { src: `${base}-d2.webp`, alt: `${listing.title}, alternate crop` }
   ];
 }
 
 function buildGallery(listing, photos) {
   const mainImage = imageFrame(photos[0], "gallery-main", listing, true);
-  const sideOne = imageFrame(photos[1], "gallery-side", listing, false);
-  const sideTwo = imageFrame(photos[2], "gallery-side", listing, false);
+  const sideOne = imageFrame(photos[1], "gallery-side", listing, false, 1);
+  const sideTwo = imageFrame(photos[2], "gallery-side", listing, false, 2);
 
   const viewAll = el(
     "button",
@@ -266,14 +277,19 @@ function buildGallery(listing, photos) {
   });
 
   mobile.append(counter);
+  const controls = el("div", { class: "gallery-controls" },
+    el("span", { text: "Swipe to explore" }),
+    el("div", { class: "row-actions" },
+      el("button", { type: "button", class: "icon-btn", "data-action": "gallery-prev", "aria-label": "Previous gallery image", disabled: true }, icon("caret-left")),
+      el("button", { type: "button", class: "icon-btn", "data-action": "gallery-next", "aria-label": "Next gallery image" }, icon("caret-right"))));
 
   const template = document.getElementById("tpl-lightbox");
   const lightbox = template.content.firstElementChild.cloneNode(true);
 
-  return { desktop, mobile, lightbox, counter };
+  return { desktop, mobile, controls, lightbox, counter };
 }
 
-function imageFrame(photo, className, listing, eager) {
+function imageFrame(photo, className, listing, eager, index = 0) {
   const button = el("button", {
     type: "button",
     class: `media-frame ${className}`,
@@ -296,7 +312,7 @@ function imageFrame(photo, className, listing, eager) {
   );
 
   button.append(img);
-  button.dataset.photo = "0";
+  button.dataset.photo = String(index);
   return button;
 }
 
@@ -311,6 +327,7 @@ function wireGallery(gallery, photos) {
     image.src = photos[index].src;
     image.alt = photos[index].alt;
     counter.textContent = `${index + 1} / ${photos.length}`;
+    changeFeedback(image);
   };
 
   const open = (start) => {
@@ -338,6 +355,15 @@ function wireGallery(gallery, photos) {
   });
 
   let frame = 1;
+  const mobileFrames = [...gallery.mobile.querySelectorAll(".media-frame")];
+  const previous = gallery.controls.querySelector('[data-action="gallery-prev"]');
+  const next = gallery.controls.querySelector('[data-action="gallery-next"]');
+  const move = delta => {
+    const target = Math.max(0, Math.min(mobileFrames.length - 1, frame - 1 + delta));
+    mobileFrames[target].scrollIntoView({ behavior: reducedMotion() ? "instant" : "smooth", block: "nearest", inline: "center" });
+  };
+  previous.addEventListener("click", () => move(-1));
+  next.addEventListener("click", () => move(1));
   const observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
@@ -346,6 +372,8 @@ function wireGallery(gallery, photos) {
           if (position >= 0) {
             frame = position + 1;
             gallery.counter.textContent = `${frame} / ${photos.length}`;
+            previous.disabled = frame === 1;
+            next.disabled = frame === photos.length;
           }
         }
       }
@@ -356,6 +384,7 @@ function wireGallery(gallery, photos) {
   for (const item of gallery.mobile.querySelectorAll(".media-frame")) {
     observer.observe(item);
   }
+  return () => observer.disconnect();
 }
 
 function buildDescription(listing) {
@@ -903,8 +932,16 @@ function requestQuote(listing, state, rail) {
   const checkOut = parseDate(state.checkOut);
 
   if (!checkIn || !checkOut || checkOut <= checkIn) {
+    rail.quoteController?.cancel();
+    state.quote = null;
     setChildren(rail.quotePanel, el("p", { class: "quote-note", text: "Choose dates to see the total." }));
     rail.reserve.disabled = true;
+    const mobileButton = document.querySelector('[data-action="mobile-reserve"]');
+    if (mobileButton) mobileButton.disabled = true;
+    const total = document.querySelector('[data-role="mobile-total"]');
+    const suffix = document.querySelector('[data-role="mobile-suffix"]');
+    if (total) total.textContent = "Choose dates";
+    if (suffix) suffix.textContent = "";
     return;
   }
 
@@ -922,6 +959,16 @@ function requestQuote(listing, state, rail) {
 }
 
 function renderRailQuote(listing, state, rail, update) {
+  state.quoteStatus = update.status;
+  state.quote = update.quote ?? null;
+  if (update.status !== "success" || !update.quote?.isAvailable) {
+    const button = document.querySelector('[data-action="mobile-reserve"]');
+    const total = document.querySelector('[data-role="mobile-total"]');
+    const suffix = document.querySelector('[data-role="mobile-suffix"]');
+    if (button) button.disabled = true;
+    if (total) total.textContent = update.status === "loading" ? "Checking dates" : "Check dates";
+    if (suffix) suffix.textContent = "";
+  }
   if (update.status === "loading") {
     setChildren(
       rail.quotePanel,
@@ -993,6 +1040,7 @@ function buildMobileReserve(listing, state) {
     type: "button",
     class: "btn btn-primary",
     "data-action": "mobile-reserve",
+    disabled: true,
     text: "Reserve"
   });
 

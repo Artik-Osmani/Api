@@ -108,6 +108,7 @@ export function createQuoteController({ onUpdate, debounce = 250 }) {
   return {
     request,
     cancel() {
+      sequence += 1;
       stopTimer();
       controller?.abort();
     }

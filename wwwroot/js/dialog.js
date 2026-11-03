@@ -1,4 +1,5 @@
 import { el, icon } from "./dom.js";
+import { reducedMotion } from "./motion.js";
 
 const openStack = [];
 
@@ -15,12 +16,43 @@ export function openDialog(dialog, options = {}) {
   }
 
   document.body.classList.add("dialog-open");
-  const entry = { dialog, trigger, onClose };
+  // A lightbox may reopen the same element; never chain a previous animated close wrapper.
+  const nativeClose = HTMLDialogElement.prototype.close.bind(dialog);
+  let closing = false;
+  let exitAnimation = null;
+  const entry = { dialog, trigger, onClose, closeImmediately: () => {
+    exitAnimation?.cancel();
+    if (dialog.open) nativeClose();
+  } };
+  dialog.close = (returnValue) => {
+    if (!dialog.open || closing) return;
+    if (reducedMotion() || !dialog.animate) { nativeClose(returnValue); return; }
+    closing = true;
+    dialog.classList.add("is-closing");
+    const sheet = dialog.classList.contains("sheet");
+    exitAnimation = dialog.animate([
+      { opacity: 1, transform: "translate(0, 0)" },
+      { opacity: 0, transform: sheet ? "translateX(20px)" : "translateY(8px)" }
+    ], { duration: 160, easing: "ease-in", fill: "forwards" });
+    exitAnimation.finished.then(() => { if (dialog.open) nativeClose(returnValue); }).catch(() => {});
+  };
   openStack.push(entry);
+
+  // Register after the caller's cancel logic, so dirty booking guards retain control over Escape.
+  const onCancel = event => {
+    if (event.defaultPrevented) return;
+    event.preventDefault();
+    dialog.close();
+  };
+  queueMicrotask(() => dialog.addEventListener("cancel", onCancel));
 
   dialog.addEventListener(
     "close",
     () => {
+      exitAnimation?.cancel();
+      dialog.removeEventListener("cancel", onCancel);
+      dialog.classList.remove("is-closing");
+      dialog.close = nativeClose;
       const index = openStack.findIndex((item) => item.dialog === dialog);
       if (index >= 0) {
         openStack.splice(index, 1);
@@ -54,7 +86,7 @@ export function closeDialog(dialog) {
 
 export function closeAllDialogs() {
   for (const entry of [...openStack]) {
-    entry.dialog.close();
+    entry.closeImmediately();
   }
 }
 

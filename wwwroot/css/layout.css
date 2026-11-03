@@ -55,7 +55,7 @@
   .brand-name {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 1.0625rem;
+    font-size: 1.25rem;
     letter-spacing: -0.02em;
   }
 
@@ -300,7 +300,7 @@
   /* Footer */
   .site-footer {
     border-top: 1px solid var(--line);
-    background: var(--canvas);
+    background: var(--surface-2);
     padding-block: var(--space-16) calc(var(--space-16) + var(--tab-h));
   }
 

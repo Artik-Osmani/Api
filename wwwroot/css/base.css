@@ -287,3 +287,8 @@
     font-size: var(--text-xs);
   }
 }
+
+@layer base {
+  /* Route headings are focus destinations, not interactive controls. */
+  h1[tabindex="-1"]:focus { outline: none; }
+}

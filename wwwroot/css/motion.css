@@ -222,3 +222,15 @@
     }
   }
 }
+
+@layer utilities {
+  @keyframes scrim-in { from { opacity: 0; } }
+  @keyframes scrim-out { to { opacity: 0; } }
+  dialog[open]::backdrop { animation: scrim-in 220ms var(--ease-out); }
+  dialog.is-closing::backdrop { animation: scrim-out 160ms ease-in both; }
+  .destination:not([aria-pressed="true"]):not(:hover) img { filter: saturate(.65); }
+  .stay-card-item:focus-within .stay-card-title { text-decoration: underline; text-underline-offset: 4px; }
+  @media (prefers-reduced-motion: reduce) {
+    dialog[open]::backdrop { animation: none; }
+  }
+}

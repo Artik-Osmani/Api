@@ -12,10 +12,12 @@ import {
   today
 } from "../format.js";
 import { openDialog, closeDialog } from "../dialog.js";
-import { once, reducedMotion, reveal } from "../motion.js";
+import { once, reducedMotion, reveal, changeFeedback } from "../motion.js";
+import { advancedChips, openFilters } from "../filters.js";
+import { destinationNavigator } from "../destinations.js";
 import { errorPanel, toast } from "../ui.js";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 8;
 
 const CATEGORIES = [
   { value: "", label: "All" },
@@ -33,8 +35,6 @@ const SORTS = [
   ["reviews_desc", "Most reviewed"],
   ["distance_asc", "Closest"]
 ];
-
-let searchController = null;
 
 export async function renderExplore() {
   const main = document.getElementById("main");
@@ -58,17 +58,14 @@ export async function renderExplore() {
   const footer = el("div", { class: "show-more" });
 
   results.append(
-    el("h2", { id: "results-heading", class: "visually-hidden", text: "Stays" }),
+    el("div", { class: "collection-head" },
+      el("h2", { id: "results-heading", text: "The collection" }),
+      el("p", { class: "muted", text: "A home for a few days. A place to return to." })),
     toolbar.element,
     resultsLine,
     grid,
     footer
   );
-
-  view.append(
-    el("div", { class: "shell" }, hero, console_.desktop, console_.compact, results)
-  );
-  main.append(view);
 
   const context = {
     grid,
@@ -78,26 +75,42 @@ export async function renderExplore() {
     filters: { ...state.filters },
     lastResponse: null,
     loading: false,
-    page: 1
+    page: 1,
+    requestId: 0,
+    controller: null
   };
+  const destinations = destinationNavigator(state.filters.query, city => {
+    applyFilters(context, { query: context.filters.query === city ? "" : city });
+    results.scrollIntoView({ behavior: reducedMotion() ? "instant" : "smooth", block: "start" });
+  });
+  context.destinations = destinations;
+  view.append(el("div", { class: "shell" }, hero, console_.desktop, console_.compact,
+    el("section", { class: "place-picker", "aria-labelledby": "places-title" },
+      el("div", { class: "place-picker-head" }, el("h2", { id: "places-title", text: "Pick a place" }),
+        el("div", { class: "place-picker-tools" }, el("span", { class: "muted", text: "Cities, mountains, the coast" }), destinations.controls)), destinations.element), results));
+  main.append(view);
 
   wireHero(view);
   wireSearchConsole(console_, context);
   wireToolbar(toolbar, context);
   wireFooter(footer, context);
 
-  if (state.lastSearch) {
+  const cached = state.lastSearch && state.lastSearchKey === JSON.stringify(state.filters) && Date.now() - (state.lastSearchAt ?? 0) < 30_000;
+  if (cached) {
+    context.lastResponse = state.lastSearch;
+    context.page = state.lastSearch.page;
     paint(state.lastSearch, context, { announce: false });
   } else {
     paintSkeleton(grid);
   }
 
-  await runSearch(context, { page: 1, replace: true, initial: true });
+  if (!cached) await runSearch(context, { page: 1, replace: true, initial: true });
 
   return {
     title: "FatiHomes | Stays in Kosovo and Albania",
     name: "Explore",
-    announce: `Explore, ${context.lastResponse?.totalRecords ?? 0} stays`
+    announce: `Explore, ${context.lastResponse?.totalRecords ?? 0} stays`,
+    cleanup: () => { context.controller?.abort(); context.stopReveals?.(); destinations.destroy(); }
   };
 }
 
@@ -134,7 +147,7 @@ function buildHero() {
   const copy = el(
     "div",
     { class: "hero-copy" },
-    el("p", { class: "hero-meta", text: "18 stays · 9 places · from €35 a night" }),
+    el("p", { class: "hero-meta", text: "Kosovo, Albania & the coast" }),
     el("h1", { class: "hero-title", id: "hero-title", text: "Places with a sense of place." }),
     el("p", {
       class: "hero-sub",
@@ -145,7 +158,11 @@ function buildHero() {
       { type: "button", class: "text-link", "data-action": "browse" },
       "Browse the collection",
       icon("arrow-right", "icon icon-16")
-    )
+    ),
+    el("div", { class: "hero-collection-note" },
+      el("strong", { text: "18" }), el("span", { text: "homes, each with its own story" }),
+      el("span", { class: "hero-note-rule", "aria-hidden": "true" }),
+      el("span", { text: "From €35 / night" }))
   );
 
   const mainFrame = el("div", { class: "media-frame hero-stack-main" });
@@ -197,6 +214,7 @@ function buildSearchConsole(filters) {
       type: "date",
       min: minDate,
       max: maxDate,
+      "aria-describedby": "search-dates-error",
       value: filters.checkIn
     })),
     searchCell("search-checkout", "Check out", el("input", {
@@ -206,6 +224,7 @@ function buildSearchConsole(filters) {
       type: "date",
       min: minDate,
       max: maxDate,
+      "aria-describedby": "search-dates-error",
       value: filters.checkOut
     })),
     el(
@@ -233,7 +252,7 @@ function buildSearchConsole(filters) {
       { class: "search-submit" },
       el("button", { type: "submit", class: "btn btn-primary", text: "Search stays" })
     ),
-    el("p", { class: "field-error", "data-role": "desktop-search-error" })
+    el("p", { class: "field-error", id: "search-dates-error", role: "alert", "data-role": "desktop-search-error" })
   );
 
   const compact = el(
@@ -307,6 +326,7 @@ function wireSearchConsole(console_, context) {
 
     const error = validateDates(next.checkIn, next.checkOut);
     desktop.querySelector('[data-role="desktop-search-error"]').textContent = error;
+    for (const input of desktop.querySelectorAll('input[type="date"]')) input.setAttribute("aria-invalid", String(Boolean(error)));
     if (error) {
       return;
     }
@@ -315,6 +335,11 @@ function wireSearchConsole(console_, context) {
   });
 
   for (const field of desktop.querySelectorAll("input")) {
+    if (field.type === "date") field.addEventListener("blur", () => {
+      const problem = validateDates(desktop.querySelector("#search-checkin").value, desktop.querySelector("#search-checkout").value);
+      desktop.querySelector('[data-role="desktop-search-error"]').textContent = problem;
+      for (const input of desktop.querySelectorAll('input[type="date"]')) input.setAttribute("aria-invalid", String(Boolean(problem)));
+    });
     field.addEventListener("change", () => {
       syncCompact(console_, {
         ...context.filters,
@@ -358,9 +383,19 @@ function openSearchSheet(console_, context) {
   checkOut.min = minDate;
   checkOut.max = maxDate;
 
-  where.value = context.filters.query;
-  checkIn.value = context.filters.checkIn;
-  checkOut.value = context.filters.checkOut;
+  where.value = console_.desktop.querySelector("#search-where").value;
+  checkIn.value = console_.desktop.querySelector("#search-checkin").value;
+  checkOut.value = console_.desktop.querySelector("#search-checkout").value;
+  error.id = "mobile-search-error";
+  error.setAttribute("role", "alert");
+  for (const input of [checkIn, checkOut]) {
+    input.setAttribute("aria-describedby", error.id);
+    input.addEventListener("blur", () => {
+      const problem = validateDates(checkIn.value, checkOut.value);
+      error.textContent = problem;
+      for (const field of [checkIn, checkOut]) field.setAttribute("aria-invalid", String(Boolean(problem)));
+    });
+  }
 
   let guests = context.filters.guests;
   guestsOutput.textContent = String(guests);
@@ -397,6 +432,7 @@ function openSearchSheet(console_, context) {
 
     const problem = validateDates(next.checkIn, next.checkOut);
     error.textContent = problem;
+    for (const field of [checkIn, checkOut]) field.setAttribute("aria-invalid", String(Boolean(problem)));
     if (problem) {
       return;
     }
@@ -442,17 +478,25 @@ function validateDates(checkInValue, checkOutValue) {
 
 function applyFilters(context, patch) {
   context.filters = { ...context.filters, ...patch };
-  setFilters(patch);
-  syncCompactElements(context);
+  setFilters(context.filters);
+  syncCompactElements(context, !Object.hasOwn(patch, "checkIn") && !Object.hasOwn(patch, "checkOut"));
+  context.destinations?.update(context.filters.query);
+  context.toolbar.filters.textContent = filterLabel(context.filters);
+  context.toolbar.select.value = context.filters.sort;
+  for (const chip of context.toolbar.chips.querySelectorAll("[data-category]")) {
+    chip.setAttribute("aria-pressed", String(chip.dataset.category === context.filters.category));
+  }
   runSearch(context, { page: 1, replace: true });
 }
 
-function syncCompactElements(context) {
+function syncCompactElements(context, keepDraftDates = false) {
   const desktop = document.querySelector('[data-role="desktop-search"]');
   if (desktop) {
     desktop.querySelector("#search-where").value = context.filters.query;
-    desktop.querySelector("#search-checkin").value = context.filters.checkIn;
-    desktop.querySelector("#search-checkout").value = context.filters.checkOut;
+    if (!keepDraftDates) {
+      desktop.querySelector("#search-checkin").value = context.filters.checkIn;
+      desktop.querySelector("#search-checkout").value = context.filters.checkOut;
+    }
     const output = desktop.querySelector('[data-role="desktop-guests"]');
     if (output) {
       output.textContent = String(context.filters.guests);
@@ -461,7 +505,9 @@ function syncCompactElements(context) {
 
   const summary = document.querySelector('[data-role="compact-summary"]');
   if (summary) {
-    summary.textContent = compactSummary(context.filters);
+    summary.textContent = compactSummary({ ...context.filters,
+      checkIn: desktop?.querySelector("#search-checkin").value ?? context.filters.checkIn,
+      checkOut: desktop?.querySelector("#search-checkout").value ?? context.filters.checkOut });
   }
 }
 
@@ -492,18 +538,26 @@ function buildToolbar(filters) {
     "div",
     { class: "explore-toolbar" },
     chips,
-    el(
-      "label",
-      { class: "sort-control", for: "sort-select" },
-      el("span", { text: "Sort" }),
-      select
-    )
+    el("div", { class: "collection-controls" },
+      el(
+        "label",
+        { class: "sort-control", for: "sort-select" },
+        el("span", { text: "Sort" }),
+        select
+      ))
   );
+  const filterButton = el("button", { type: "button", class: "btn btn-secondary filters-trigger", "data-action": "open-filters", text: filterLabel(filters) });
+  element.querySelector(".collection-controls").prepend(filterButton);
+  return { element, chips, select, filters: filterButton };
+}
 
-  return { element, chips, select };
+function filterLabel(filters) {
+  const count = advancedChips(filters).length;
+  return count ? `Filters (${count})` : "Filters";
 }
 
 function wireToolbar(toolbar, context) {
+  toolbar.filters.addEventListener("click", () => openFilters(context.filters, values => applyFilters(context, values)));
   toolbar.chips.addEventListener("click", (event) => {
     const button = event.target.closest("[data-category]");
     if (!button) {
@@ -585,6 +639,14 @@ function buildPayload(context, page) {
     payload.categories = [filters.category];
   }
 
+  for (const key of ["minPrice", "maxPrice", "minBedrooms", "minRating"]) {
+    if (filters[key] !== "" && filters[key] !== undefined) payload[key] = Number(filters[key]);
+  }
+  payload.petsCount = Number(filters.petsCount || 0);
+  payload.instantBookOnly = Boolean(filters.instantBookOnly);
+  payload.superhostOnly = Boolean(filters.superhostOnly);
+  payload.requiredAmenities = filters.requiredAmenities ?? [];
+
   if (filters.sort === "distance_asc") {
     const centre = cityCentre(filters.query);
     if (!centre) {
@@ -604,9 +666,12 @@ async function runSearch(context, options = {}) {
     return;
   }
 
-  searchController?.abort();
-  searchController = new AbortController();
+  context.controller?.abort();
+  context.controller = new AbortController();
+  const requestId = ++context.requestId;
   context.loading = true;
+  context.grid.setAttribute("aria-busy", "true");
+  context.toolbar.element.classList.add("is-searching");
 
   if (!append) {
     if ((initial || !context.lastResponse) && !context.grid.children.length) {
@@ -617,10 +682,13 @@ async function runSearch(context, options = {}) {
   }
 
   try {
-    const response = await api.search(payload, searchController.signal);
+    const response = await api.search(payload, context.controller.signal);
+    if (requestId !== context.requestId || !context.grid.isConnected) return;
     cacheListings(response.results);
-    setState({ listings: response.results });
-    context.lastResponse = response;
+    const combined = append ? [...(context.lastResponse?.results ?? []), ...response.results] : response.results;
+    const unique = [...new Map(combined.map(listing => [listing.id, listing])).values()];
+    context.lastResponse = { ...response, results: unique };
+    setState({ listings: unique, lastSearch: context.lastResponse, lastSearchKey: JSON.stringify(context.filters), lastSearchAt: Date.now() });
 
     if (append) {
       appendCards(context, response.results);
@@ -629,6 +697,7 @@ async function runSearch(context, options = {}) {
     } else {
       context.page = response.page;
       paint(response, context);
+      if (!initial) changeFeedback(context.grid);
       context.grid.classList.add("is-updating");
       window.setTimeout(() => context.grid.classList.remove("is-updating"), 220);
     }
@@ -637,13 +706,13 @@ async function runSearch(context, options = {}) {
       return;
     }
 
-    if (replace || !context.lastResponse) {
-      context.grid.replaceChildren();
+    if (!append) {
+      if (!context.lastResponse) context.grid.replaceChildren();
       context.resultsLine.replaceChildren();
       context.resultsLine.append(
         errorPanel({
-          title: "We could not load stays.",
-          message: "Check your connection and try again.",
+          title: context.lastResponse ? "We could not refresh stays." : "We could not load stays.",
+          message: context.lastResponse ? "Showing the last loaded stays. Try again to apply these filters." : "Check your connection and try again.",
           onRetry: () => runSearch(context, { page: 1, replace: true })
         })
       );
@@ -651,14 +720,19 @@ async function runSearch(context, options = {}) {
       toast("The results could not be refreshed. Showing the last loaded stays.", { tone: "error" });
     }
   } finally {
+    if (requestId !== context.requestId) return;
     context.loading = false;
+    context.grid.removeAttribute("aria-busy");
+    context.toolbar.element.classList.remove("is-searching");
+    context.footer.querySelector("button")?.removeAttribute("disabled");
   }
 }
 
 function paint(response, context, options = {}) {
   const { announce = true } = options;
+  context.stopReveals?.();
   context.grid.replaceChildren();
-  paintCards(context.grid, response.results);
+  context.stopReveals = paintCards(context.grid, response.results);
   paintResultsLine(response, context);
   paintPagination(context);
 
@@ -683,7 +757,7 @@ function paintCards(grid, listings) {
     grid.append(card);
   });
 
-  reveal(grid);
+  return reveal(grid);
 }
 
 function appendCards(context, listings) {
@@ -771,6 +845,9 @@ function paintResultsLine(response, context) {
     const label = SORTS.find(([value]) => value === filters.sort)?.[1] ?? filters.sort;
     active.append(removableChip(label, () => applyFilters(context, { sort: "recommended" })));
   }
+  for (const chip of advancedChips(filters)) {
+    active.append(removableChip(chip.label, () => applyFilters(context, chip.patch)));
+  }
 
   if (active.children.length > 0) {
     active.append(
@@ -782,6 +859,8 @@ function paintResultsLine(response, context) {
           resetFilters();
           context.filters = { ...getState().filters };
           syncCompactElements(context);
+          context.destinations.update("");
+          context.toolbar.filters.textContent = "Filters";
           context.toolbar.select.value = "recommended";
           for (const chip of context.toolbar.chips.querySelectorAll("[data-category]")) {
             chip.setAttribute("aria-pressed", String(chip.dataset.category === ""));
@@ -835,6 +914,10 @@ function buildEmptyState(context) {
         resetFilters();
         context.filters = { ...getState().filters };
         syncCompactElements(context);
+        context.destinations.update("");
+        context.toolbar.filters.textContent = "Filters";
+        context.toolbar.select.value = "recommended";
+        for (const chip of context.toolbar.chips.querySelectorAll("[data-category]")) chip.setAttribute("aria-pressed", String(chip.dataset.category === ""));
         runSearch(context, { page: 1, replace: true });
       }
     }),
@@ -857,6 +940,9 @@ function paintPagination(context) {
   if (!response) {
     return;
   }
+  if (response.totalRecords > 0) {
+    context.footer.append(el("p", { class: "results-count", text: `Showing ${number(Math.min(context.grid.children.length, response.totalRecords))} of ${number(response.totalRecords)} stays` }));
+  }
 
   if (response.page < response.totalPages) {
     context.footer.append(
@@ -870,12 +956,4 @@ function paintPagination(context) {
     return;
   }
 
-  if (response.totalRecords > 0) {
-    context.footer.append(
-      el("p", {
-        class: "results-count",
-        text: `${number(Math.min(context.grid.children.length, response.totalRecords))} of ${number(response.totalRecords)}`
-      })
-    );
-  }
 }

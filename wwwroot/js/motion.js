@@ -4,6 +4,24 @@ export function reducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+/** A single acknowledgement, never a loop or a permanent inline style. */
+export function saveFeedback(element) {
+  if (!element?.isConnected || reducedMotion() || !element.animate) return;
+  element.animate([
+    { transform: "scale(1)" },
+    { transform: "scale(0.88)", offset: 0.35 },
+    { transform: "scale(1)" }
+  ], { duration: 260, easing: "cubic-bezier(.22,.61,.36,1)" });
+}
+
+export function changeFeedback(element, direction = 1) {
+  if (!element?.isConnected || reducedMotion() || !element.animate) return;
+  element.animate([
+    { opacity: 0.35, transform: `translateY(${direction * 8}px)` },
+    { opacity: 1, transform: "translateY(0)" }
+  ], { duration: 240, easing: "cubic-bezier(.22,.61,.36,1)" });
+}
+
 export function reveal(root = document) {
   const nodes = [...root.querySelectorAll(".reveal:not(.is-visible)")];
   if (nodes.length === 0) {

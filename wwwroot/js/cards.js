@@ -4,6 +4,9 @@ import { getState, isFavorite, setFavorite } from "./store.js";
 import { money, rating, reviewsLabel } from "./format.js";
 import { amenityLabel, categoryLabel, placeLabel } from "./icons.js";
 import { toast } from "./ui.js";
+import { saveFeedback } from "./motion.js";
+
+const favoriteWrites = new Set();
 
 /**
  * The one stay card used by Explore, Saved, Hosts and Similar stays. The card is a link; the heart
@@ -75,6 +78,7 @@ export function heartButton(listing, className = "heart-btn") {
     type: "button",
     class: className,
     "data-listing": listing.id,
+    disabled: favoriteWrites.has(listing.id),
     "aria-pressed": String(isFavorite(listing.id)),
     "aria-label": isFavorite(listing.id) ? `Remove ${listing.title} from saved` : `Save ${listing.title}`
   });
@@ -84,6 +88,10 @@ export function heartButton(listing, className = "heart-btn") {
   button.addEventListener("click", async (event) => {
     event.preventDefault();
     event.stopPropagation();
+    if (favoriteWrites.has(listing.id)) return;
+    favoriteWrites.add(listing.id);
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
 
     const wasFavorite = isFavorite(listing.id);
     applyHeart(button, listing, !wasFavorite);
@@ -91,10 +99,17 @@ export function heartButton(listing, className = "heart-btn") {
     try {
       const result = await api.toggleFavorite(listing.id);
       applyHeart(button, listing, result.favorited);
+      saveFeedback(document.querySelector(`[data-listing="${listing.id}"]`));
       toast(result.favorited ? "Saved to your list." : "Removed from saved.");
     } catch (error) {
       applyHeart(button, listing, wasFavorite);
       toast(error instanceof ApiError ? error.message : "That did not save. Try again.", { tone: "error" });
+    } finally {
+      favoriteWrites.delete(listing.id);
+      for (const heart of document.querySelectorAll(`[data-listing="${listing.id}"]`)) {
+        heart.disabled = false;
+        heart.removeAttribute("aria-busy");
+      }
     }
   });
 
@@ -103,11 +118,14 @@ export function heartButton(listing, className = "heart-btn") {
 
 export function applyHeart(button, listing, favorited) {
   setFavorite(listing.id, favorited, listing);
-  button.setAttribute("aria-pressed", String(favorited));
-  button.setAttribute(
-    "aria-label",
-    favorited ? `Remove ${listing.title} from saved` : `Save ${listing.title}`
-  );
+  const instances = new Set([button, ...document.querySelectorAll(`[data-listing="${listing.id}"]`)]);
+  for (const heart of instances) {
+    heart.setAttribute("aria-pressed", String(favorited));
+    heart.setAttribute(
+      "aria-label",
+      favorited ? `Remove ${listing.title} from saved` : `Save ${listing.title}`
+    );
+  }
 }
 
 export function ratingLine(listing) {

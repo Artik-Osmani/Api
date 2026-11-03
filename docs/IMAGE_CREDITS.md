@@ -50,3 +50,7 @@ The photographs are illustrative stock images, not photographs of the fictional 
 ## Brand marks
 
 `wwwroot/images/logo.svg` is the hand-drawn FH monogram in brand green, used as the site mark and favicon source. `favicon.ico`, `apple-touch-icon.png` and `images/logo-mark-512.png` were rendered locally with Pillow and Segoe UI Bold. No third-party image licence applies to these marks.
+
+## Destination thumbnails, UI/UX v2
+
+`wwwroot/images/places/` contains nine 112×88 WebP thumbnails derived from the corresponding credited listing photographs above. They total 19,928 bytes. The original photo licences continue to apply. The optional maintenance script is `scripts/prepare-destinations.py`; no image tooling is needed to run the app.

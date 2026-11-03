@@ -3,7 +3,10 @@
  * cache, favorites and reservations. Nothing reads another view's DOM.
  */
 
+import { advancedDefaults } from "./filters.js";
+
 const state = {
+  catalog: [],
   listings: [],
   listingCache: new Map(),
   favoriteListings: [],
@@ -17,7 +20,8 @@ const state = {
     checkOut: "",
     guests: 1,
     category: "",
-    sort: "recommended"
+    sort: "recommended",
+    ...advancedDefaults
   },
   lastSearch: null
 };
@@ -119,7 +123,8 @@ export function resetFilters() {
     checkOut: "",
     guests: 1,
     category: "",
-    sort: "recommended"
+    sort: "recommended",
+    ...advancedDefaults
   };
   emit();
 }
@@ -129,6 +134,8 @@ export function upsertReservation(reservation) {
   if (!reservation?.id) {
     return;
   }
+  // A new or cancelled booking changes date-based search availability.
+  state.lastSearch = null;
 
   const index = state.reservations.findIndex((item) => item.id === reservation.id);
   if (index >= 0) {

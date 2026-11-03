@@ -88,6 +88,7 @@ export const api = {
   stats: () => request("/v1/system/stats"),
 
   search: (payload, signal) => request("/v1/listings/search", { method: "POST", body: payload, signal }),
+  listings: (signal) => request("/v1/listings?limit=50", { signal }),
   listing: (id, signal) => request(`/v1/listings/${encodeURIComponent(id)}`, { signal }),
   availability: (id, start, end, signal) =>
     request(

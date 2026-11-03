@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Complements browser-audit.mjs with empty, keyboard, zoom and Swagger interactions. */
 import assert from "node:assert/strict";
-import { writeFileSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 const { chromium } = await import(process.env.FH_PLAYWRIGHT_MODULE ?? "playwright");
 const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -9,6 +9,8 @@ const page = await context.newPage();
 page.setDefaultTimeout(15_000);
 const base = "http://localhost:5047";
 const checks = [];
+const output = process.env.FH_OUTPUT_DIR ?? "output/playwright";
+mkdirSync(output, { recursive: true });
 async function visit(path) {
   await page.goto(`${base}/${path}`);
   await page.waitForFunction(() => document.querySelector("main h1") && !document.querySelector('main[aria-busy="true"]'));
@@ -19,7 +21,7 @@ try {
   for (const listing of favorites) await context.request.post(`${base}/v1/favorites/${listing.id}`);
   await visit("#/saved");
   await page.getByText("Nothing saved yet. Use the heart on any stay to keep it here.", { exact: true }).waitFor();
-  await page.screenshot({ path: "output/playwright/saved-empty.png" });
+  await page.screenshot({ path: `${output}/saved-empty.png` });
   checks.push("Empty Saved renders the supplied copy and Browse stays action");
 
   await page.setViewportSize({ width: 320, height: 844 });
@@ -32,8 +34,9 @@ try {
     // No background page control may receive focus while the modal is open.
     assert.equal(await page.evaluate(() => document.activeElement === document.body || Boolean(document.activeElement.closest("dialog[open]"))), true);
   }
-  await page.screenshot({ path: "output/playwright/search-keyboard-320.png" });
+  await page.screenshot({ path: `${output}/search-keyboard-320.png` });
   await page.keyboard.press("Escape");
+  await page.waitForFunction(() => !document.querySelector("dialog[open]"));
   assert.equal(await search.count(), 0);
   checks.push("320px search sheet excludes background controls from Tab navigation and Escape closes");
 
@@ -44,6 +47,7 @@ try {
   await page.keyboard.press("Escape");
   await page.getByRole("heading", { name: "Leave this booking?" }).waitFor();
   await page.getByRole("button", { name: "Keep editing", exact: true }).click();
+  await page.waitForFunction(() => document.querySelectorAll("dialog[open]").length === 1);
   assert.equal(await page.locator('dialog.sheet[open]').count(), 1);
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Leave", exact: true }).click();
@@ -55,7 +59,7 @@ try {
   await cdp.send("Emulation.setDeviceMetricsOverride", { width: 720, height: 450, deviceScaleFactor: 2, mobile: false });
   await visit("#/explore");
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-  await page.screenshot({ path: "output/playwright/explore-200-percent.png" });
+  await page.screenshot({ path: `${output}/explore-200-percent.png` });
   checks.push("200% zoom-equivalent metrics at 1440 physical pixels: no horizontal overflow");
   await cdp.send("Emulation.clearDeviceMetricsOverride");
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
@@ -72,10 +76,10 @@ try {
   await operation.getByRole("button", { name: "Try it out", exact: true }).click();
   await operation.getByRole("button", { name: "Execute", exact: true }).click();
   await operation.locator(".live-responses-table").getByText("200", { exact: true }).waitFor();
-  await page.screenshot({ path: "output/playwright/swagger-health-executed.png" });
+  await page.screenshot({ path: `${output}/swagger-health-executed.png` });
   checks.push("Swagger Try it out executes health and displays HTTP 200");
 } finally {
-  writeFileSync("output/playwright/interaction-check.json", JSON.stringify({ generatedAt: new Date().toISOString(), checks }, null, 2));
+  writeFileSync(`${output}/interaction-check.json`, JSON.stringify({ generatedAt: new Date().toISOString(), checks }, null, 2));
   console.log(JSON.stringify({ checks }, null, 2));
   await context.request.post(`${base}/v1/system/reset`);
   await context.close();
