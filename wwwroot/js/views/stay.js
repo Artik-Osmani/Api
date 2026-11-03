@@ -583,20 +583,14 @@ function renderReviews(listing, reviewsState, body) {
           { class: "distribution-row" },
           el("span", { text: `${row.stars} star` }),
           el(
-            "div",
-            { class: "distribution-bar" },
-            el("span", { "data-value": String(row.count / total) })
+            "progress",
+            { class: "distribution-bar", value: row.count, max: total || 1, "aria-label": `${row.stars} star reviews` }
           ),
           el("span", { text: String(row.count) })
         )
       )
     )
   );
-
-  for (const bar of summary.querySelectorAll(".distribution-bar span")) {
-    const value = Number(bar.dataset.value);
-    bar.style.width = `${Math.round(value * 100)}%`;
-  }
 
   const list = el("div", { class: "reviews-list" });
   for (const review of reviews.slice(0, reviewsState.visible)) {

@@ -1,6 +1,6 @@
 # Image credits
 
-All photography is downloaded and self-hosted under `wwwroot/images/stays/`. Nothing is hotlinked. Every listing slug has five WebP files: `-800`, `-1200`, `-p800`, `-d1` and `-d2`. The hero has `hero-p800` and `hero-p1200`.
+All photography is downloaded and self-hosted under `wwwroot/images/stays/`. Nothing is hotlinked. Every listing slug has six WebP files: `-800`, `-1200`, `-1600`, `-p800`, `-d1` and `-d2`. The hero has `hero-p800` and `hero-p1200`.
 
 The photographs are illustrative stock images, not photographs of the fictional properties described in the seed data. Photographer names could not be resolved without an Unsplash API key, so only the stable Unsplash photo IDs are recorded. Attribution can be completed later through the Unsplash API.
 
@@ -36,11 +36,11 @@ The photographs are illustrative stock images, not photographs of the fictional 
 
 ## Processing and totals
 
-- Cover-cropped with Pillow, no distortion. Landscape at 800x533 and 1200x800; portrait at 800x1000. Metadata stripped.
+- Cover-cropped with Pillow, no distortion. Landscape at 800x533, 1200x800 and 1600x1067; portrait at 800x1000. Metadata stripped.
 - `-d1` and `-d2` are alternate 3:2 framings cropped from the same 1600px master so the stay gallery shows three different compositions instead of one repeated frame.
-- Every file is below 180 KB. The set is below 4 MB.
-- To reach the budget, the photos were lightly denoised and encoded with adaptive quality (roughly 25-42) rather than a flat quality 74, which produced 9.3 MB at these dimensions. The 1600px landscape and 1200px portrait variants were then dropped because the grid never requests them.
-- **Total: 92 files, 3,629,528 bytes (3.461 MiB / 3.63 MB).** Run `Get-ChildItem wwwroot/images/stays | Measure-Object Length -Sum` to confirm on disk.
+- Every file is below 180 KB. The complete photo set is 5.37 MB.
+- To reach the budget, the photos were lightly denoised and encoded with adaptive quality (roughly 25-42) rather than a flat quality 74, which produced 9.3 MB at these dimensions. The initial 1600px landscape variants were restored from the credited sources at adaptive WebP quality 15-45 for wide displays. Portrait cards use the existing 800px variant.
+- **Total: 110 files, 5,374,482 bytes (5.13 MiB / 5.37 MB).** Run `Get-ChildItem wwwroot/images/stays | Measure-Object Length -Sum` to confirm on disk.
 - Placeholders: 0. Every slug has a real Unsplash photograph.
 
 ## Icons

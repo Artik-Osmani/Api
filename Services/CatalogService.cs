@@ -77,11 +77,11 @@ public sealed class CatalogService
             var listing = db.Listings.FirstOrDefault(l => l.Id == id)
                           ?? throw ApiException.NotFound($"Stay {id} was not found.");
 
+            HostRecord? nextHost = null;
             if (request.HostId is { } hostId)
             {
-                var host = db.Hosts.FirstOrDefault(h => h.Details.HostId == hostId)
+                nextHost = db.Hosts.FirstOrDefault(h => h.Details.HostId == hostId)
                            ?? throw ApiException.Validation("hostId", "hostId does not match a known host.");
-                listing.Host = host.Details;
             }
 
             var errors = ValidateListingRequest(
@@ -104,6 +104,11 @@ public sealed class CatalogService
             if (request.Title is not null)
             {
                 listing.Title = request.Title.Trim();
+            }
+
+            if (nextHost is not null)
+            {
+                listing.Host = nextHost.Details;
             }
 
             if (request.Description is not null)
@@ -239,8 +244,9 @@ public sealed class CatalogService
                 .ToList();
 
             var days = new List<DailyAvailability>(window);
-            for (var date = from; date <= to; date = date.AddDays(1))
+            for (var offset = 0; offset < window; offset++)
             {
+                var date = from.AddDays(offset);
                 var isPast = date < today;
                 var isBooked = !isPast && bookings.Any(r => date >= r.CheckInDate && date < r.CheckOutDate);
                 days.Add(new DailyAvailability(

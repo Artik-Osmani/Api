@@ -42,22 +42,28 @@ public class SecurityHeadersMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var headers = context.Response.Headers;
-
-        headers["X-Content-Type-Options"] = "nosniff";
-        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-        headers["X-Frame-Options"] = "DENY";
-        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
-        headers["Cross-Origin-Opener-Policy"] = "same-origin";
-        headers["Cross-Origin-Resource-Policy"] = "same-origin";
-
-        if (!_environment.IsDevelopment())
+        // The exception handler may clear the response. Apply these at send time so errors keep them.
+        context.Response.OnStarting(() =>
         {
-            headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
-        }
+            var headers = context.Response.Headers;
 
-        var isSwagger = context.Request.Path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase);
-        headers["Content-Security-Policy"] = isSwagger ? SwaggerPolicy : ApplicationPolicy;
+            headers["X-Content-Type-Options"] = "nosniff";
+            headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+            headers["X-Frame-Options"] = "DENY";
+            headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+            headers["Cross-Origin-Opener-Policy"] = "same-origin";
+            headers["Cross-Origin-Resource-Policy"] = "same-origin";
+
+            if (!_environment.IsDevelopment())
+            {
+                headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+            }
+
+            var isSwagger = context.Request.Path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase);
+            headers["Content-Security-Policy"] = isSwagger ? SwaggerPolicy : ApplicationPolicy;
+
+            return Task.CompletedTask;
+        });
 
         await _next(context);
     }

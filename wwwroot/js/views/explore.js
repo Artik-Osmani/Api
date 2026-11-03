@@ -44,7 +44,12 @@ export async function renderExplore() {
   const view = el("div", { class: "view view-explore" });
 
   const hero = buildHero();
-  const console_ = buildSearchConsole(state.filters);
+  // Suggested future dates are displayed, but only applied after submitting the search.
+  const console_ = buildSearchConsole({
+    ...state.filters,
+    checkIn: state.filters.checkIn || toIso(addDays(today(), 7)),
+    checkOut: state.filters.checkOut || toIso(addDays(today(), 10))
+  });
   const results = el("section", { class: "explore-results", id: "stays", "aria-labelledby": "results-heading" });
 
   const toolbar = buildToolbar(state.filters);
@@ -108,7 +113,7 @@ function buildHero() {
     sizes: "(max-width: 899px) 100vw, 36vw",
     width: 1200,
     height: 1500,
-    alt: "A clifftop villa with a pool above the Ionian Sea near Dhërmi",
+    alt: "Illustrative modern villa with a pool and timber balcony",
     fetchpriority: "high",
     decoding: "async"
   });
@@ -116,11 +121,11 @@ function buildHero() {
 
   const landscape = el("img", {
     src: "/images/stays/prizren-stone-house-1200.webp",
-    srcset: "/images/stays/prizren-stone-house-800.webp 800w, /images/stays/prizren-stone-house-1200.webp 1200w",
+    srcset: "/images/stays/prizren-stone-house-800.webp 800w, /images/stays/prizren-stone-house-1200.webp 1200w, /images/stays/prizren-stone-house-1600.webp 1600w",
     sizes: "(max-width: 899px) 100vw, 26vw",
     width: 1200,
     height: 800,
-    alt: "Stone houses below the fortress in Prizren",
+    alt: "Illustrative stone house with a covered porch and lawn",
     decoding: "async",
     loading: "lazy"
   });
@@ -129,7 +134,7 @@ function buildHero() {
   const copy = el(
     "div",
     { class: "hero-copy" },
-    el("p", { class: "hero-meta", text: "18 stays · 9 places" }),
+    el("p", { class: "hero-meta", text: "18 stays · 9 places · from €35 a night" }),
     el("h1", { class: "hero-title", id: "hero-title", text: "Places with a sense of place." }),
     el("p", {
       class: "hero-sub",
@@ -730,7 +735,7 @@ function paintResultsLine(response, context) {
     ? ` matching “${filters.query}”`
     : isFiltered
       ? ""
-      : " in Kosovo, Albania and North Macedonia";
+      : " in Kosovo, Albania and the coast";
 
   const count = el("p", {
     class: "results-count",
@@ -816,7 +821,7 @@ function buildEmptyState(context) {
     { class: "empty-state" },
     el("h2", { text: "No stays match these filters." }),
     el("p", {
-      text: "Widen the dates, raise the guest count, or try another place. The full collection is eighteen stays."
+      text: "Widen the dates, lower the guest count, or try another place. The full collection is eighteen stays."
     })
   );
 

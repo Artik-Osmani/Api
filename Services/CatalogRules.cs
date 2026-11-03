@@ -115,10 +115,10 @@ public static class CatalogRules
             errors["pricing.baseNightlyRate"] = ["Nightly rate must be greater than 0 and at most 100000."];
         }
 
-        if (pricing.CleaningFee < 0 || pricing.ServiceFee < 0
-            || pricing.LocalOccupancyTax < 0 || pricing.SecurityDeposit < 0)
+        if (pricing.CleaningFee is < 0 or > 100_000 || pricing.ServiceFee is < 0 or > 100_000
+            || pricing.LocalOccupancyTax is < 0 or > 100_000 || pricing.SecurityDeposit is < 0 or > 100_000)
         {
-            errors["pricing.cleaningFee"] = ["Fees and the deposit cannot be negative."];
+            errors["pricing.cleaningFee"] = ["Fees and the deposit must be between 0 and 100000."];
         }
 
         if (pricing.Discounts is null)
@@ -212,6 +212,8 @@ public static class CatalogRules
         return trimmed.StartsWith('/')
                && !trimmed.StartsWith("//", StringComparison.Ordinal)
                && !trimmed.Contains("://", StringComparison.Ordinal)
+               && !trimmed.Contains('\\')
+               && !trimmed.Any(char.IsControl)
                && trimmed.Length <= 300;
     }
 }

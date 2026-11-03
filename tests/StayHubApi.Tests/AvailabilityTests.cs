@@ -10,6 +10,15 @@ public class AvailabilityTests : ApiTestBase
     }
 
     [Fact]
+    public async Task Availability_LastRepresentableDate_DoesNotOverflow()
+    {
+        var (status, body) = await GetAsync(
+            $"/v1/listings/{Listing1Id}/availability?start_date=9999-12-31&end_date=9999-12-31");
+        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Single(body.GetProperty("days").EnumerateArray());
+    }
+
+    [Fact]
     public async Task Availability_MissingDates_Returns422()
     {
         var (status, body) = await GetAsync($"/v1/listings/{Listing1Id}/availability");

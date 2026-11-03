@@ -1,4 +1,8 @@
 @layer utilities {
+  /* One selected image in each snapshot, without runtime style attributes. */
+  [data-shared-image] {
+    view-transition-name: stay-image;
+  }
   @keyframes skeleton-sweep {
     to {
       transform: translateX(100%);

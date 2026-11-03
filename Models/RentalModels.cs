@@ -11,12 +11,12 @@ public record CoordinatePair(double Latitude, double Longitude);
 /// A postal address plus the neighbourhood identifier used by search.
 /// </summary>
 public record Address(
-    string Street,
-    string City,
-    string State,
-    string PostalCode,
-    string CountryCode,
-    string NeighborhoodId);
+    [StringLength(160)] string Street,
+    [StringLength(80, MinimumLength = 2)] string City,
+    [StringLength(80)] string State,
+    [StringLength(20)] string PostalCode,
+    [StringLength(2, MinimumLength = 2)] string CountryCode,
+    [StringLength(60)] string NeighborhoodId);
 
 /// <summary>
 /// The six categories a stay can belong to. The JSON value is the snake_case name.
@@ -78,8 +78,8 @@ public record PricingMatrix(
 /// House rules shown on the stay detail page and used by the pets filter.
 /// </summary>
 public record HouseRules(
-    string QuietHoursStart,
-    string QuietHoursEnd,
+    [StringLength(5)] string QuietHoursStart,
+    [StringLength(5)] string QuietHoursEnd,
     bool SmokingAllowed,
     bool PartiesAllowed,
     int MaxPets);
@@ -458,6 +458,7 @@ public class CreateReservationRequest
     public string? PaymentAuthorizationToken { get; set; }
 
     /// <summary>Either <c>instant_book</c> or <c>request_to_book</c>.</summary>
+    [StringLength(30)]
     public string BookingFlow { get; set; } = "instant_book";
 
     [StringLength(500)]

@@ -203,7 +203,8 @@
   /* Main and page rhythm */
   #main {
     display: block;
-    min-height: 60dvh;
+    /* Keep the footer below the first viewport while route modules load. */
+    min-height: calc(100dvh - var(--header-h));
     outline: none;
   }
 

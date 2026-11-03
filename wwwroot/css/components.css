@@ -958,17 +958,25 @@
   }
 
   .distribution-bar {
+    appearance: none;
+    border: 0;
+    width: 100%;
     height: 5px;
     background: var(--surface-2);
     border-radius: var(--r-pill);
     overflow: hidden;
   }
 
-  .distribution-bar span {
-    display: block;
-    height: 100%;
-    background: var(--accent);
-    border-radius: inherit;
+  .distribution-bar::-webkit-progress-bar {
+    background: var(--surface-2);
+  }
+
+  .distribution-bar::-webkit-progress-value {
+    background: var(--ink);
+  }
+
+  .distribution-bar::-moz-progress-bar {
+    background: var(--ink);
   }
 
   .review-item {

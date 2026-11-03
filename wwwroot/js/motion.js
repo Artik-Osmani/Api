@@ -61,19 +61,18 @@ export function shareImage(element, id) {
     return () => {};
   }
 
-  const name = `stay-${id}`;
-  element.style.setProperty("view-transition-name", name);
+  element.dataset.sharedImage = "true";
   sharedNames.add(element);
 
   return () => {
-    element.style.removeProperty("view-transition-name");
+    delete element.dataset.sharedImage;
     sharedNames.delete(element);
   };
 }
 
 export function clearSharedImages() {
   for (const element of sharedNames) {
-    element.style.removeProperty("view-transition-name");
+    delete element.dataset.sharedImage;
   }
   sharedNames.clear();
 }

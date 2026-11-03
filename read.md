@@ -24,7 +24,7 @@ Projekti është punë kursi. Të dhënat mbahen në memorie dhe rivendosen në 
 | Dokumentacioni | Swashbuckle 10.2.3, Swagger UI, komente XML |
 | Frontend | HTML, CSS dhe JavaScript me module ES, pa framework dhe pa build |
 | Të dhënat | `MockDataStore`, lista në memorie me `lock` |
-| Testet | xUnit, `WebApplicationFactory`, 59 teste |
+| Testet | xUnit, `WebApplicationFactory`, 73 teste |
 | Fontet | Schibsted Grotesk, Geist dhe Geist Mono, të vetëhostuara |
 | Fotot | WebP lokale në `wwwroot/images/stays`, pa lidhje të jashtme |
 
@@ -58,7 +58,7 @@ Middleware/         gabimet, header-at e sigurisë, kufizimi i kërkesave
 Models/             ApiError dhe të gjitha kontratat JSON
 Services/           çmimet, rregullat, kërkimi, seed data dhe magazina
 wwwroot/            index.html, css/, js/, fonts/, images/
-tests/              59 teste integrimi dhe njësi
+tests/              73 teste integrimi dhe njësi
 scripts/            verifikimi i OpenAPI, generatori, kontrollet e browserit
 docs/               openapi.yaml, SEED_IDS.md, IMAGE_CREDITS.md, screenshots/
 php/                punë e vjetër e modulit PHP, nuk përdoret nga aplikacioni
@@ -115,6 +115,8 @@ Testet mbulojnë kërkimin, kuotimin dhe barazinë me krijimin, datat e kaluara,
 
 Kontrolli i browserit ruhet në `docs/screenshots/` dhe përdor `scripts/ui-check.mjs` për pamje dhe gabime në konsolë, si dhe `scripts/booking-flow-check.mjs` për rezervimin nga fillimi në fund.
 
+Rezultatet, komandat dhe matrica e plotë: [docs/VERIFICATION.md](docs/VERIFICATION.md). Pamjet dhe GIF-i: [output/playwright](output/playwright). Vargjet JSON shkurtohen para validimit, gabimet 404/405 përdorin ApiError, dhe kalendari ruan fokusin pas ndërrimit të muajit.
+
 ## Kufizimet
 
 - Të dhënat janë në memorie dhe humbin në rinisje.
@@ -122,7 +124,8 @@ Kontrolli i browserit ruhet në `docs/screenshots/` dhe përdor `scripts/ui-chec
 - Pagesa është e simuluar; tokeni kontrollohet vetëm për gjatësi dhe nuk ruhet.
 - Fotot janë ilustruese dhe nuk përfaqësojnë pronat e trilluara.
 - Harta interaktive dhe vizatimi i poligoneve nuk janë në klient, ndonëse API-ja i mbështet.
-- Lighthouse dhe axe nuk u ekzekutuan në këtë mjedis; kontrollet e tjera të browserit u kryen.
+- Lighthouse desktop: 100 Performance, 100 Accessibility, 100 Best Practices, 100 SEO. Axe: zero shkelje në 60 pamje, pa tejkalim horizontal dhe pa kërkesa të jashtme.
+- Porta 5000 është e zënë nga Logitech G HUB në këtë kompjuter; profili dev punon në 5047. Testi i integrimit për Production kalon.
 
 ## Ekipi
 

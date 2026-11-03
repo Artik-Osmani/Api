@@ -76,6 +76,9 @@ export function icon(name, className = "icon") {
 
 export function safeHref(value) {
   const href = String(value ?? "").trim();
+  if (/[\\\u0000-\u001f\u007f]/.test(href)) {
+    return "#";
+  }
   if (href.startsWith("/") && !href.startsWith("//")) {
     return href;
   }
@@ -93,7 +96,7 @@ export function safeHref(value) {
 
 export function safeUrl(value) {
   const url = String(value ?? "").trim();
-  if (url.startsWith("/") && !url.startsWith("//")) {
+  if (url.startsWith("/") && !url.startsWith("//") && !/[\\\s,]/.test(url)) {
     return url;
   }
 
@@ -112,9 +115,9 @@ export function stayImage(listing, options = {}) {
     className = ""
   } = options;
 
-  const base = String(listing.imageUrl ?? "").replace(/-\d+\.webp$/, "");
+  const base = safeUrl(listing.imageUrl).replace(/-\d+\.webp$/, "");
   const portrait = ratio === "4-5";
-  const widths = portrait ? [800] : [800, 1200];
+  const widths = portrait ? [800] : [800, 1200, 1600];
   const suffix = portrait ? "p" : "";
   const dimensions = {
     "16-10": [1600, 1000],
@@ -129,7 +132,7 @@ export function stayImage(listing, options = {}) {
     : "";
 
   const img = el("img", {
-    src: base ? `${base}-${suffix}1200.webp` : "",
+    src: base ? `${base}-${suffix}${portrait ? 800 : 1200}.webp` : "",
     srcset: srcset || null,
     sizes: srcset ? sizes : null,
     alt: `${listing.title}, ${listing.address?.city ?? ""}`.trim(),

@@ -452,7 +452,7 @@ export function openBookingSheet(options) {
     const checkIn = parseDate(state.checkIn);
     const checkOut = parseDate(state.checkOut);
     elements.dates.textContent = checkIn && checkOut
-      ? `${formatDateRange(checkIn, checkOut)} Â· ${guestsLabel(state.guests)}`
+      ? `${formatDateRange(checkIn, checkOut)} · ${guestsLabel(state.guests)}`
       : "Choose your dates";
   }
 

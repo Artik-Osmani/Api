@@ -20,6 +20,7 @@ builder.Services
         // Rewrites any MVC-generated ProblemDetails into the single ApiError envelope.
         options.Filters.Add<UnifiedErrorResultFilter>();
     })
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new TrimmedStringConverter()))
     .ConfigureApiBehaviorOptions(options =>
     {
         // Model binding and DataAnnotations failures use the same envelope as every other error.
@@ -162,6 +163,23 @@ app.UseStaticFiles(new StaticFileOptions
 // Static files are served above this line, so they never consume the API budget.
 app.UseMiddleware<RateLimitMiddleware>();
 app.UseCors("AppPolicy");
+
+// Routing failures (including 404 and 405) must use the same envelope as controller errors.
+app.UseStatusCodePages(async statusContext =>
+{
+    var context = statusContext.HttpContext;
+    if (!context.Request.Path.StartsWithSegments("/v1"))
+    {
+        return;
+    }
+
+    var status = context.Response.StatusCode;
+    context.Response.Headers.CacheControl = "no-store";
+    await context.Response.WriteAsJsonAsync(new ApiError(
+        status == 404 ? ErrorCodes.ResourceNotFound : ErrorCodes.ValidationFailed,
+        status == 404 ? "This API resource does not exist." : "This request is not supported by this resource.",
+        context.TraceIdentifier));
+});
 
 app.UseSwagger();
 app.UseSwaggerUI(options =>

@@ -117,7 +117,7 @@ export function createCalendar(options) {
     return map;
   }
 
-  async function draw(direction = "") {
+  async function draw(direction = "", restoreFocus = false) {
     if (destroyed) {
       return;
     }
@@ -160,6 +160,11 @@ export function createCalendar(options) {
     }
 
     renderDays(availability.get(key), direction);
+    if (restoreFocus) {
+      const target = grid.querySelector(`[data-date="${focusIso}"]:not(:disabled)`)
+        ?? grid.querySelector("button:not(:disabled)");
+      target?.focus({ preventScroll: true });
+    }
   }
 
   function drawSkeleton() {
@@ -177,6 +182,7 @@ export function createCalendar(options) {
   }
 
   function renderDays(days, direction) {
+    const restoreFocus = grid.contains(document.activeElement);
     const first = startOfMonth(viewMonth);
     const offset = (first.getDay() + 6) % 7;
     const total = endOfMonth(viewMonth).getDate();
@@ -226,7 +232,7 @@ export function createCalendar(options) {
     status.textContent = `Showing ${monthLabel(viewMonth)}. ${minimumStayNights} night minimum stay.`;
 
     const focusTarget = grid.querySelector(`[data-date="${focusIso}"]`);
-    if (focusTarget && document.activeElement && grid.contains(document.activeElement)) {
+    if (focusTarget && restoreFocus) {
       focusTarget.focus({ preventScroll: true });
     }
 
@@ -310,10 +316,10 @@ export function createCalendar(options) {
         target = addDays(date, -7);
         break;
       case "PageDown":
-        target = new Date(date.getFullYear(), date.getMonth() + 1, date.getDate());
+        target = adjacentMonth(date, 1);
         break;
       case "PageUp":
-        target = new Date(date.getFullYear(), date.getMonth() - 1, date.getDate());
+        target = adjacentMonth(date, -1);
         break;
       case "Enter":
       case " ":
@@ -325,6 +331,9 @@ export function createCalendar(options) {
     }
 
     event.preventDefault();
+    if (target < today() || target > maxDate) {
+      return;
+    }
     focusIso = toIso(target);
 
     const before = startOfMonth(viewMonth);
@@ -333,14 +342,16 @@ export function createCalendar(options) {
     if (target < before || target > after) {
       const direction = target < before ? "prev" : "next";
       viewMonth = startOfMonth(target);
-      draw(direction);
-      window.setTimeout(() => {
-        grid.querySelector(`[data-date="${focusIso}"]`)?.focus({ preventScroll: true });
-      }, 0);
+      draw(direction, true);
       return;
     }
 
     grid.querySelector(`[data-date="${focusIso}"]`)?.focus({ preventScroll: true });
+  }
+
+  function adjacentMonth(date, delta) {
+    const first = new Date(date.getFullYear(), date.getMonth() + delta, 1);
+    return new Date(first.getFullYear(), first.getMonth(), Math.min(date.getDate(), endOfMonth(first).getDate()));
   }
 
   function changeMonth(delta) {

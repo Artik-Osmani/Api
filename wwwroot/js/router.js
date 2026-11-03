@@ -82,7 +82,11 @@ function match(path) {
     if (result) {
       const params = {};
       route.keys.forEach((key, index) => {
-        params[key] = decodeURIComponent(result[index + 1]);
+        try {
+          params[key] = decodeURIComponent(result[index + 1]);
+        } catch {
+          params[key] = result[index + 1];
+        }
       });
       return { route, params };
     }
@@ -222,6 +226,20 @@ function updateNavigation(name) {
 }
 
 export function start() {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("a[href^='#']");
+    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    if (link.getAttribute("href") === "#main") {
+      event.preventDefault();
+      const main = document.getElementById("main");
+      main?.focus({ preventScroll: true });
+      main?.scrollIntoView({ behavior: "instant" });
+      return;
+    }
+    navigating = true;
+  });
   window.addEventListener("hashchange", () => {
     const wasNavigating = navigating;
     navigating = false;

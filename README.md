@@ -2,7 +2,7 @@
 
 A small, finished stays catalogue for Kosovo, Albania and the coast, with a booking API served from the same .NET process. The web client is static HTML, CSS and JavaScript with no build step. The data layer is an in-memory singleton seeded on start.
 
-**Status:** working end to end. `dotnet build -warnaserror` reports 0 warnings, `dotnet test` passes 59 tests, every route renders with loading, empty and error states, and the app runs with `dotnet run` alone.
+**Status:** working end to end. `dotnet build -warnaserror` reports 0 warnings, `dotnet test` passes 73 tests, the final browser audit reports zero axe violations across 60 captures, and the app runs with `dotnet run` alone. Lighthouse desktop scores 100 in all four requested categories. See [verification evidence](docs/VERIFICATION.md).
 
 - **Stack:** .NET 10, ASP.NET Core controllers, Swashbuckle 10.2.3, native CSS, ES modules
 - **Catalogue:** 18 stays in 9 places, 4 hosts, 4 reservations, 15 reviews, 5 messages, 2 favorites
@@ -11,7 +11,7 @@ A small, finished stays catalogue for Kosovo, Albania and the coast, with a book
 - **Course artefacts:** [read.md](read.md) (Albanian), [docs/openapi.yaml](docs/openapi.yaml), [php/index.php](php/index.php), [docs/course/UshtrimiAdili.md](docs/course/UshtrimiAdili.md)
 - **Brief:** [UPGRADE_PROMPT.md](UPGRADE_PROMPT.md) is the specification this iteration implements
 
-Line numbers in this README were verified on 2026-11-03 against the working tree. They will drift. Every row includes a searchable symbol, so use `Ctrl+F` on the symbol when a line is stale.
+Line numbers in the code-map tables were verified on 2026-11-03 against the upgrade/ui working tree based on commit d057351. They will drift. Every row includes a searchable symbol, so use `Ctrl+F` on the symbol when a line is stale.
 
 ---
 
@@ -43,7 +43,7 @@ Other ways to start it:
 ```powershell
 .\run-dev.ps1      # dotnet run --launch-profile dev  -> http://localhost:5047
 .\run-prod.ps1     # dotnet run --launch-profile prod -> http://localhost:5000
-dotnet test        # 59 unit and integration tests
+dotnet test        # 73 unit and integration tests
 ```
 
 All data resets when the process restarts. In Development, `POST /v1/system/reset` restores the seed without restarting.
@@ -139,7 +139,7 @@ Api/
 â”‚   â”œâ”€â”€ manifest.webmanifest           name, icons, theme colours
 â”‚   â”œâ”€â”€ robots.txt                     disallows /v1/
 â”‚   â””â”€â”€ swagger-custom.css             restrained Swagger theme
-â”œâ”€â”€ tests/StayHubApi.Tests/            59 xUnit tests, WebApplicationFactory
+â”œâ”€â”€ tests/StayHubApi.Tests/            73 xUnit tests, WebApplicationFactory
 â”œâ”€â”€ scripts/
 â”‚   â”œâ”€â”€ verify-openapi.ps1             runtime vs docs/openapi.yaml
 â”‚   â”œâ”€â”€ generate-openapi.py            exports the runtime document to YAML
@@ -176,18 +176,19 @@ Api/
 | :--- | :--- | :--- |
 | Application entry point | [Program.cs](Program.cs#L12) | `var builder = WebApplication.CreateBuilder` |
 | Controller registration and error filter | [Program.cs](Program.cs#L18) | `AddControllers(options` |
-| Unified model-binding error body | [Program.cs](Program.cs#L26) | `InvalidModelStateResponseFactory` |
-| Swagger document, XML comments, contact | [Program.cs](Program.cs#L43) | `AddSwaggerGen` |
-| Service registration | [Program.cs](Program.cs#L74) | `AddSingleton<MockDataStore>` |
-| CORS from configuration | [Program.cs](Program.cs#L85) | `Cors:AllowedOrigins` |
-| Response compression | [Program.cs](Program.cs#L108) | `AddResponseCompression` |
-| Middleware order | [Program.cs](Program.cs#L121) | `UseMiddleware<ExceptionHandlingMiddleware>` |
-| Static files and cache headers | [Program.cs](Program.cs#L145) | `UseDefaultFiles` |
-| Rate limiter placement | [Program.cs](Program.cs#L163) | `UseMiddleware<RateLimitMiddleware>` |
-| Swagger UI and custom theme | [Program.cs](Program.cs#L167) | `UseSwaggerUI` |
-| Endpoint mapping and test entry marker | [Program.cs](Program.cs#L187) | `MapControllers`, `partial class Program` |
+| Unified model-binding error body | [Program.cs](Program.cs#L27) | `InvalidModelStateResponseFactory` |
+| Swagger document, XML comments, contact | [Program.cs](Program.cs#L44) | `AddSwaggerGen` |
+| Service registration | [Program.cs](Program.cs#L75) | `AddSingleton<MockDataStore>` |
+| CORS from configuration | [Program.cs](Program.cs#L86) | `Cors:AllowedOrigins` |
+| Response compression | [Program.cs](Program.cs#L101) | `AddResponseCompression` |
+| Middleware order | [Program.cs](Program.cs#L122) | `UseMiddleware<ExceptionHandlingMiddleware>` |
+| Static files and cache headers | [Program.cs](Program.cs#L146) | `UseDefaultFiles` |
+| Routing error envelopes | [Program.cs](Program.cs#L168) | `UseStatusCodePages` |
+| Rate limiter placement | [Program.cs](Program.cs#L164) | `UseMiddleware<RateLimitMiddleware>` |
+| Swagger UI and custom theme | [Program.cs](Program.cs#L185) | `UseSwaggerUI` |
+| Endpoint mapping and test entry marker | [Program.cs](Program.cs#L195) | `MapControllers`, `partial class Program` |
 | Error envelope | [ApiError.cs](Models/ApiError.cs#L11) | `public sealed record ApiError` |
-| Stable error codes | [ApiError.cs](Models/ApiError.cs#L22) | `ErrorCodes.DateOrder` |
+| Stable error codes | [ApiError.cs](Models/ApiError.cs#L28) | `public const string DateOrder` |
 | Deliberate failure type | [ApiException.cs](Services/ApiException.cs#L9) | `public sealed class ApiException` |
 | Exception mapping and 500 body | [ExceptionHandlingMiddleware.cs](Middleware/ExceptionHandlingMiddleware.cs#L40) | `catch (ApiException` |
 | ProblemDetails rewrite (415) | [UnifiedErrorResultFilter.cs](Middleware/UnifiedErrorResultFilter.cs#L14) | `OnResultExecuting` |
@@ -197,6 +198,8 @@ Api/
 | Model-state key formatting | [ValidationFormatter.cs](Services/ValidationFormatter.cs#L11) | `ToFieldErrors` |
 | Assembly version | [AppInfo.cs](Services/AppInfo.cs#L11) | `public static string Version` |
 
+Additional verification files: `scripts/browser-audit.mjs`, `scripts/interaction-check.mjs`, `docs/VERIFICATION.md`, `docs/CHANGELOG_FILES.md` and `output/playwright/` (audit reports, 64 screenshots and the booking GIF).
+
 ### Backend: pricing, rules and data
 
 | What you are looking for | Where it is | Search for |
@@ -204,20 +207,21 @@ Api/
 | The pricing formula | [PricingCalculator.cs](Services/PricingCalculator.cs#L26) | `public ReservationQuote BuildQuote` |
 | Discount thresholds and rounding | [PricingCalculator.cs](Services/PricingCalculator.cs#L14) | `MaxNights`, `WeeklyDiscountThreshold` |
 | Overlap, state machine, cancellation | [ReservationRules.cs](Services/ReservationRules.cs#L68) | `ValidateTransition` |
-| Transition table | [ReservationRules.cs](Services/ReservationRules.cs#L28) | `Transitions =` |
-| Booking validation order | [ReservationService.cs](Services/ReservationService.cs#L232) | `ValidateStay` |
+| Transition table | [ReservationRules.cs](Services/ReservationRules.cs#L20) | `Transitions =` |
+| Booking validation order | [ReservationService.cs](Services/ReservationService.cs#L57) | `ValidateStay` |
 | Quote endpoint logic | [ReservationService.cs](Services/ReservationService.cs#L47) | `public ReservationQuote Quote` |
 | Atomic create and conflict check | [ReservationService.cs](Services/ReservationService.cs#L70) | `public Reservation Create` |
 | Status update | [ReservationService.cs](Services/ReservationService.cs#L131) | `public Reservation UpdateStatus` |
-| Message sender derivation | [ReservationService.cs](Services/ReservationService.cs#L186) | `public Message SendMessage` |
+| Message sender derivation | [ReservationService.cs](Services/ReservationService.cs#L224) | `public Message SendMessage` |
 | Search filters and sorting | [ListingSearchService.cs](Services/ListingSearchService.cs#L29) | `public ListingSearchResponse Search` |
-| Weighted recommended score | [ListingSearchService.cs](Services/ListingSearchService.cs#L238) | `BayesianScore` |
-| Haversine and point in polygon | [CatalogRules.cs](Services/CatalogRules.cs#L40) | `HaversineMeters` |
-| Availability day calculation | [CatalogService.cs](Services/CatalogService.cs#L193) | `public ListingAvailabilityResponse GetAvailability` |
-| Review recomputation | [CatalogService.cs](Services/CatalogService.cs#L269) | `public Review AddReview` |
+| Weighted recommended score | [ListingSearchService.cs](Services/ListingSearchService.cs#L188) | `BayesianScore` |
+| Haversine and point in polygon | [CatalogRules.cs](Services/CatalogRules.cs#L55) | `HaversineMeters` |
+| Availability day calculation | [CatalogService.cs](Services/CatalogService.cs#L198) | `public ListingAvailabilityResponse GetAvailability` |
+| Trim JSON before validation | [TrimmedStringConverter.cs](Services/TrimmedStringConverter.cs#L7) | `public sealed class TrimmedStringConverter` |
+| Review recomputation | [CatalogService.cs](Services/CatalogService.cs#L289) | `public Review AddReview` |
 | Listing create and host lookup | [CatalogService.cs](Services/CatalogService.cs#L29) | `public ListingDetail Create` |
-| Delete conflict rule | [CatalogService.cs](Services/CatalogService.cs#L156) | `ListingHasActiveReservations` |
-| Host weighted aggregate | [HostService.cs](Services/HostService.cs#L19) | `Aggregate(listings)` |
+| Delete conflict rule | [CatalogService.cs](Services/CatalogService.cs#L180) | `ListingHasActiveReservations` |
+| Host weighted aggregate | [HostService.cs](Services/HostService.cs#L43) | `Aggregate(listings)` |
 | Favorite toggle in one lock | [FavoriteService.cs](Services/FavoriteService.cs#L25) | `public FavoriteToggleResponse Toggle` |
 | Store lock and Reset | [MockDataStore.cs](Services/MockDataStore.cs#L37) | `public void Reset` |
 | Seed catalogue | [SeedData.cs](Services/SeedData.cs#L58) | `public static Snapshot Build` |
@@ -238,7 +242,7 @@ Api/
 | Host directory action | [HostsController.cs](Controllers/HostsController.cs#L27) | `public ActionResult<List<HostProfileResponse>> GetAll` |
 | Favorite toggle action | [FavoritesController.cs](Controllers/FavoritesController.cs#L37) | `public ActionResult<FavoriteToggleResponse> Toggle` |
 | Health check | [SystemController.cs](Controllers/SystemController.cs#L37) | `public ActionResult<HealthResponse> Health` |
-| Stats and currency grouping | [SystemController.cs](Controllers/SystemController.cs#L69) | `TotalPaidByCurrency` |
+| Stats and currency grouping | [SystemController.cs](Controllers/SystemController.cs#L98) | `TotalPaidByCurrency` |
 | Stage endpoint moved from Program | [SystemController.cs](Controllers/SystemController.cs#L110) | `public ActionResult<StageResponse> Stage` |
 | Reset endpoint | [SystemController.cs](Controllers/SystemController.cs#L133) | `public ActionResult<ResetResponse> Reset` |
 
@@ -246,30 +250,32 @@ Api/
 
 | What you are looking for | Where it is | Search for |
 | :--- | :--- | :--- |
-| Document head, fonts, social meta | [index.html](wwwroot/index.html#L1) | `og:image` |
-| Header, navigation, mobile tab bar | [index.html](wwwroot/index.html#L42) | `<header class="site-header"` |
-| Booking sheet template | [index.html](wwwroot/index.html#L183) | `tpl-booking` |
-| Review dialog template | [index.html](wwwroot/index.html#L315) | `tpl-review` |
-| Photo lightbox template | [index.html](wwwroot/index.html#L377) | `tpl-lightbox` |
-| Message drawer template | [index.html](wwwroot/index.html#L395) | `tpl-chat` |
-| Module entry | [index.html](wwwroot/index.html#L417) | `<script type="module"` |
-| Boot, route table, saved badge | [main.js](wwwroot/js/main.js#L22) | `register("/explore"` |
-| Appearance control | [main.js](wwwroot/js/main.js#L44) | `initAppearance` |
-| Shared-element transition name | [main.js](wwwroot/js/main.js#L137) | `initSharedTransitions` |
-| Hash router, aliases, focus, title | [router.js](wwwroot/js/router.js#L94) | `export async function render` |
+| Document head, fonts, social meta | [index.html](wwwroot/index.html#L15) | `og:image` |
+| Header, navigation, mobile tab bar | [index.html](wwwroot/index.html#L43) | `<header class="site-header"` |
+| Booking sheet template | [index.html](wwwroot/index.html#L184) | `tpl-booking` |
+| Review dialog template | [index.html](wwwroot/index.html#L316) | `tpl-review` |
+| Photo lightbox template | [index.html](wwwroot/index.html#L378) | `tpl-lightbox` |
+| Message drawer template | [index.html](wwwroot/index.html#L396) | `tpl-chat` |
+| Module entry | [index.html](wwwroot/index.html#L418) | `<script type="module"` |
+| Boot, route table, saved badge | [main.js](wwwroot/js/main.js#L26) | `register("/explore"` |
+| Appearance control | [main.js](wwwroot/js/main.js#L19) | `initAppearance` |
+| Shared-element transition name | [main.js](wwwroot/js/main.js#L24) | `initSharedTransitions` |
+| Hash router, aliases, focus, title | [router.js](wwwroot/js/router.js#L98) | `export async function render` |
 | Route aliases | [router.js](wwwroot/js/router.js#L8) | `new Map([` |
 | Fetch wrapper and timeout | [api.js](wwwroot/js/api.js#L23) | `export async function request` |
 | Endpoint functions | [api.js](wwwroot/js/api.js#L86) | `export const api` |
-| Shared state and cache | [store.js](wwwroot/js/store.js#L8) | `const state =` |
+| Shared state and cache | [store.js](wwwroot/js/store.js#L6) | `const state =` |
 | Favorites state | [store.js](wwwroot/js/store.js#L72) | `setFavorites` |
 | Safe DOM builder | [dom.js](wwwroot/js/dom.js#L8) | `export function el` |
-| Responsive image helper | [dom.js](wwwroot/js/dom.js#L93) | `export function stayImage` |
+| Responsive image helper | [dom.js](wwwroot/js/dom.js#L110) | `export function stayImage` |
 | Stay card and heart | [cards.js](wwwroot/js/cards.js#L12) | `export function stayCard` |
 | Money, dates and booking reference | [format.js](wwwroot/js/format.js#L193) | `bookingCode` |
 | Amenity labels and groups | [icons.js](wwwroot/js/icons.js#L20) | `AMENITY_LABELS` |
 | Toast and live region | [ui.js](wwwroot/js/ui.js#L6) | `export function toast` |
 | Dialog helpers | [dialog.js](wwwroot/js/dialog.js#L9) | `export function openDialog` |
 | Reveal and reduced motion | [motion.js](wwwroot/js/motion.js#L7) | `export function reveal` |
+| Repeatable browser and axe audit | [browser-audit.mjs](scripts/browser-audit.mjs#L1) | `async function audit` |
+| Empty, keyboard, zoom and Swagger checks | [interaction-check.mjs](scripts/interaction-check.mjs#L1) | `async function visit` |
 | Quote controller | [quote.js](wwwroot/js/quote.js#L70) | `createQuoteController` |
 | Calendar component | [calendar.js](wwwroot/js/calendar.js#L23) | `createCalendar` |
 | Booking sheet logic | [booking.js](wwwroot/js/booking.js#L29) | `openBookingSheet` |
@@ -289,40 +295,40 @@ Api/
 | :--- | :--- | :--- |
 | Colour and type tokens | [tokens.css](wwwroot/css/tokens.css#L57) | `--canvas:` |
 | Dark theme overrides | [tokens.css](wwwroot/css/tokens.css#L150) | `prefers-color-scheme: dark` |
-| Self-hosted fonts | [tokens.css](wwwroot/css/tokens.css#L3) | `@font-face` |
-| Reset and focus ring | [base.css](wwwroot/css/base.css#L1) | `:focus-visible` |
+| Self-hosted fonts | [tokens.css](wwwroot/css/tokens.css#L4) | `@font-face` |
+| Reset and focus ring | [base.css](wwwroot/css/base.css#L131) | `:focus-visible` |
 | Header, tab bar, footer | [layout.css](wwwroot/css/layout.css#L18) | `.site-header` |
 | Explore hero | [pages.css](wwwroot/css/pages.css#L3) | `.explore-hero` |
 | Hero image stack | [pages.css](wwwroot/css/pages.css#L43) | `.hero-stack` |
 | Search console | [pages.css](wwwroot/css/pages.css#L86) | `.search-console` |
-| Asymmetric results grid | [pages.css](wwwroot/css/pages.css#L280) | `.results-grid` |
+| Asymmetric results grid | [pages.css](wwwroot/css/pages.css#L262) | `.results-grid` |
 | Stay gallery and rail | [pages.css](wwwroot/css/pages.css#L627) | `.stay-rail` |
 | Booking sheet and steps | [components.css](wwwroot/css/components.css#L772) | `.booking-steps` |
-| Calendar day states | [components.css](wwwroot/css/components.css#L1049) | `.cal-day` |
-| Hero and reveal motion | [motion.css](wwwroot/css/motion.css#L105) | `.hero-reveal` |
-| Reduced motion overrides | [motion.css](wwwroot/css/motion.css#L185) | `prefers-reduced-motion: reduce` |
+| Calendar day states | [components.css](wwwroot/css/components.css#L1058) | `.cal-day` |
+| Hero and reveal motion | [motion.css](wwwroot/css/motion.css#L109) | `.hero-reveal` |
+| Reduced motion overrides | [motion.css](wwwroot/css/motion.css#L189) | `prefers-reduced-motion: reduce` |
 
 ### Tests, scripts and configuration
 
 | What you are looking for | Where it is | Search for |
 | :--- | :--- | :--- |
-| Test host with Testing environment | [ApiFactory.cs](tests/StayHubApi.Tests/ApiFactory.cs#L12) | `WebApplicationFactory<Program>` |
-| Reset per test | [ApiTestBase.cs](tests/StayHubApi.Tests/ApiTestBase.cs#L28) | `PostAsync("/v1/system/reset"` |
+| Test host with Testing environment | [ApiFactory.cs](tests/StayHubApi.Tests/ApiFactory.cs#L11) | `WebApplicationFactory<Program>` |
+| Reset per test | [ApiTestBase.cs](tests/StayHubApi.Tests/ApiTestBase.cs#L34) | `PostAsync("/v1/system/reset"` |
 | Pricing rounding and discounts | [PricingCalculatorTests.cs](tests/StayHubApi.Tests/PricingCalculatorTests.cs#L38) | `Round_UsesAwayFromZero` |
 | Quote and create parity | [ReservationTests.cs](tests/StayHubApi.Tests/ReservationTests.cs#L22) | `Quote_TotalMatchesCreatedReservation` |
 | Circle and polygon search | [SearchTests.cs](tests/StayHubApi.Tests/SearchTests.cs#L93) | `Search_CircleFilter_ReturnsOnlyNearby` |
-| Availability validation | [AvailabilityTests.cs](tests/StayHubApi.Tests/AvailabilityTests.cs#L13) | `Availability_MissingDates_Returns422` |
+| Availability validation | [AvailabilityTests.cs](tests/StayHubApi.Tests/AvailabilityTests.cs#L22) | `Availability_MissingDates_Returns422` |
 | Weighted host rating | [HostTests.cs](tests/StayHubApi.Tests/HostTests.cs#L30) | `Hosts_AggregateRating_IsWeighted` |
 | One error envelope everywhere | [SystemTests.cs](tests/StayHubApi.Tests/SystemTests.cs#L77) | `Errors_AllFailuresUseApiErrorShape` |
 | CSP assertions | [SecurityHeaderTests.cs](tests/StayHubApi.Tests/SecurityHeaderTests.cs#L13) | `AppCspHasNoUnsafeInline` |
 | 429 with Retry-After | [RateLimitTests.cs](tests/StayHubApi.Tests/RateLimitTests.cs#L17) | `RateLimit_Returns429` |
 | OpenAPI drift check | [verify-openapi.ps1](scripts/verify-openapi.ps1#L1) | `Compare` |
-| OpenAPI export | [generate-openapi.py](scripts/generate-openapi.py#L1) | `swagger/v1/swagger.json` |
-| Browser screenshot and console check | [ui-check.mjs](scripts/ui-check.mjs#L1) | `Runtime.evaluate` |
-| End-to-end booking in Chrome | [booking-flow-check.mjs](scripts/booking-flow-check.mjs#L77) | `Reserve` |
-| Rate limits and exemptions | [appsettings.json](appsettings.json#L13) | `ApiRequestsPerMinute` |
-| CORS origins | [appsettings.Development.json](appsettings.Development.json#L16) | `AllowedOrigins` |
-| Ports and profiles | [launchSettings.json](Properties/launchSettings.json#L4) | `5047`, `5000` |
+| OpenAPI export | [generate-openapi.py](scripts/generate-openapi.py#L80) | `swagger/v1/swagger.json` |
+| Browser screenshot and console check | [ui-check.mjs](scripts/ui-check.mjs#L98) | `Runtime.evaluate` |
+| End-to-end booking in Chrome | [booking-flow-check.mjs](scripts/booking-flow-check.mjs#L81) | `Reserve` |
+| Rate limits and exemptions | [appsettings.json](appsettings.json#L14) | `ApiRequestsPerMinute` |
+| CORS origins | [appsettings.Development.json](appsettings.Development.json#L14) | `AllowedOrigins` |
+| Ports and profiles | [launchSettings.json](Properties/launchSettings.json#L8) | `5047`, `5000` |
 | CI build and test | [ci.yml](.github/workflows/ci.yml#L26) | `dotnet test` |
 | Seed identifiers | [SEED_IDS.md](docs/SEED_IDS.md) | `3f7bf08e` |
 | Photo and font licences | [IMAGE_CREDITS.md](docs/IMAGE_CREDITS.md), [FONT_LICENSES.md](docs/FONT_LICENSES.md) | `Unsplash`, `OFL` |
@@ -335,56 +341,71 @@ Base path `/v1`. All responses are JSON. Every endpoint is a controller action; 
 
 ### Listings
 
-| Method | Path | Action | Success | Errors |
-| :--- | :--- | :--- | :--- | :--- |
-| GET | `/v1/listings` | [GetAll](Controllers/ListingsController.cs#L22) | 200, `limit` clamped 1..100 | none |
-| POST | `/v1/listings/search` | [Search](Controllers/ListingsController.cs#L42) | 200 page plus `appliedFilters` | 422 |
-| GET | `/v1/listings/{id}` | [GetById](Controllers/ListingsController.cs#L62) | 200 | 404 |
-| POST | `/v1/listings` | [Create](Controllers/ListingsController.cs#L73) | 201, Location | 400, 422 |
-| PUT | `/v1/listings/{id}` | [Update](Controllers/ListingsController.cs#L90) | 200 | 400, 404, 422 |
-| DELETE | `/v1/listings/{id}` | [Delete](Controllers/ListingsController.cs#L98) | 204 | 404, 409 |
-| GET | `/v1/listings/{id}/availability` | [GetAvailability](Controllers/ListingsController.cs#L118) | 200 | 404, 422 |
-| GET | `/v1/listings/{id}/reviews` | [GetReviews](Controllers/ListingsController.cs#L138) | 200 | 404 |
-| POST | `/v1/listings/{id}/reviews` | [AddReview](Controllers/ListingsController.cs#L154) | 201 | 400, 404, 429 |
+| Method | Path | Action | Request body | Success | Errors |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/v1/listings` | [GetAll](Controllers/ListingsController.cs#L30) | none | 200, `limit` clamped 1..100 | none |
+| POST | `/v1/listings/search` | [Search](Controllers/ListingsController.cs#L42) | `ListingSearchRequest` | 200 page plus `appliedFilters` | 422 |
+| GET | `/v1/listings/{id}` | [GetById](Controllers/ListingsController.cs#L52) | none | 200 | 404 |
+| POST | `/v1/listings` | [Create](Controllers/ListingsController.cs#L65) | `CreateListingRequest` | 201, Location | 400, 422 |
+| PUT | `/v1/listings/{id}` | [Update](Controllers/ListingsController.cs#L83) | `UpdateListingRequest` | 200 | 400, 404, 422 |
+| DELETE | `/v1/listings/{id}` | [Delete](Controllers/ListingsController.cs#L98) | none | 204 | 404, 409 |
+| GET | `/v1/listings/{id}/availability` | [GetAvailability](Controllers/ListingsController.cs#L118) | none | 200 | 404, 422 |
+| GET | `/v1/listings/{id}/reviews` | [GetReviews](Controllers/ListingsController.cs#L133) | none | 200 | 404 |
+| POST | `/v1/listings/{id}/reviews` | [AddReview](Controllers/ListingsController.cs#L154) | `CreateReviewRequest` | 201 | 400, 404, 429 |
 
 ### Reservations
 
-| Method | Path | Action | Success | Errors |
-| :--- | :--- | :--- | :--- | :--- |
-| GET | `/v1/reservations` | [GetAll](Controllers/ReservationsController.cs#L19) | 200, optional `?status=` | 422 |
-| POST | `/v1/reservations/quote` | [Quote](Controllers/ReservationsController.cs#L43) | 200, `isAvailable` may be false | 404, 422 |
-| POST | `/v1/reservations` | [Create](Controllers/ReservationsController.cs#L61) | 201, Location | 400, 404, 409, 422 |
-| GET | `/v1/reservations/{id}` | [GetById](Controllers/ReservationsController.cs#L88) | 200 | 404 |
-| PATCH | `/v1/reservations/{id}/status` | [UpdateStatus](Controllers/ReservationsController.cs#L95) | 200 | 404, 409, 422 |
-| POST | `/v1/reservations/{id}/cancel` | [Cancel](Controllers/ReservationsController.cs#L106) | 200 | 404, 409, 422 |
-| GET | `/v1/reservations/{id}/messages` | [GetMessages](Controllers/ReservationsController.cs#L123) | 200 | 404 |
-| POST | `/v1/reservations/{id}/messages` | [SendMessage](Controllers/ReservationsController.cs#L134) | 201 | 400, 404, 422 |
+| Method | Path | Action | Request body | Success | Errors |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/v1/reservations` | [GetAll](Controllers/ReservationsController.cs#L29) | none | 200, optional `?status=` | 422 |
+| POST | `/v1/reservations/quote` | [Quote](Controllers/ReservationsController.cs#L43) | `QuoteRequest` | 200, `isAvailable` may be false | 404, 422 |
+| POST | `/v1/reservations` | [Create](Controllers/ReservationsController.cs#L61) | `CreateReservationRequest` | 201, Location | 400, 404, 409, 422 |
+| GET | `/v1/reservations/{id}` | [GetById](Controllers/ReservationsController.cs#L74) | none | 200 | 404 |
+| PATCH | `/v1/reservations/{id}/status` | [UpdateStatus](Controllers/ReservationsController.cs#L92) | `UpdateReservationStatusRequest` | 200 | 404, 409, 422 |
+| POST | `/v1/reservations/{id}/cancel` | [Cancel](Controllers/ReservationsController.cs#L106) | none; optional `reason` query | 200 | 404, 409, 422 |
+| GET | `/v1/reservations/{id}/messages` | [GetMessages](Controllers/ReservationsController.cs#L116) | none | 200 | 404 |
+| POST | `/v1/reservations/{id}/messages` | [SendMessage](Controllers/ReservationsController.cs#L134) | `CreateMessageRequest` | 201 | 400, 404, 422 |
 
-### Hosts and favorites
+### Hosts
 
-| Method | Path | Action | Success | Errors |
-| :--- | :--- | :--- | :--- | :--- |
-| GET | `/v1/hosts` | [GetAll](Controllers/HostsController.cs#L27) | 200, sorted by name | none |
-| GET | `/v1/hosts/{id}` | [GetById](Controllers/HostsController.cs#L36) | 200 | 404 |
-| GET | `/v1/hosts/{id}/listings` | [GetListings](Controllers/HostsController.cs#L47) | 200 | 404 |
-| GET | `/v1/hosts/{id}/verification` | [GetVerification](Controllers/HostsController.cs#L58) | 200 | 404 |
-| GET | `/v1/favorites` | [GetAll](Controllers/FavoritesController.cs#L22) | 200, ordered by title | none |
-| POST | `/v1/favorites/{listingId}` | [Toggle](Controllers/FavoritesController.cs#L37) | 200, `{ listingId, favorited }` | 404 |
+| Method | Path | Action | Request body | Success | Errors |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/v1/hosts` | [GetAll](Controllers/HostsController.cs#L27) | none | 200, sorted by name | none |
+| GET | `/v1/hosts/{id}` | [GetById](Controllers/HostsController.cs#L37) | none | 200 | 404 |
+| GET | `/v1/hosts/{id}/listings` | [GetListings](Controllers/HostsController.cs#L47) | none | 200 | 404 |
+| GET | `/v1/hosts/{id}/verification` | [GetVerification](Controllers/HostsController.cs#L57) | none | 200 | 404 |
+### Favorites
+
+| Method | Path | Action | Request body | Success | Errors |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/v1/favorites` | [GetAll](Controllers/FavoritesController.cs#L27) | none | 200, ordered by title | none |
+| POST | `/v1/favorites/{listingId}` | [Toggle](Controllers/FavoritesController.cs#L37) | none | 200, `{ listingId, favorited }` | 404 |
 
 ### System
 
-| Method | Path | Action | Success | Errors |
-| :--- | :--- | :--- | :--- | :--- |
-| GET | `/v1/system/health` | [Health](Controllers/SystemController.cs#L37) | 200, store probe, version, uptime | none |
-| GET | `/v1/system/stats` | [Stats](Controllers/SystemController.cs#L69) | 200 | none |
-| GET | `/v1/system/stage` | [Stage](Controllers/SystemController.cs#L110) | 200 | none |
-| POST | `/v1/system/reset` | [Reset](Controllers/SystemController.cs#L133) | 200 | 404 outside Development unless enabled |
+| Method | Path | Action | Request body | Success | Errors |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/v1/system/health` | [Health](Controllers/SystemController.cs#L37) | none | 200, store probe, version, uptime | none |
+| GET | `/v1/system/stats` | [Stats](Controllers/SystemController.cs#L69) | none | 200 | none |
+| GET | `/v1/system/stage` | [Stage](Controllers/SystemController.cs#L110) | none | 200 | none |
+| POST | `/v1/system/reset` | [Reset](Controllers/SystemController.cs#L133) | none | 200 | 404 outside Development unless enabled |
 
-`GET /v1/listings` example:
+Copy-paste examples, one per controller:
 
 ```powershell
-Invoke-RestMethod http://localhost:5047/v1/listings?limit=3
+# Listings
+Invoke-RestMethod 'http://localhost:5047/v1/listings?limit=3'
+# Reservations
+Invoke-RestMethod 'http://localhost:5047/v1/reservations'
+# Hosts
+Invoke-RestMethod 'http://localhost:5047/v1/hosts'
+# Favorites
+Invoke-RestMethod 'http://localhost:5047/v1/favorites'
+# System
+Invoke-RestMethod 'http://localhost:5047/v1/system/health'
 ```
+
+All operations can additionally return 429 with ApiError when the API/write budget is exhausted, 400 for malformed binding values, and 500 for an unexpected server failure. Body endpoints can return 415 for an unsupported content type. Success and domain error statuses are listed above; DTO fields are defined in RentalModels.cs and the complete generated OpenAPI schemas.
 
 `POST /v1/hosts` does not exist by design. Host data is seeded; there is no host write API.
 
@@ -453,7 +474,7 @@ Every failure, including model binding, uses:
 | HTTP | Code | Meaning |
 | :--- | :--- | :--- |
 | 400 | `VALIDATION_FAILED` | DataAnnotations or model binding failure; `fieldErrors` is populated |
-| 400 | `UNSUPPORTED_MEDIA_TYPE` | Body was not JSON (415 in HTTP terms, mapped by the result filter) |
+| 415 | `UNSUPPORTED_MEDIA_TYPE` | Body was not JSON; the result filter preserves HTTP 415 in ApiError |
 | 404 | `RESOURCE_NOT_FOUND` | Missing stay, reservation, host or disabled reset |
 | 409 | `BOOKING_CONFLICT` | Dates overlap an active reservation; `details` has the blocking range |
 | 409 | `INVALID_STATUS_TRANSITION` | State machine rejection; `details` has `from`, `to`, `allowed` |
@@ -501,6 +522,7 @@ Request
   -> UseStaticFiles                  cache headers, before the limiter
   -> RateLimitMiddleware             /v1 only, API, write and review windows
   -> CORS                            origins from configuration
+  -> StatusCodePages                 ApiError for unmatched routes and unsupported methods
   -> Swagger and Swagger UI          /swagger
   -> MapControllers                  /v1/...
 ```
@@ -611,19 +633,23 @@ Swagger gets a separate policy with `unsafe-inline` for its own bundled UI. The 
 
 ## Testing
 
+Final evidence: [verification report](docs/VERIFICATION.md), [file-by-file changes](docs/CHANGELOG_FILES.md), [Lighthouse report](output/playwright/lighthouse-desktop.report.html), [browser results](output/playwright/browser-audit.json), [interaction checks](output/playwright/interaction-check.json), and [booking GIF](output/playwright/booking-flow.gif).
+
 ```powershell
 dotnet restore
 dotnet build -warnaserror
 dotnet test
 ```
 
-`dotnet test` runs 59 tests in `tests/StayHubApi.Tests`, all passing on SDK 10.0.302. The suite uses `WebApplicationFactory<Program>`, the `Testing` environment, high rate limits and a store reset before each test.
+`dotnet test` runs 73 tests in `tests/StayHubApi.Tests`, all passing on SDK 10.0.302. The suite uses `WebApplicationFactory<Program>`, the `Testing` environment, high rate limits and a store reset before each test.
 
 | Area | Tests |
 | :--- | :--- |
 | Search | No filters, reversed dates, single date, category plus amenities, booked dates excluded, circle, polygon, pets, unknown sort, distance sort without a circle, page size cap |
 | Reservations | Six-night quote, weekly discount, monthly discount, quote and create parity, past check-in, minimum stay, overlap, capacity, missing dates, illegal transition, pending to confirmed, early check-in, past cancellation |
-| Availability | Missing dates, 92-day window, past days, seeded booked days |
+| Availability | Missing dates, 92-day window, past days, seeded booked days, last representable date |
+| Regression contracts | Routing errors, trimming before validation, atomic rejected update, eight concurrent bookings, security headers on errors, image path validation, fee bounds |
+| Production | Health, HSTS, reset disabled |
 | Reviews | Out-of-range rating, short comment, recomputation, unknown listing |
 | Favorites | Seeded list independent of search, toggle twice, unknown listing |
 | Hosts | Full directory, weighted aggregate, stored verification flags, unknown host, hostId filter |
@@ -646,7 +672,7 @@ node scripts/booking-flow-check.mjs
 .\scripts\verify-openapi.ps1
 ```
 
-`ui-check.mjs` writes a screenshot and fails on a console error, an exception or the global error panel. `booking-flow-check.mjs` opens the sheet, fills the guest form, confirms the booking and fails unless the confirmation panel appears. Both were run against the current tree.
+`ui-check.mjs` writes a screenshot and fails on a console error, an exception or the global error panel. `booking-flow-check.mjs` opens the sheet, fills the guest form, confirms the booking and fails unless the confirmation panel appears. Both were used for the initial QA. The final repeatable audit is `scripts/browser-audit.mjs`; its 60 captures and axe results are in [output/playwright](output/playwright). Setup, command tails, all 25 QA rows, and tooling failures are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md).
 
 ### Manual QA matrix result
 
@@ -665,7 +691,9 @@ node scripts/booking-flow-check.mjs
 | Booking a booked range | Pass, inline conflict, Continue disabled, no reservation created |
 | Double submit | Pass, button disabled while in flight and a submitting guard |
 | Cancel booking | Pass, reason dialog, status updates, dates free |
-| Reviews | Pass, 5 star accepted, count and average recomputed, dialog closes |
+| Reviews | Pass, 1 star accepted and displayed, XSS payload remains literal text, count and average recomputed |
+| Lighthouse desktop | Pass: Performance 100, Accessibility 100, Best Practices 100, SEO 100 |
+| axe WCAG checks | Pass: 60 captures, zero violations, including zero critical and serious |
 | Message thread | Pass, 5 seeded messages, send adds a bubble |
 | CSS and JS no-inline policy | Pass: no `onclick`, `onsubmit`, `style=` or `innerHTML` in `wwwroot` |
 | External runtime requests | Pass: no `googleapis` or `unsplash` references |
@@ -676,7 +704,7 @@ Screenshots are in [docs/screenshots](docs/screenshots): Explore at 1440, 1024, 
 
 ## Demo script for the professor
 
-1. `dotnet run`, open <http://localhost:5047/>. Point out the hero, `18 stays Â· 9 places`, and that the top of the first card is already in the first viewport. The grid came from `POST /v1/listings/search`, called in [explore.js](wwwroot/js/views/explore.js#L39).
+1. `dotnet run`, open <http://localhost:5047/>. Point out the hero, `18 stays · 9 places`, and that the top of the first card is already in the first viewport. The grid came from `POST /v1/listings/search`, called in [explore.js](wwwroot/js/views/explore.js#L39).
 2. Type `prizren`, submit. Two stays remain. Pick `Cabins`; three cabins appear with the count and a removable chip. Change sort to `Lowest price`; prices ascend. Explain `appliedFilters` and [ListingSearchService.cs](Services/ListingSearchService.cs#L29).
 3. Save a stay with the heart, filter Explore to a category that excludes it, then open Saved. The stay is still there because `GET /v1/favorites` is independent of search.
 4. Open listing 1 directly: <http://localhost:5047/#/stay/e14c1d68-0fa4-44bc-b17b-4b248a31e8fd>. Move the calendar forward with Page Down, select a range, and watch the rail quote. Show the minimum stay note and the booked hatch.
@@ -696,19 +724,24 @@ These are true of the current tree.
 - The store is in memory. Restarting the process reseeds it; the reset endpoint exists so a demo can recover without a restart.
 - There is no authentication or authorization. Any caller can create a booking, cancel a seeded one or post a review as any name. That is deliberate for the course scope.
 - Payment is simulated. The token is verified for length, then discarded.
-- The photography is illustrative stock, not photographs of the fictional properties. See [IMAGE_CREDITS.md](docs/IMAGE_CREDITS.md). Images are served at 800 and 1200 pixels wide, not 1600, to keep the checked-in set under 4 MB.
+- The photography is illustrative stock, not photographs of the fictional properties. See [IMAGE_CREDITS.md](docs/IMAGE_CREDITS.md). Listing photos have local 800, 1200 and 1600 pixel landscape variants, plus portraits and detail crops. The complete photo set is 5.37 MB.
 - Each place has exactly two stays, so `More in {city}` usually shows one card and sometimes two. It never invents a third.
 - The circle and polygon filters are fully implemented in the API but the UI only uses the circle through the `Closest` sort, which needs a place query. There is no map drawing surface.
 - `systemVersion` is `2.0.0` from the assembly. The generated OpenAPI document inherits that version.
 - Warnings 1591 are suppressed for public XML documentation. All controller actions and response codes are documented; not every public DTO member has a `<summary>`.
 - The rate limiter is per process and per IP. Restarting clears it.
 - HTTPS redirection and HSTS are production settings. The demo has no certificate, so the redirect is opt-in and off.
-- Lighthouse was not run in this environment. The browser checks cover console errors, layout overflow at five widths, CSP, dark mode and the booking flow; Lighthouse and axe remain a manual step.
+- Production port 5000 is occupied on this machine by Logitech G HUB (`CS_GO_Arx_Applet.exe`). The production integration test passes; a live production launch needs that port freed. The dev app uses 5047.
 - There is no CI run in this workspace. The workflow is checked in and the same three commands pass locally.
 
 ---
 
 ## Decisions
+
+- **Strings are trimmed during JSON deserialization.** Nested fields are validated after trimming, so spaces cannot satisfy minimum lengths.
+- **Routing failures use ApiError too.** Unmatched `/v1` routes and unsupported methods retain their HTTP status and return the common error envelope.
+- **Shared images use one CSS transition name per snapshot.** Data attributes identify the selected image without creating inline styles; review distributions use native progress elements.
+- **Photo variants include 1600px.** The photo budget is 5.37 MB so wide cards can load the requested resolution. All variants are local and individually below 180 KB.
 
 - **Flat service fee.** `PricingMatrix.ServiceFee` stays a flat amount per booking, like the cleaning fee. It preserves the existing JSON contract and is easy to explain. A percentage would need a new field and a migration.
 - **Delete listing returns 409 while active reservations exist.** Cascading would silently destroy a guest's booking. Cancelled and completed reservations are removed with the stay.
@@ -748,13 +781,13 @@ These are true of the current tree.
 
 **What is the difference between `docs/openapi.yaml` and `/swagger/v1/swagger.json`?** They contain the same paths and schemas. The JSON is generated at runtime by Swashbuckle; the YAML is an export of that document with a `servers` entry, checked in so the repository has a reviewable spec. The verify script compares them.
 
-**How do I run the tests?** `dotnet test`. 59 tests, no external services. `dotnet build -warnaserror` must pass first.
+**How do I run the tests?** `dotnet test`. 73 tests, no external services. `dotnet build -warnaserror` must pass first.
 
 **Where is the state machine?** [ReservationRules.cs](Services/ReservationRules.cs#L28) has the transition table; `ValidateTransition` enforces dates. The controller and create path both call it.
 
 **Where are the seeded IDs?** [docs/SEED_IDS.md](docs/SEED_IDS.md), generated from [SeedData.cs](Services/SeedData.cs#L58). Listing 1, host 1 and reservation 1 are stable and referenced by the demo.
 
-**What is not finished?** Real authentication, real payments, HTTPS in the demo, a map drawing UI for polygons, Lighthouse and axe runs, and production deployment. The rest of the brief is implemented.
+**What is not finished?** Real authentication, real payments, HTTPS in the demo, a map drawing UI for polygons, and production deployment are outside the course scope. Live production launch is blocked here by the port 5000 conflict. See the verification report for the measured QA scope.
 
 ---
 

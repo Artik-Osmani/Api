@@ -1126,6 +1126,8 @@ components:
           description: "Simulated payment token. It is checked for length, then discarded and never logged."
           nullable: true
         bookingFlow:
+          maxLength: 30
+          minLength: 0
           type: "string"
           description: "Either `instant_book` or `request_to_book`."
           nullable: true
