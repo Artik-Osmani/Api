@@ -1,91 +1,95 @@
-# Vacation Rental & Booking API (StayHub / FatiHomes)
+# FatiHomes
 
-An enterprise-grade, high-performance REST API combining key features from **Airbnb** (home sharing, host messaging, user reviews, dynamic amenities) and **Booking.com** (real-time booked date conflict checking, daily calendar availability matrices, length-of-stay discounts, occupancy taxes).
+A stays catalogue for Kosovo and Albania. Built with .NET 10 and plain HTML, CSS and JavaScript. Demo data is stored in memory; payments are simulated.
 
----
+## Open the project
 
-## 📁 Project Structure
+Install the .NET 10 SDK, then run from this folder:
 
-```text
-Api/
-├── Controllers/
-│   ├── ListingsController.cs       # Search, CRUD, reviews, and reservation-aware availability
-│   ├── HostsController.cs          # Host profiles, host properties, and trust verification
-│   ├── ReservationsController.cs   # Booking execution, conflict detection, discounts, cancellations
-│   ├── FavoritesController.cs      # User wishlist and favorite property toggles
-│   └── SystemController.cs         # System health check, platform stats, and uptime
-├── Middleware/
-│   ├── ExceptionHandlingMiddleware.cs # RFC 7807 standardized error handling
-│   ├── RateLimitMiddleware.cs         # IP sliding window rate limiting
-│   └── SecurityHeadersMiddleware.cs   # OWASP secure headers (CSP, HSTS, frame protection)
-├── Models/
-│   └── RentalModels.cs             # Strongly-typed domain models, requests, and DTOs
-├── Services/
-│   └── MockDataStore.cs            # Thread-safe in-memory database with pre-seeded listings, reviews & bookings
-├── wwwroot/                        # Integrated web application frontend & Swagger assets
-├── Program.cs                      # Application pipeline, SwaggerGen, and middleware
-└── StayHubApi.csproj               # .NET 10 project definition with XML docs enabled
+```powershell
+dotnet run
 ```
 
----
+[Website](http://localhost:5047/) · [Swagger API](http://localhost:5047/swagger) · [GitHub repository](https://github.com/Artik-Osmani/Api)
 
-## 🚀 How to Run the Project
+Checks: `dotnet build -warnaserror`.
 
-1. Open your terminal in this directory:
-   ```bash
-   dotnet run
-   ```
-2. Open your browser and navigate to:
-   ```text
-   http://localhost:5000/swagger
-   ```
-   This opens the interactive **Swagger UI** with live testing and XML documentation for all endpoints.
+## Where is the code?
 
----
+Click a file to open it at the relevant code. On GitHub, `#L` jumps to the line. If lines move, search for the symbol shown in the link.
 
-## 🔌 Core API Endpoints
+### Page and navigation
 
-### 🏡 Listings
-| Method | Path | Description |
-| :--- | :--- | :--- |
-| `GET` | `/v1/listings` | Fetch all properties (supports `limit`) |
-| `POST` | `/v1/listings/search` | Search with text query, price range, bedrooms/baths, amenities, sorting, and pagination |
-| `GET` | `/v1/listings/{id}` | Retrieve property details |
-| `POST` | `/v1/listings` | Create a new property listing |
-| `PUT` | `/v1/listings/{id}` | Update an existing property |
-| `DELETE` | `/v1/listings/{id}` | Delete a listing |
-| `GET` | `/v1/listings/{id}/availability` | Real-time calendar availability (calculates active booking blocks) |
-| `GET` | `/v1/listings/{id}/reviews` | Fetch reviews and overall listing ratings |
-| `POST` | `/v1/listings/{id}/reviews` | Post a review (automatically updates property star rating & review count) |
+| Part | Code |
+| --- | --- |
+| Page structure | [index.html](wwwroot/index.html#L1) |
+| Logo, stage and platform stats | [index.html · navbar-inner](wwwroot/index.html#L24) |
+| Navbar navigation links | [index.html · primaryNavigation](wwwroot/index.html#L38) |
+| Swagger API docs button | [index.html · swagger-pill](wwwroot/index.html#L58) |
+| Dark / light mode toggle button | [index.html · themeToggle](wwwroot/index.html#L61) |
+| Mobile hamburger menu toggle | [index.html · navMenuToggle](wwwroot/index.html#L62) |
+| Theme toggle behaviour | [app.js · initDarkMode / toggleDarkMode](wwwroot/app.js#L104) |
+| Navigation view switching | [app.js · switchView](wwwroot/app.js#L119) |
+| App startup and initialisation | [app.js · initApp](wwwroot/app.js#L1012) |
 
-### 📅 Reservations & Bookings
-| Method | Path | Description |
-| :--- | :--- | :--- |
-| `GET` | `/v1/reservations` | List all bookings (optional `?status=` filter) |
-| `POST` | `/v1/reservations` | Create booking (enforces double-booking prevention, calculates stay discounts) |
-| `GET` | `/v1/reservations/{id}` | Inspect reservation and fee breakdown |
-| `PATCH` | `/v1/reservations/{id}/status` | Update reservation state (`confirmed`, `checked_in`, `completed`, `cancelled`) |
-| `POST` | `/v1/reservations/{id}/cancel` | Cancel an existing reservation with optional reason |
-| `GET` | `/v1/reservations/{id}/messages` | Get guest/host conversation thread |
-| `POST` | `/v1/reservations/{id}/messages` | Send message in booking thread |
+### Views and interactions
 
-### 👤 Hosts & Favorites
-| Method | Path | Description |
-| :--- | :--- | :--- |
-| `GET` | `/v1/hosts/{id}` | Host profile, total properties, and aggregate host rating |
-| `GET` | `/v1/hosts/{id}/listings` | List all properties managed by this host |
-| `GET` | `/v1/hosts/{id}/verification` | Verification status (ID, background check, response rate) |
-| `GET` | `/v1/favorites` | Get saved favorite properties |
-| `POST` | `/v1/favorites/{id}` | Toggle property favorite on/off |
+| Part | Code |
+| --- | --- |
+| Hero banner and heading | [index.html · hero-section](wwwroot/index.html#L76) |
+| Search console: destination, dates, guests | [index.html · search-console](wwwroot/index.html#L83) |
+| Search execution & query logic | [app.js · executeSearch](wwwroot/app.js#L216) |
+| Category filter strip | [app.js · renderCategories / selectCategory](wwwroot/app.js#L198) |
+| Sorting and superhost / instant book filters | [app.js · toggleSuperhostFilter / toggleInstantBookFilter](wwwroot/app.js#L254) |
+| Stay cards rendering | [app.js · renderListingsGrid](wwwroot/app.js#L266) |
+| Wishlist / save toggle & badge count | [app.js · toggleWishlist / loadFavorites](wwwroot/app.js#L313) |
+| Wishlist view | [app.js · renderWishlist](wwwroot/app.js#L347) |
+| Stay detail modal & availability check | [app.js · openPropertyDetail](wwwroot/app.js#L354) |
+| Multi-step checkout & booking flow | [app.js · startBookingFlow / submitReservation](wwwroot/app.js#L474) |
+| Booking modal HTML structure | [index.html · bookingModal](wwwroot/index.html#L264) |
+| Bookings & itinerary view | [app.js · renderReservations / loadReservations](wwwroot/app.js#L660) |
+| Booking cards, receipts and cancellation | [app.js · renderBookingCard / cancelReservation](wwwroot/app.js#L726) |
+| Review submission modal & star rating | [app.js · openReviewModal / submitReview](wwwroot/app.js#L852) |
+| Host and guest messaging drawer | [app.js · openChatModal / sendChatMessage](wwwroot/app.js#L886) |
+| Verified hosts directory | [app.js · renderHosts](wwwroot/app.js#L939) |
+| Contact view | [index.html · view-contact](wwwroot/index.html#L234) |
+| Toast notifications & confetti animation | [app.js · toast / fireConfetti](wwwroot/app.js#L39) |
 
-### ⚙️ System
-| Method | Path | Description |
-| :--- | :--- | :--- |
-| `GET` | `/v1/system/health` | Health check endpoint |
-| `GET` | `/v1/system/stats` | Platform statistics (total listings, bookings, reviews, uptime) |
+### API and data
 
-## 📄 OpenAPI Specification File
-The complete OpenAPI specification is located at:
-- `docs/openapi.yaml`
+| Part | Code |
+| --- | --- |
+| Backend startup, services and pipeline | [Program.cs](Program.cs#L4) |
+| Swagger API documentation setup | [Program.cs · AddSwaggerGen](Program.cs#L11) |
+| CORS policies (dev & prod) | [Program.cs · AddCors](Program.cs#L22) |
+| Listings, search, availability and reviews | [ListingsController.cs](Controllers/ListingsController.cs#L10) |
+| Bookings, statuses, quotes and chat messages | [ReservationsController.cs](Controllers/ReservationsController.cs#L10) |
+| Hosts and verification endpoints | [HostsController.cs](Controllers/HostsController.cs#L10) |
+| Saved / favorites endpoints | [FavoritesController.cs](Controllers/FavoritesController.cs#L10) |
+| Health, platform stats and stage | [SystemController.cs](Controllers/SystemController.cs#L10) |
+| Strongly-typed domain models and DTOs | [RentalModels.cs](Models/RentalModels.cs) |
+| Thread-safe in-memory database & mock data | [MockDataStore.cs](Services/MockDataStore.cs#L5) |
+| RFC 7807 standardized error handling | [ExceptionHandlingMiddleware.cs](Middleware/ExceptionHandlingMiddleware.cs) |
+| Sliding window rate limiting | [RateLimitMiddleware.cs](Middleware/RateLimitMiddleware.cs) |
+| OWASP security headers (CSP, HSTS) | [SecurityHeadersMiddleware.cs](Middleware/SecurityHeadersMiddleware.cs) |
 
-## This project is made by Artik Osmani, Arber Miftari, Dalmat Ademi, Arber Beqiri, Jon Ferizi
+### Design and assets
+
+| Part | Code |
+| --- | --- |
+| Complete styling, dark mode, components & layouts | [app.css](wwwroot/app.css) |
+| Custom Swagger UI theme | [swagger-custom.css](wwwroot/swagger-custom.css) |
+| Brand logo | [logo.svg](wwwroot/images/logo.svg) |
+
+### Run, configuration and supporting files
+
+| Part | Code |
+| --- | --- |
+| Project definition (.NET 10) | [StayHubApi.csproj](StayHubApi.csproj) |
+| Ports and launch profiles | [launchSettings.json](Properties/launchSettings.json) |
+| Application configuration | [appsettings.json](appsettings.json) |
+| Example HTTP requests | [StayHubApi.http](StayHubApi.http) |
+| Development run script | [run-dev.ps1](run-dev.ps1) |
+| Production run script | [run-prod.ps1](run-prod.ps1) |
+| Albanian project guide | [read.md](read.md) |
+| Student exercise note | [UshtrimiAdili.md](UshtrimiAdili.md) |
