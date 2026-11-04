@@ -21,12 +21,13 @@
     z-index: var(--z-header);
     background: var(--canvas);
     border-bottom: 1px solid transparent;
-    transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+    transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
   }
 
   .site-header[data-scrolled="true"] {
     background: var(--surface);
     border-bottom-color: var(--line);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   }
 
   .header-inner {
@@ -44,6 +45,11 @@
     text-decoration: none;
     justify-self: start;
     min-height: 44px;
+    transition: transform var(--dur-1) var(--ease-out);
+  }
+
+  .brand:hover {
+    transform: translateY(-1px);
   }
 
   .brand-mark {
@@ -78,18 +84,27 @@
     color: var(--ink-2);
     text-decoration: none;
     white-space: nowrap;
+    transition: color var(--dur-1) var(--ease-out);
   }
 
   .primary-nav a:hover {
-    color: var(--ink);
+    color: var(--brand);
   }
 
   .primary-nav a[aria-current="page"] {
-    color: var(--ink);
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 6px;
+    color: var(--brand);
+    font-weight: 600;
+  }
+
+  .primary-nav a[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--brand);
+    border-radius: var(--r-pill);
   }
 
   .nav-count {
@@ -165,6 +180,11 @@
     font-size: 0.6875rem;
     letter-spacing: 0.01em;
     color: var(--muted);
+    transition: color var(--dur-1) var(--ease-out);
+  }
+
+  .tab-bar a:hover {
+    color: var(--ink-2);
   }
 
   .tab-bar a::before {
@@ -174,13 +194,13 @@
     left: 50%;
     width: 0;
     height: 2px;
-    background: var(--accent);
+    background: var(--brand);
     transform: translateX(-50%);
     transition: width var(--dur-1) var(--ease-out);
   }
 
   .tab-bar a[aria-current="page"] {
-    color: var(--ink);
+    color: var(--brand);
   }
 
   .tab-bar a[aria-current="page"]::before {
@@ -301,25 +321,25 @@
   .site-footer {
     border-top: 1px solid var(--line);
     background: var(--surface-2);
-    padding-block: var(--space-16) calc(var(--space-16) + var(--tab-h));
+    padding-block: var(--space-20) calc(var(--space-20) + var(--tab-h));
   }
 
   .footer-grid {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr;
-    gap: var(--space-8);
+    gap: var(--space-10);
     align-items: start;
   }
 
   .footer-brand {
     display: grid;
-    gap: var(--space-3);
+    gap: var(--space-4);
     max-width: 32ch;
   }
 
   .footer-credit {
-    margin-top: var(--space-10);
-    padding-top: var(--space-6);
+    margin-top: var(--space-12);
+    padding-top: var(--space-8);
     border-top: 1px solid var(--line);
     display: flex;
     align-items: center;

@@ -53,34 +53,34 @@
   :root {
     color-scheme: light dark;
 
-    /* Surfaces */
-    --canvas: #f2f3ee;
-    --surface: #fbfbf7;
-    --surface-2: #e9ebe3;
-    --ink: #101713;
-    --ink-2: #344139;
-    --muted: #5b6860;
-    --line: #d7dad0;
-    --line-strong: #b9bfb3;
+    /* Surfaces - Modernized with better contrast */
+    --canvas: #faf9f6;
+    --surface: #ffffff;
+    --surface-2: #f0efe9;
+    --ink: #1a1a1a;
+    --ink-2: #2d3436;
+    --muted: #636e72;
+    --line: #e0e0e0;
+    --line-strong: #b2bec3;
 
-    /* Brand and one accent */
-    --brand: #1e3d30;
-    --brand-soft: #dde6de;
-    --accent: #a86a2e;
-    --accent-text: #8a5522;
-    --accent-soft: #f0e3d2;
+    /* Brand - Vibrant teal-inspired brand color */
+    --brand: #00a896;
+    --brand-soft: #e0f7f4;
+    --accent: #ff6b6b;
+    --accent-text: #e85555;
+    --accent-soft: #ffe5e5;
 
-    /* Semantics */
-    --success: #2c6a4c;
-    --danger: #9e3b32;
-    --danger-soft: #f6e3e0;
+    /* Semantics - Modern palette */
+    --success: #00b894;
+    --danger: #d63031;
+    --danger-soft: #ffe5e5;
 
-    /* Actions */
-    --action-bg: #101713;
-    --action-fg: #f7f8f2;
-    --action-bg-hover: #1e3d30;
+    /* Actions - High contrast, modern */
+    --action-bg: #1a1a1a;
+    --action-fg: #ffffff;
+    --action-bg-hover: #2d3436;
 
-    /* Type */
+    /* Type - Enhanced hierarchy */
     --font-display: "Schibsted Grotesk", "Archivo", "Segoe UI", system-ui, sans-serif;
     --font-ui: "Geist", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
     --font-mono: "Geist Mono", ui-monospace, "Cascadia Mono", monospace;
@@ -89,11 +89,11 @@
     --text-sm: 0.875rem;
     --text-base: 1rem;
     --text-lg: 1.125rem;
-    --text-xl: 1.375rem;
-    --text-2xl: 1.75rem;
-    --text-3xl: 2.25rem;
-    --display-1: clamp(2.75rem, 6vw, 4.75rem);
-    --display-2: clamp(2rem, 4vw, 3rem);
+    --text-xl: 1.5rem;
+    --text-2xl: 1.875rem;
+    --text-3xl: 2.5rem;
+    --display-1: clamp(3rem, 7vw, 5rem);
+    --display-2: clamp(2.25rem, 5vw, 3.5rem);
 
     /* Space. The scale is 4, 8, 12, 16, 24, 32, 40, 48, 64, 80, 96, 128. */
     --space-1: 0.25rem;
@@ -109,10 +109,10 @@
     --space-24: 6rem;
     --space-32: 8rem;
 
-    --gutter: clamp(1rem, 4vw, 3rem);
-    --container: 1360px;
-    --grid-gap: clamp(1rem, 2.5vw, 2rem);
-    --section-y: clamp(3.5rem, 7vw, 7rem);
+    --gutter: clamp(1.25rem, 4vw, 3.5rem);
+    --container: 1400px;
+    --grid-gap: clamp(1.5rem, 2.5vw, 2.5rem);
+    --section-y: clamp(4rem, 8vw, 8rem);
 
     /* Shape */
     --r-xs: 2px;
@@ -149,24 +149,24 @@
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --canvas: #0b110e;
-      --surface: #121a16;
-      --surface-2: #18221d;
-      --ink: #e9ede6;
-      --ink-2: #c0c8bf;
-      --muted: #9aa69d;
-      --line: #26322b;
-      --line-strong: #3a4a40;
-      --brand: #9ac5ac;
-      --brand-soft: #1b2a22;
-      --accent: #d6a165;
-      --accent-text: #d6a165;
-      --accent-soft: #2a2118;
-      --success: #6fbf95;
-      --danger: #e08c83;
-      --danger-soft: #2a1a18;
-      --action-bg: #e9ede6;
-      --action-fg: #0b110e;
+      --canvas: #0f1214;
+      --surface: #1a1d21;
+      --surface-2: #24282e;
+      --ink: #f5f6fa;
+      --ink-2: #dfe6e9;
+      --muted: #b2bec3;
+      --line: #2d3436;
+      --line-strong: #636e72;
+      --brand: #00cec9;
+      --brand-soft: #0f3d3b;
+      --accent: #ff7675;
+      --accent-text: #ff7675;
+      --accent-soft: #3d1f1f;
+      --success: #55efc4;
+      --danger: #ff7675;
+      --danger-soft: #3d1f1f;
+      --action-bg: #f5f6fa;
+      --action-fg: #0f1214;
       --action-bg-hover: #ffffff;
       --shadow-sheet: 0 24px 64px -20px rgb(0 0 0 / 0.7);
       --shadow-rail: 0 18px 40px -30px rgb(0 0 0 / 0.8);
@@ -175,24 +175,24 @@
   }
 
   :root[data-theme="dark"] {
-    --canvas: #0b110e;
-    --surface: #121a16;
-    --surface-2: #18221d;
-    --ink: #e9ede6;
-    --ink-2: #c0c8bf;
-    --muted: #9aa69d;
-    --line: #26322b;
-    --line-strong: #3a4a40;
-    --brand: #9ac5ac;
-    --brand-soft: #1b2a22;
-    --accent: #d6a165;
-    --accent-text: #d6a165;
-    --accent-soft: #2a2118;
-    --success: #6fbf95;
-    --danger: #e08c83;
-    --danger-soft: #2a1a18;
-    --action-bg: #e9ede6;
-    --action-fg: #0b110e;
+    --canvas: #0f1214;
+    --surface: #1a1d21;
+    --surface-2: #24282e;
+    --ink: #f5f6fa;
+    --ink-2: #dfe6e9;
+    --muted: #b2bec3;
+    --line: #2d3436;
+    --line-strong: #636e72;
+    --brand: #00cec9;
+    --brand-soft: #0f3d3b;
+    --accent: #ff7675;
+    --accent-text: #ff7675;
+    --accent-soft: #3d1f1f;
+    --success: #55efc4;
+    --danger: #ff7675;
+    --danger-soft: #3d1f1f;
+    --action-bg: #f5f6fa;
+    --action-fg: #0f1214;
     --action-bg-hover: #ffffff;
     --shadow-sheet: 0 24px 64px -20px rgb(0 0 0 / 0.7);
     --shadow-rail: 0 18px 40px -30px rgb(0 0 0 / 0.8);

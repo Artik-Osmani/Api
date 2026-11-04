@@ -181,15 +181,21 @@ app.UseStatusCodePages(async statusContext =>
         context.TraceIdentifier));
 });
 
-app.UseSwagger();
+app.UseSwagger(options =>
+{
+    options.RouteTemplate = "swagger/{documentName}/swagger.json";
+});
 app.UseSwaggerUI(options =>
 {
-    options.SwaggerEndpoint($"/swagger/v1/swagger.json", $"FatiHomes API v{AppInfo.Version} ({stageName})");
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", $"FatiHomes API v{AppInfo.Version} ({stageName})");
     options.RoutePrefix = "swagger";
     options.DocumentTitle = "FatiHomes API documentation";
-    options.InjectStylesheet("/swagger-custom.css");
+    options.InjectStylesheet("/swagger-custom.css?v=5");
     options.DefaultModelsExpandDepth(-1);
     options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+    options.EnableDeepLinking();
+    options.ShowExtensions();
+    options.DisplayRequestDuration();
 });
 
 app.MapControllers();

@@ -17,16 +17,25 @@
     white-space: nowrap;
     transition: background var(--dur-1) var(--ease-out),
       color var(--dur-1) var(--ease-out),
-      border-color var(--dur-1) var(--ease-out);
+      border-color var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out),
+      box-shadow var(--dur-1) var(--ease-out);
+  }
+
+  .btn:active {
+    transform: scale(0.98);
   }
 
   .btn-primary {
     background: var(--action-bg);
     color: var(--action-fg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   }
 
   .btn-primary:hover {
     background: var(--action-bg-hover);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    transform: translateY(-1px);
   }
 
   .btn-secondary {
@@ -36,7 +45,9 @@
   }
 
   .btn-secondary:hover {
-    border-color: var(--ink);
+    border-color: var(--brand);
+    color: var(--brand);
+    transform: translateY(-1px);
   }
 
   .btn-quiet {
@@ -45,10 +56,12 @@
     text-decoration: underline;
     text-underline-offset: 4px;
     text-decoration-thickness: 1px;
+    transition: color var(--dur-1) var(--ease-out), text-decoration-color var(--dur-1) var(--ease-out);
   }
 
   .btn-quiet:hover {
-    text-decoration-color: var(--accent);
+    color: var(--brand);
+    text-decoration-color: var(--brand);
     text-decoration-thickness: 2px;
   }
 
@@ -260,6 +273,7 @@
     text-decoration-color: var(--line);
     text-decoration-thickness: 1px;
     text-underline-offset: 6px;
+    transition: color var(--dur-1) var(--ease-out), text-decoration-color var(--dur-1) var(--ease-out);
   }
 
   .filter-chip .count {
@@ -269,16 +283,17 @@
   }
 
   .filter-chip:hover {
-    color: var(--ink);
-    text-decoration-color: var(--ink-2);
+    color: var(--brand);
+    text-decoration-color: var(--brand);
   }
 
   .filter-chip[aria-pressed="true"] {
     padding: 0 var(--space-3);
     border-radius: var(--r-pill);
-    background: var(--action-bg);
-    color: var(--action-fg);
+    background: var(--brand);
+    color: var(--surface);
     text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 168, 150, 0.3);
   }
 
   .segmented {
@@ -386,19 +401,32 @@
     min-width: 0;
     color: var(--ink);
     text-decoration: none;
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+
+  .stay-card:hover {
+    transform: translateY(-4px);
   }
 
   .stay-card-media {
     position: relative;
     margin-bottom: var(--space-1);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: box-shadow var(--dur-2) var(--ease-out);
+  }
+
+  .stay-card:hover .stay-card-media {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   }
 
   .stay-card-media img {
-    transition: transform 180ms var(--ease-out);
+    transition: transform var(--dur-3) var(--ease-out);
   }
 
   .stay-card:hover .stay-card-media img {
-    transform: scale(1.02);
+    transform: scale(1.05);
   }
 
   .stay-card-title {
@@ -483,15 +511,21 @@
     background: var(--surface);
     border: 1px solid var(--line);
     color: var(--ink);
-    transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+    transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
   }
 
   .heart-btn:hover {
     border-color: var(--ink-2);
+    transform: scale(1.1);
+  }
+
+  .heart-btn:active {
+    transform: scale(0.95);
   }
 
   .heart-btn[aria-pressed="true"] {
     color: var(--brand);
+    animation: pulse-glow 0.6s ease-out;
   }
 
   .heart-btn[aria-pressed="true"] .icon {
