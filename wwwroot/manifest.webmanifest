@@ -5,8 +5,8 @@
   "start_url": "/#/explore",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#F2F3EE",
-  "theme_color": "#101713",
+  "background_color": "#F8FAFC",
+  "theme_color": "#CF1747",
   "icons": [
     {
       "src": "/images/logo-mark-512.png",

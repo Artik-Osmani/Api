@@ -7,7 +7,7 @@
     gap: var(--space-2);
     min-height: 44px;
     padding: 0 var(--space-4);
-    border-radius: var(--r-md);
+    border-radius: var(--r-pill);
     border: 1px solid transparent;
     font-family: var(--font-ui);
     font-size: 0.9375rem;
@@ -372,15 +372,19 @@
 
   /* Stay card */
   .stay-card-item {
-    position: relative;
-    display: grid;
-    min-width: 0;
+    position: relative; display: grid; min-width: 0;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+    box-shadow: 0 3px 12px rgb(15 23 42 / .035);
+    transition: translate var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+  }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .stay-card-item:hover { translate: 0 -5px; box-shadow: 0 14px 30px rgb(15 23 42 / .1); }
   }
 
   .stay-card {
     position: relative;
     display: grid;
-    grid-template-rows: auto auto auto auto auto;
+    grid-template-rows: auto auto auto 1fr auto;
     align-content: start;
     gap: var(--space-2);
     min-width: 0;
@@ -390,7 +394,8 @@
 
   .stay-card-media {
     position: relative;
-    margin-bottom: var(--space-1);
+    margin: 8px 8px 4px;
+    border-radius: 14px;
   }
 
   .stay-card-media img {
@@ -403,11 +408,14 @@
 
   .stay-card-title {
     font-family: var(--font-display);
-    font-size: clamp(1.125rem, 1.5vw, 1.375rem);
+    font-size: 1.125rem;
+    font-weight: 600;
     line-height: 1.25;
     letter-spacing: -0.01em;
     margin: 0;
   }
+
+  .stay-card > :not(.stay-card-media) { margin-inline: 18px; }
 
   .stay-card:hover .stay-card-title {
     text-decoration: underline;
@@ -432,6 +440,7 @@
     justify-content: space-between;
     gap: var(--space-3);
     margin-top: var(--space-1);
+    margin-bottom: 18px;
     padding-top: var(--space-3);
     border-top: 1px solid var(--line);
   }
@@ -1119,7 +1128,7 @@
 
   .cal-day.is-edge small {
     color: var(--action-fg);
-    opacity: 0.7;
+    opacity: 1;
   }
 
   .cal-day.is-empty {

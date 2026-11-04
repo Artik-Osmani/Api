@@ -8,7 +8,7 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 900 
 const page = await context.newPage();
 page.setDefaultTimeout(15_000);
 const base = process.env.FH_BASE_URL ?? "http://localhost:5047";
-const output = "output/upgrade-v2";
+const output = process.env.FH_OUTPUT_DIR ?? "output/upgrade-v2";
 mkdirSync(output, { recursive: true });
 const checks = [], errors = [], violations = [], motion = [];
 const axe = readFileSync(process.env.FH_AXE_SOURCE, "utf8");

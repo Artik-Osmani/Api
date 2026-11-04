@@ -14,6 +14,22 @@ dotnet run
 
 Checks: `dotnet build -warnaserror` and `dotnet test`.
 
+## Team contributions
+
+These credits follow the actual Git history of [Scrum-18](https://github.com/Artik-Osmani/Api/tree/Scrum-18). Original work has since been refactored into the linked files; these are historical contributions, not claims that every current line has the same author.
+
+| Contributor | Recorded contribution | Evidence / code today |
+| --- | --- | --- |
+| Dalmat | API starter, reservations and messaging, favorites, FatiHomes logo, Contact page and code-navigation README | [API starter](https://github.com/Artik-Osmani/Api/commit/f2e226a), [logo](https://github.com/Artik-Osmani/Api/commit/f573f56), [Contact](https://github.com/Artik-Osmani/Api/commit/2c2ac53) · [Controllers](Controllers), [contact.js](wwwroot/js/views/contact.js) |
+| arber_miftari | Navbar redesign, development documentation and the classroom Git/Jira exercise | [Navbar commit](https://github.com/Artik-Osmani/Api/commit/b6ccdb6), [exercise](https://github.com/Artik-Osmani/Api/commit/dc59faf) · [header](wwwroot/index.html#L43), [layout.css](wwwroot/css/layout.css) |
+| arberbeqiri | Bookings-page redesign/restoration, twelve additional regional listings, mobile/dark-mode fixes and keeping cards visible when saving | [Bookings](https://github.com/Artik-Osmani/Api/commit/8f08b22), [listings](https://github.com/Artik-Osmani/Api/commit/f50fcc9), [wishlist fix](https://github.com/Artik-Osmani/Api/commit/1cc3338) · [trips.js](wwwroot/js/views/trips.js), [SeedData.cs](Services/SeedData.cs), [cards.js](wwwroot/js/cards.js) |
+| Etnik Haziri | Albanian project documentation and correction of the OpenAPI documentation link; branch integration | [Documentation](https://github.com/Artik-Osmani/Api/commit/6c880c8), [OpenAPI link](https://github.com/Artik-Osmani/Api/commit/d349019) · [read.md](read.md), [OpenAPI](docs/openapi.yaml) |
+| Artik Osmani | PHP practice-page and README edits; merged the Contact and exercise pull requests | [PHP edit](https://github.com/Artik-Osmani/Api/commit/380348f), [README edit](https://github.com/Artik-Osmani/Api/commit/646d420), [Contact PR](https://github.com/Artik-Osmani/Api/pull/3) · [php/index.php](php/index.php) |
+| shefkidallku4-bit / Shefki Dallku | Merged the classroom exercise contribution through PR #5; the exercise includes his name | [Recorded merge](https://github.com/Artik-Osmani/Api/commit/31fa568), [original exercise](https://github.com/Artik-Osmani/Api/blob/3349589/UshtrimiAdili.md) |
+| Lowland | Merged the logo, SCRUM-14 and practice-page pull requests | [Logo PR](https://github.com/Artik-Osmani/Api/pull/2), [SCRUM-14 PR](https://github.com/Artik-Osmani/Api/pull/1), [practice PR](https://github.com/Artik-Osmani/Api/pull/6) |
+
+Git records seven author identities here. Accounts may belong to the same person; identities are left separate rather than guessing. PR integration is credited separately from implementation. The current rose visual refresh builds on the team's Scrum-18 design while retaining the tested modular API/client.
+
 ## Where is the code?
 
 Click a file to open it at the relevant code. On GitHub, `#L` jumps to the line. If lines move, search for the symbol shown in the link.
@@ -40,8 +56,8 @@ Click a file to open it at the relevant code. On GitHub, `#L` jumps to the line.
 | Hero: heading, description and photos | [explore.js · buildHero](wwwroot/js/views/explore.js#L117) |
 | Destination shortcuts and real rates | [destinations.js · destinationNavigator](wwwroot/js/destinations.js#L14) |
 | Advanced filters and active chips | [filters.js · openFilters](wwwroot/js/filters.js#L36) |
-| Search: place, dates and guests | [explore.js · buildSearchConsole](wwwroot/js/views/explore.js#L194) |
-| Category filters and sorting | [explore.js · buildToolbar](wwwroot/js/views/explore.js#L514) |
+| Search: place, dates and guests | [explore.js · buildSearchConsole](wwwroot/js/views/explore.js#L154) |
+| Category filters and sorting | [explore.js · buildToolbar](wwwroot/js/views/explore.js#L474) |
 | Stay cards and prices | [cards.js · stayCard](wwwroot/js/cards.js#L15) |
 | Heart / save button | [cards.js · heartButton](wwwroot/js/cards.js#L76) |
 | Stay detail page | [stay.js · renderStay](wwwroot/js/views/stay.js#L26) |
@@ -94,7 +110,7 @@ Click a file to open it at the relevant code. On GitHub, `#L` jumps to the line.
 | Base typography and keyboard focus | [base.css](wwwroot/css/base.css) |
 | Navbar, mobile tabs and footer layout | [layout.css](wwwroot/css/layout.css) |
 | Buttons, cards, inputs and dialogs | [components.css](wwwroot/css/components.css) |
-| Hero and individual page layouts | [pages.css](wwwroot/css/pages.css) |
+| Hero, rounded catalogue grid and individual page layouts | [pages.css](wwwroot/css/pages.css) |
 | Animations and reduced motion | [motion.css](wwwroot/css/motion.css) |
 | Native animation behaviour | [motion.js · reveal](wwwroot/js/motion.js#L25) |
 | Prices, dates and booking references | [format.js · money / bookingCode](wwwroot/js/format.js#L28) |
@@ -121,4 +137,4 @@ Click a file to open it at the relevant code. On GitHub, `#L` jumps to the line.
 | Photo and font licences | [Image credits](docs/IMAGE_CREDITS.md) · [Font licences](docs/FONT_LICENSES.md) |
 | Code licence | [MIT licence](LICENSE) |
 
-Current UI upgrade: destination shortcuts, real advanced filters, eight-stay pagination, shared-image transitions, animated sheets and preserved search choices through booking. [Review and results](docs/UI_UX_V2_RESULTS.md).
+Current design: the original Scrum-18 house logo and rose identity, a photographic hero, pill navigation, rounded cards and working search/booking interactions. [Current verification](docs/SCRUM18_REFRESH.md).

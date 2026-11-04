@@ -59,8 +59,8 @@ export async function renderExplore() {
 
   results.append(
     el("div", { class: "collection-head" },
-      el("h2", { id: "results-heading", text: "The collection" }),
-      el("p", { class: "muted", text: "A home for a few days. A place to return to." })),
+      el("h2", { id: "results-heading", text: "Find your kind of getaway" }),
+      el("p", { class: "muted", text: "18 stays. Nine destinations. A little closer to your next escape." })),
     toolbar.element,
     resultsLine,
     grid,
@@ -84,7 +84,7 @@ export async function renderExplore() {
     results.scrollIntoView({ behavior: reducedMotion() ? "instant" : "smooth", block: "start" });
   });
   context.destinations = destinations;
-  view.append(el("div", { class: "shell" }, hero, console_.desktop, console_.compact,
+  view.append(hero, el("div", { class: "shell explore-content" }, console_.desktop, console_.compact,
     el("section", { class: "place-picker", "aria-labelledby": "places-title" },
       el("div", { class: "place-picker-head" }, el("h2", { id: "places-title", text: "Pick a place" }),
         el("div", { class: "place-picker-tools" }, el("span", { class: "muted", text: "Cities, mountains, the coast" }), destinations.controls)), destinations.element), results));
@@ -120,64 +120,24 @@ function buildHero() {
     section.classList.add("hero-reveal");
   }
 
-  const portrait = el("img", {
-    src: "/images/stays/hero-p1200.webp",
-    srcset: "/images/stays/hero-p800.webp 800w, /images/stays/hero-p1200.webp 1200w",
-    sizes: "(max-width: 899px) 100vw, 36vw",
-    width: 1200,
-    height: 1500,
-    alt: "Illustrative modern villa with a pool and timber balcony",
-    fetchpriority: "high",
-    decoding: "async"
+  const image = el("img", {
+    class: "hero-image",
+    src: "/images/stays/dhermi-cliff-villa-1600.webp",
+    srcset: "/images/stays/dhermi-cliff-villa-800.webp 800w, /images/stays/dhermi-cliff-villa-1200.webp 1200w, /images/stays/dhermi-cliff-villa-1600.webp 1600w",
+    sizes: "100vw", width: 1600, height: 1067,
+    alt: "Illustrative coastal villa with a pool and open terraces",
+    fetchpriority: "high", decoding: "async"
   });
-  attachImageFallback(portrait, "Dhërmi, Albania");
-
-  const landscape = el("img", {
-    src: "/images/stays/prizren-stone-house-1200.webp",
-    srcset: "/images/stays/prizren-stone-house-800.webp 800w, /images/stays/prizren-stone-house-1200.webp 1200w, /images/stays/prizren-stone-house-1600.webp 1600w",
-    sizes: "(max-width: 899px) 100vw, 26vw",
-    width: 1200,
-    height: 800,
-    alt: "Illustrative stone house with a covered porch and lawn",
-    decoding: "async",
-    loading: "lazy"
-  });
-  attachImageFallback(landscape, "Prizren, Kosovo");
-
-  const copy = el(
-    "div",
-    { class: "hero-copy" },
-    el("p", { class: "hero-meta", text: "Kosovo, Albania & the coast" }),
-    el("h1", { class: "hero-title", id: "hero-title", text: "Places with a sense of place." }),
-    el("p", {
-      class: "hero-sub",
-      text: "Eighteen homes across Kosovo, Albania and the coast, chosen for their location and their hosts."
-    }),
-    el(
-      "button",
-      { type: "button", class: "text-link", "data-action": "browse" },
-      "Browse the collection",
-      icon("arrow-right", "icon icon-16")
-    ),
-    el("div", { class: "hero-collection-note" },
-      el("strong", { text: "18" }), el("span", { text: "homes, each with its own story" }),
-      el("span", { class: "hero-note-rule", "aria-hidden": "true" }),
-      el("span", { text: "From €35 / night" }))
+  attachImageFallback(image, "Coastal stays");
+  const copy = el("div", { class: "hero-copy" },
+    el("p", { class: "hero-meta", text: "FATIHOMES · KOSOVO & ALBANIA" }),
+    el("h1", { class: "hero-title", id: "hero-title", text: "Somewhere you’d rather be." }),
+    el("p", { class: "hero-sub", text: "Coastal villas, quiet cabins and city hideaways. Find your next few days away." }),
+    el("button", { type: "button", class: "hero-browse", "data-action": "browse" },
+      "Find your stay", icon("arrow-right", "icon icon-16"))
   );
-
-  const mainFrame = el("div", { class: "media-frame hero-stack-main" });
-  mainFrame.append(
-    portrait,
-    el("p", { class: "hero-caption hero-caption-main", text: "Dhërmi, Albania" })
-  );
-
-  const secondFrame = el("div", { class: "media-frame hero-stack-secondary" });
-  secondFrame.append(
-    landscape,
-    el("p", { class: "hero-caption hero-caption-secondary", text: "Prizren, Kosovo" })
-  );
-
-  section.append(copy, el("div", { class: "hero-stack" }, mainFrame, secondFrame));
+  section.append(image, copy,
+    el("p", { class: "hero-location", text: "Dhërmi, Albania · Illustrative photography" }));
 
   return section;
 }

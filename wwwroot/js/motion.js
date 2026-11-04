@@ -44,7 +44,7 @@ export function reveal(root = document) {
         }
       }
     },
-    { threshold: 0.15, rootMargin: "0px 0px -5% 0px" }
+    { threshold: 0.01, rootMargin: "0px 0px 48px 0px" }
   );
 
   for (const node of nodes) {

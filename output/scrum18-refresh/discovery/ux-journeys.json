@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-11-04T17:33:22.788Z",
+  "passed": 16,
+  "checks": [
+    "Eight initial stays and collection starts in the desktop viewport",
+    "Show more appends 8, then 2 without duplicate stays",
+    "Back navigation restores all appended cards from matching cached search",
+    "Destination shortcut performs a real Prizren search and updates selected state",
+    "Invalid budget stays in the sheet with a readable field error",
+    "Advanced filters send actual price, amenity, room, rating and instant-book fields",
+    "Removing one active chip preserves other API constraints",
+    "Cancelled filter draft does not change results; Clear all resets both controls and state",
+    "Search dates and guests survive advanced filtering, Stay and the booking sheet",
+    "Failed refresh preserves successful cards and offers a working retry",
+    "Each desktop gallery tile opens its own image and arrow keys advance correctly",
+    "Double Save serializes one mutation and reconciles the visible heart with the server",
+    "An obsolete slow Stay request cannot overwrite a later Saved navigation",
+    "Dialog exit has a real native animation and reduced motion closes immediately",
+    "Mobile gallery arrows update the visible photo count",
+    "A partial mobile calendar selection clears the old total and disables Reserve"
+  ],
+  "errors": [],
+  "violations": [],
+  "motion": [
+    {
+      "kind": "dialog-exit",
+      "open": true,
+      "animations": [
+        160
+      ]
+    },
+    {
+      "kind": "reduced-motion-exit",
+      "open": false
+    }
+  ],
+  "failure": null
+}

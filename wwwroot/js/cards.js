@@ -61,7 +61,7 @@ export function stayCard(listing, options = {}) {
     "span",
     { class: "price" },
     el("span", { class: "price-amount", text: money(listing.pricing.baseNightlyRate, { decimals: 0 }) }),
-    el("span", { class: "price-suffix", text: "night" })
+    el("span", { class: "price-suffix", text: "/ night" })
   );
 
   body.push(el("div", { class: "stay-card-foot" }, ratingNode, priceNode));

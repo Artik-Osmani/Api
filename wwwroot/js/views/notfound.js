@@ -19,7 +19,7 @@ export async function renderNotFound() {
     el("a", { class: "btn btn-primary", href: "#/explore", text: "Back to stays" })
   );
 
-  const suggestions = el("div", { class: "suggestions", "aria-label": "Suggested stays" });
+  const suggestions = el("section", { class: "suggestions", "aria-label": "Suggested stays" });
 
   shell.append(panel, suggestions);
   view.append(shell);

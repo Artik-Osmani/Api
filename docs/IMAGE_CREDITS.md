@@ -1,6 +1,6 @@
 # Image credits
 
-All photography is downloaded and self-hosted under `wwwroot/images/stays/`. Nothing is hotlinked. Every listing slug has six WebP files: `-800`, `-1200`, `-1600`, `-p800`, `-d1` and `-d2`. The hero has `hero-p800` and `hero-p1200`.
+All photography is downloaded and self-hosted under `wwwroot/images/stays/`. Nothing is hotlinked. Every listing slug has six WebP files: `-800`, `-1200`, `-1600`, `-p800`, `-d1` and `-d2`. The archived portrait hero has `hero-p800` and `hero-p1200`; the current full-width hero uses the credited `dhermi-cliff-villa` responsive images.
 
 The photographs are illustrative stock images, not photographs of the fictional properties described in the seed data. Photographer names could not be resolved without an Unsplash API key, so only the stable Unsplash photo IDs are recorded. Attribution can be completed later through the Unsplash API.
 
