@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+    branches: [main, upgrade/ui]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore StayHubApi.sln
+
+      - name: Build with warnings as errors
+        run: dotnet build StayHubApi.sln --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test StayHubApi.sln --no-build --verbosity normal

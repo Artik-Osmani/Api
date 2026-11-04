@@ -4,359 +4,153 @@ using StayHubApi.Services;
 
 namespace StayHubApi.Controllers;
 
+/// <summary>
+/// Stays: search, read, write, availability and reviews. Every error is returned as
+/// <see cref="ApiError"/> with a stable <c>code</c>.
+/// </summary>
 [ApiController]
 [Route("v1/listings")]
 [Produces("application/json")]
 public class ListingsController : ControllerBase
 {
-    private readonly MockDataStore _dataStore;
+    private readonly CatalogService _catalog;
+    private readonly ListingSearchService _search;
 
-    public ListingsController(MockDataStore dataStore)
+    public ListingsController(CatalogService catalog, ListingSearchService search)
     {
-        _dataStore = dataStore;
+        _catalog = catalog;
+        _search = search;
     }
 
-    /// <summary>
-    /// Retrieves all vacation rental listings with an optional limit.
-    /// </summary>
+    /// <summary>Lists stays without filtering. Use the search endpoint for anything else.</summary>
+    /// <param name="limit">Maximum number of stays, clamped to 1 through 100. Defaults to 50.</param>
+    /// <response code="200">The stays, newest first.</response>
     [HttpGet]
     [ProducesResponseType(typeof(List<ListingDetail>), StatusCodes.Status200OK)]
-    public ActionResult<List<ListingDetail>> GetAllListings([FromQuery] int limit = 50)
-    {
-        var listings = _dataStore.Read(db => db.Listings.Take(Math.Clamp(limit, 1, 100)).ToList());
-        return Ok(listings);
-    }
+    public ActionResult<List<ListingDetail>> GetAll([FromQuery] int limit = 50)
+        => Ok(_catalog.GetAll(limit));
 
     /// <summary>
-    /// Searches listings by text, date availability, price, room capacities, amenities, and custom sort order.
+    /// Searches stays by text, dates, guests, pets, price, rooms, amenities, rating, neighbourhood,
+    /// host, circle or polygon, with sorting and pagination. Both dates or neither.
     /// </summary>
+    /// <response code="200">A page of results plus <c>appliedFilters</c>.</response>
+    /// <response code="422">Invalid dates, sort, category, price, geo filter or paging.</response>
     [HttpPost("search")]
     [ProducesResponseType(typeof(ListingSearchResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public ActionResult<ListingSearchResponse> SearchListings([FromBody] ListingSearchRequest request)
-    {
-        if (request.CheckInDate.HasValue && request.CheckOutDate.HasValue && request.CheckOutDate <= request.CheckInDate)
-        {
-            return UnprocessableEntity(new { code = "VALIDATION_FAILED", message = "check_out_date must be strictly after check_in_date" });
-        }
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status422UnprocessableEntity)]
+    public ActionResult<ListingSearchResponse> Search([FromBody] ListingSearchRequest request)
+        => Ok(_search.Search(request));
 
-        var results = _dataStore.Read(db =>
-        {
-            var query = db.Listings.AsEnumerable();
-
-            if (!string.IsNullOrWhiteSpace(request.Query))
-            {
-                var q = request.Query.Trim();
-                query = query.Where(l =>
-                    l.Title.Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                    l.Description.Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                    l.Address.City.Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                    l.Address.State.Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                    l.Category.Contains(q, StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (request.GuestsCount > 0)
-            {
-                query = query.Where(l => l.Capacity.MaxGuests >= request.GuestsCount);
-            }
-
-            if (request.MinBedrooms.HasValue)
-            {
-                query = query.Where(l => l.Capacity.Bedrooms >= request.MinBedrooms.Value);
-            }
-
-            if (request.MinBeds.HasValue)
-            {
-                query = query.Where(l => l.Capacity.Beds >= request.MinBeds.Value);
-            }
-
-            if (request.MinBathrooms.HasValue)
-            {
-                query = query.Where(l => l.Capacity.Bathrooms >= request.MinBathrooms.Value);
-            }
-
-            if (request.MinPrice.HasValue)
-            {
-                query = query.Where(l => l.Pricing.BaseNightlyRate >= request.MinPrice.Value);
-            }
-
-            if (request.MaxPrice.HasValue)
-            {
-                query = query.Where(l => l.Pricing.BaseNightlyRate <= request.MaxPrice.Value);
-            }
-
-            if (request.SuperhostOnly)
-            {
-                query = query.Where(l => l.Host.SuperhostStatus);
-            }
-
-            if (request.InstantBookOnly)
-            {
-                query = query.Where(l => l.InstantBookEnabled);
-            }
-
-            if (request.MinRating.HasValue)
-            {
-                query = query.Where(l => l.StarRating >= request.MinRating.Value);
-            }
-
-            if (request.Categories != null && request.Categories.Count > 0)
-            {
-                query = query.Where(l => request.Categories.Contains(l.Category, StringComparer.OrdinalIgnoreCase));
-            }
-
-            if (request.RequiredAmenities != null && request.RequiredAmenities.Count > 0)
-            {
-                query = query.Where(l => request.RequiredAmenities.All(a => l.Amenities.Contains(a, StringComparer.OrdinalIgnoreCase)));
-            }
-
-            // Availability filtering if dates supplied
-            if (request.CheckInDate.HasValue && request.CheckOutDate.HasValue)
-            {
-                var checkIn = request.CheckInDate.Value;
-                var checkOut = request.CheckOutDate.Value;
-
-                var bookedListingIds = db.Reservations
-                    .Where(r => r.Status != "cancelled" && r.CheckInDate < checkOut && r.CheckOutDate > checkIn)
-                    .Select(r => r.ListingId)
-                    .ToHashSet();
-
-                query = query.Where(l => !bookedListingIds.Contains(l.Id));
-            }
-
-            // Sorting
-            query = request.SortBy?.ToLowerInvariant() switch
-            {
-                "price_asc" => query.OrderBy(l => l.Pricing.BaseNightlyRate),
-                "price_desc" => query.OrderByDescending(l => l.Pricing.BaseNightlyRate),
-                "rating_desc" => query.OrderByDescending(l => l.StarRating).ThenByDescending(l => l.ReviewCount),
-                "reviews_desc" => query.OrderByDescending(l => l.ReviewCount),
-                _ => query.OrderByDescending(l => l.StarRating * l.ReviewCount) // popularity default
-            };
-
-            return query.ToList();
-        });
-
-        int pageSize = Math.Clamp(request.PageSize, 1, 100);
-        int page = Math.Max(1, request.Page);
-
-        return Ok(new ListingSearchResponse
-        {
-            Page = page,
-            PageSize = pageSize,
-            TotalRecords = results.Count,
-            TotalPages = (int)Math.Ceiling(results.Count / (double)pageSize),
-            Results = results.Skip((page - 1) * pageSize).Take(pageSize).ToList()
-        });
-    }
-
+    /// <summary>Reads one stay by id.</summary>
+    /// <param name="id">Listing GUID.</param>
+    /// <response code="200">The stay.</response>
+    /// <response code="404">No stay has that id.</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ListingDetail), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<ListingDetail> GetListingById(Guid id)
-    {
-        var listing = _dataStore.Read(db => db.Listings.FirstOrDefault(l => l.Id == id));
-        if (listing == null)
-        {
-            return NotFound(new { code = "RESOURCE_NOT_FOUND", message = $"Listing {id} not found." });
-        }
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status404NotFound)]
+    public ActionResult<ListingDetail> GetById(Guid id)
+        => Ok(_catalog.GetById(id));
 
-        return Ok(listing);
-    }
-
+    /// <summary>
+    /// Creates a stay. The host is looked up by <c>hostId</c>; a caller cannot supply host details.
+    /// </summary>
+    /// <response code="201">The created stay, with a Location header.</response>
+    /// <response code="400">Model binding or DataAnnotations failure.</response>
+    /// <response code="422">Semantic validation failure, for example an unknown category or host.</response>
     [HttpPost]
     [ProducesResponseType(typeof(ListingDetail), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<ListingDetail> CreateListing([FromBody] CreateListingRequest request)
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status422UnprocessableEntity)]
+    public ActionResult<ListingDetail> Create([FromBody] CreateListingRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Title))
-            return BadRequest(new { code = "VALIDATION_FAILED", message = "Title is required" });
-
-        var newListing = new ListingDetail
-        {
-            Id = Guid.NewGuid(),
-            Title = request.Title,
-            Description = request.Description,
-            ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80" : request.ImageUrl,
-            Category = request.Category,
-            Coordinates = request.Coordinates ?? new CoordinatePair(37.7749, -122.4194),
-            Address = request.Address ?? new Address("New St 1", "San Francisco", "CA", "94103", "US", "neigh_central"),
-            Capacity = request.Capacity ?? new CapacityBreakdown(2, 1, 1, 1),
-            Amenities = request.Amenities ?? [],
-            Host = request.Host ?? new HostDetails(Guid.NewGuid(), "Host User", "", 100, 10, true, true),
-            Pricing = request.Pricing ?? new PricingMatrix("USD", 120, 50, 15, 12, 150, new DynamicDiscounts(10, 20, 5)),
-            HouseRules = request.HouseRules ?? new HouseRules("22:00", "08:00", false, false, 0),
-            InstantBookEnabled = request.InstantBookEnabled,
-            StarRating = 5.0,
-            ReviewCount = 0
-        };
-
-        _dataStore.Modify(db => db.Listings.Add(newListing));
-
-        return CreatedAtAction(nameof(GetListingById), new { id = newListing.Id }, newListing);
+        var listing = _catalog.Create(request);
+        return CreatedAtAction(nameof(GetById), new { id = listing.Id }, listing);
     }
 
+    /// <summary>Partially updates a stay. Null properties keep their stored value.</summary>
+    /// <param name="id">Listing GUID.</param>
+    /// <param name="request">Fields to change.</param>
+    /// <response code="200">The updated stay.</response>
+    /// <response code="400">Model binding or DataAnnotations failure.</response>
+    /// <response code="404">No stay has that id.</response>
+    /// <response code="422">Semantic validation failure.</response>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ListingDetail), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<ListingDetail> UpdateListing(Guid id, [FromBody] UpdateListingRequest request)
-    {
-        var updated = _dataStore.Modify(db =>
-        {
-            var listing = db.Listings.FirstOrDefault(l => l.Id == id);
-            if (listing == null) return null;
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status422UnprocessableEntity)]
+    public ActionResult<ListingDetail> Update(Guid id, [FromBody] UpdateListingRequest request)
+        => Ok(_catalog.Update(id, request));
 
-            if (!string.IsNullOrWhiteSpace(request.Title)) listing.Title = request.Title;
-            if (!string.IsNullOrWhiteSpace(request.Description)) listing.Description = request.Description;
-            if (!string.IsNullOrWhiteSpace(request.ImageUrl)) listing.ImageUrl = request.ImageUrl;
-            if (!string.IsNullOrWhiteSpace(request.Category)) listing.Category = request.Category;
-            if (request.Capacity != null) listing.Capacity = request.Capacity;
-            if (request.Amenities != null) listing.Amenities = request.Amenities;
-            if (request.Pricing != null) listing.Pricing = request.Pricing;
-            if (request.HouseRules != null) listing.HouseRules = request.HouseRules;
-            if (request.InstantBookEnabled.HasValue) listing.InstantBookEnabled = request.InstantBookEnabled.Value;
-
-            return listing;
-        });
-
-        if (updated == null)
-            return NotFound(new { code = "RESOURCE_NOT_FOUND", message = $"Listing {id} not found." });
-
-        return Ok(updated);
-    }
-
+    /// <summary>
+    /// Deletes a stay. Blocked with 409 while an active reservation exists. Otherwise the stay, its
+    /// reviews, its favorite entry and any finished reservations are removed.
+    /// </summary>
+    /// <param name="id">Listing GUID.</param>
+    /// <response code="204">Deleted.</response>
+    /// <response code="404">No stay has that id.</response>
+    /// <response code="409">The stay has active reservations.</response>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult DeleteListing(Guid id)
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status409Conflict)]
+    public IActionResult Delete(Guid id)
     {
-        var removed = _dataStore.Modify(db =>
-        {
-            var idx = db.Listings.FindIndex(l => l.Id == id);
-            if (idx >= 0)
-            {
-                db.Listings.RemoveAt(idx);
-                db.FavoriteIds.Remove(id);
-                return true;
-            }
-            return false;
-        });
-
-        if (!removed)
-            return NotFound(new { code = "RESOURCE_NOT_FOUND", message = $"Listing {id} not found." });
-
+        _catalog.Delete(id);
         return NoContent();
     }
 
+    /// <summary>
+    /// Day-by-day availability. Both dates are required, the window is capped at 92 days, past days
+    /// are marked with <c>blockReason: "past"</c> and booked days with <c>"booked"</c>.
+    /// </summary>
+    /// <param name="id">Listing GUID.</param>
+    /// <param name="start_date">First day, <c>YYYY-MM-DD</c>.</param>
+    /// <param name="end_date">Last day, inclusive.</param>
+    /// <response code="200">The calendar window.</response>
+    /// <response code="404">No stay has that id.</response>
+    /// <response code="422">Missing dates, reversed range or a window over 92 days.</response>
     [HttpGet("{id:guid}/availability")]
     [ProducesResponseType(typeof(ListingAvailabilityResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public ActionResult<ListingAvailabilityResponse> GetListingAvailability(
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status422UnprocessableEntity)]
+    public ActionResult<ListingAvailabilityResponse> GetAvailability(
         Guid id,
-        [FromQuery] DateOnly start_date,
-        [FromQuery] DateOnly end_date)
-    {
-        var listing = _dataStore.Read(db => db.Listings.FirstOrDefault(l => l.Id == id));
-        if (listing == null)
-        {
-            return NotFound(new { code = "RESOURCE_NOT_FOUND", message = $"Listing {id} not found." });
-        }
+        [FromQuery] DateOnly? start_date,
+        [FromQuery] DateOnly? end_date)
+        => Ok(_catalog.GetAvailability(id, start_date, end_date));
 
-        if (end_date < start_date)
-        {
-            return UnprocessableEntity(new { code = "VALIDATION_FAILED", message = "end_date cannot precede start_date" });
-        }
-
-        // Check active reservations overlapping this listing
-        var reservations = _dataStore.Read(db => db.Reservations
-            .Where(r => r.ListingId == id && r.Status != "cancelled")
-            .ToList());
-
-        var days = new List<DailyAvailability>();
-        for (var dt = start_date; dt <= end_date; dt = dt.AddDays(1))
-        {
-            var isBooked = reservations.Any(r => dt >= r.CheckInDate && dt < r.CheckOutDate);
-
-            days.Add(new DailyAvailability(
-                Date: dt,
-                IsAvailable: !isBooked,
-                NightlyPrice: listing.Pricing.BaseNightlyRate,
-                MinimumStayNights: 2,
-                BlockReason: isBooked ? "reservation_booked" : "not_blocked"
-            ));
-        }
-
-        return Ok(new ListingAvailabilityResponse(id, start_date, end_date, days));
-    }
-
+    /// <summary>Reviews for a stay, newest first, with the stored average and count.</summary>
+    /// <param name="id">Listing GUID.</param>
+    /// <param name="page">Page number, defaults to 1.</param>
+    /// <param name="pageSize">Page size, clamped to 1 through 50.</param>
+    /// <response code="200">The reviews page.</response>
+    /// <response code="404">No stay has that id.</response>
     [HttpGet("{id:guid}/reviews")]
     [ProducesResponseType(typeof(ReviewsResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<ReviewsResponse> GetListingReviews(Guid id)
-    {
-        var listing = _dataStore.Read(db => db.Listings.FirstOrDefault(l => l.Id == id));
-        if (listing == null)
-        {
-            return NotFound(new { code = "RESOURCE_NOT_FOUND", message = $"Listing {id} not found." });
-        }
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status404NotFound)]
+    public ActionResult<ReviewsResponse> GetReviews(
+        Guid id,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+        => Ok(_catalog.GetReviews(id, page, pageSize));
 
-        var reviews = _dataStore.Read(db => db.Reviews
-            .Where(r => r.ListingId == id)
-            .OrderByDescending(r => r.CreatedAt)
-            .ToList());
-
-        return Ok(new ReviewsResponse(id, listing.StarRating, listing.ReviewCount, reviews));
-    }
-
+    /// <summary>
+    /// Adds a review and recomputes the stay rating and review count from the real records.
+    /// Writes are limited to 5 per minute per IP.
+    /// </summary>
+    /// <param name="id">Listing GUID.</param>
+    /// <param name="request">Rating 1 to 5, comment 20 to 1200 characters, name 2 to 80.</param>
+    /// <response code="201">The created review.</response>
+    /// <response code="400">Rating, comment or name failed validation.</response>
+    /// <response code="404">No stay has that id.</response>
+    /// <response code="429">More than 5 review writes in a minute from this IP.</response>
     [HttpPost("{id:guid}/reviews")]
     [ProducesResponseType(typeof(Review), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiError), StatusCodes.Status429TooManyRequests)]
     public ActionResult<Review> AddReview(Guid id, [FromBody] CreateReviewRequest request)
-    {
-        if (request.Rating < 1 || request.Rating > 5)
-        {
-            return BadRequest(new { code = "VALIDATION_FAILED", message = "Rating must be between 1 and 5." });
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Comment))
-        {
-            return BadRequest(new { code = "VALIDATION_FAILED", message = "Review comment is required." });
-        }
-
-        var review = _dataStore.Modify(db =>
-        {
-            var listing = db.Listings.FirstOrDefault(l => l.Id == id);
-            if (listing == null) return null;
-
-            var newRev = new Review(
-                Id: Guid.NewGuid(),
-                ListingId: id,
-                AuthorId: Guid.NewGuid(),
-                AuthorName: string.IsNullOrWhiteSpace(request.AuthorName) ? "Verified Guest" : request.AuthorName,
-                AuthorAvatarUrl: request.AuthorAvatarUrl,
-                Rating: request.Rating,
-                Comment: request.Comment,
-                CreatedAt: DateTime.UtcNow
-            );
-
-            db.Reviews.Add(newRev);
-
-            // Dynamically recalculate average rating & review count on listing
-            var allRatings = db.Reviews.Where(r => r.ListingId == id).Select(r => r.Rating).ToList();
-            listing.ReviewCount = allRatings.Count;
-            listing.StarRating = Math.Round(allRatings.Average(), 2);
-
-            return newRev;
-        });
-
-        if (review == null)
-        {
-            return NotFound(new { code = "RESOURCE_NOT_FOUND", message = $"Listing {id} not found." });
-        }
-
-        return StatusCode(201, review);
-    }
+        => StatusCode(StatusCodes.Status201Created, _catalog.AddReview(id, request));
 }
-

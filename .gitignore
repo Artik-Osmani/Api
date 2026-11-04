@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+TestResults/
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# Tooling
+node_modules/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

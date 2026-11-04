@@ -1,146 +1,253 @@
-﻿/* Custom Swagger UI styling for FatiHomes */
-body {
-    margin: 0;
-    background: #f8fafc;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+/* Swagger UI theme for FatiHomes. Restrained palette, no gradient, no red brand. */
+
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
-/* Topbar Header */
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  margin: 0;
+  background: #f2f3ee;
+  color: #101713;
+  font-family: "Geist", "Segoe UI", system-ui, sans-serif;
+}
+
 .swagger-ui .topbar {
-    background: linear-gradient(135deg, #ff385c 0%, #e00b41 100%) !important;
-    padding: 14px 24px;
-    box-shadow: 0 4px 15px rgba(224, 11, 65, 0.2);
+  background: #101713;
+  padding: 12px 24px;
 }
 
 .swagger-ui .topbar .topbar-wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: center;
 }
 
 .swagger-ui .topbar .topbar-wrapper a {
-    display: flex;
-    align-items: center;
-    font-weight: 800;
-    font-size: 1.4rem;
-    color: #ffffff !important;
-    letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 1.125rem;
+  color: #f7f8f2;
+  letter-spacing: -0.01em;
+  text-decoration: none;
 }
 
-.swagger-ui .topbar .topbar-wrapper a span {
-    display: none;
+.swagger-ui .topbar .topbar-wrapper img,
+.swagger-ui .topbar .topbar-wrapper svg {
+  display: none;
 }
 
 .swagger-ui .topbar .topbar-wrapper a::after {
-    content: "🏠 FatiHomes API";
-    color: #ffffff;
-    font-size: 1.4rem;
-    font-weight: 800;
+  content: "FatiHomes API";
+  color: #f7f8f2;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
-/* Main Container */
+.swagger-ui .topbar .download-url-wrapper {
+  display: none;
+}
+
 .swagger-ui .wrapper {
-    max-width: 1200px;
-    padding: 24px 20px;
+  max-width: 1200px;
+  padding: 24px 20px 64px;
 }
 
-/* Information Container */
 .swagger-ui .info {
-    margin: 20px 0 30px;
-    background: #ffffff;
-    padding: 24px;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin: 24px 0 32px;
+  background: #fbfbf7;
+  padding: 24px;
+  border-radius: 6px;
+  border: 1px solid #d7dad0;
 }
 
 .swagger-ui .info .title {
-    color: #0f172a;
-    font-size: 2.2rem;
-    font-weight: 800;
+  color: #101713;
+  font-size: 1.75rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .swagger-ui .info .title small {
-    background: #ff385c;
-    color: white;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    padding: 4px 10px;
-    vertical-align: middle;
+  background: #dde6de;
+  color: #1e3d30;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  padding: 2px 8px;
+  vertical-align: middle;
 }
 
-/* Operation Blocks (Endpoints) */
-.swagger-ui .opblock {
-    margin: 0 0 16px 0;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-    border: 1px solid #e2e8f0;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.swagger-ui .opblock:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-}
-
-.swagger-ui .opblock .opblock-summary {
-    padding: 10px 16px;
+.swagger-ui .info p,
+.swagger-ui .info li,
+.swagger-ui .info a,
+.swagger-ui .info .base-url {
+  color: #344139;
+  font-family: "Geist", "Segoe UI", system-ui, sans-serif;
 }
 
 .swagger-ui .opblock-tag {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #1e293b;
-    border-bottom: 2px solid #e2e8f0;
-    padding-bottom: 8px;
-    margin: 24px 0 12px;
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #101713;
+  border-bottom: 1px solid #d7dad0;
+  padding-bottom: 8px;
+  margin: 24px 0 12px;
+  font-family: "Geist", "Segoe UI", system-ui, sans-serif;
 }
 
-/* HTTP Method Badges */
+.swagger-ui .opblock {
+  margin: 0 0 12px 0;
+  border-radius: 4px;
+  box-shadow: none;
+  border: 1px solid #d7dad0;
+  background: #fbfbf7;
+}
+
+.swagger-ui .opblock .opblock-summary {
+  padding: 8px 12px;
+}
+
+.swagger-ui .opblock .opblock-summary-method {
+  border-radius: 3px;
+  font-weight: 500;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  min-width: 72px;
+  background: #1e3d30;
+}
+
 .swagger-ui .opblock.opblock-get .opblock-summary-method {
-    background: #0284c7;
-    border-radius: 6px;
-    font-weight: 700;
-}
-.swagger-ui .opblock.opblock-post .opblock-summary-method {
-    background: #10b981;
-    border-radius: 6px;
-    font-weight: 700;
-}
-.swagger-ui .opblock.opblock-delete .opblock-summary-method {
-    background: #ef4444;
-    border-radius: 6px;
-    font-weight: 700;
-}
-.swagger-ui .opblock.opblock-put .opblock-summary-method {
-    background: #f59e0b;
-    border-radius: 6px;
-    font-weight: 700;
+  background: #1e3d30;
 }
 
-/* Execute Button */
+.swagger-ui .opblock.opblock-post .opblock-summary-method {
+  background: #101713;
+}
+
+.swagger-ui .opblock.opblock-put .opblock-summary-method,
+.swagger-ui .opblock.opblock-patch .opblock-summary-method {
+  background: #a86a2e;
+}
+
+.swagger-ui .opblock.opblock-delete .opblock-summary-method {
+  background: #9e3b32;
+}
+
+.swagger-ui .opblock .opblock-summary-path,
+.swagger-ui .opblock .opblock-summary-path a {
+  color: #101713;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 0.8125rem;
+}
+
+.swagger-ui .opblock .opblock-summary-description {
+  color: #5b6860;
+  font-family: "Geist", "Segoe UI", system-ui, sans-serif;
+}
+
+.swagger-ui .btn {
+  border-radius: 6px;
+  font-family: "Geist", "Segoe UI", system-ui, sans-serif;
+  box-shadow: none;
+}
+
 .swagger-ui .btn.execute {
-    background-color: #ff385c;
-    border-color: #ff385c;
-    color: #fff;
-    border-radius: 8px;
-    font-weight: 700;
-    padding: 8px 30px;
-    box-shadow: 0 2px 4px rgba(255, 56, 92, 0.3);
+  background: #101713;
+  border-color: #101713;
+  color: #f7f8f2;
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 6px 24px;
 }
 
 .swagger-ui .btn.execute:hover {
-    background-color: #e00b41;
+  background: #1e3d30;
+  border-color: #1e3d30;
 }
 
-/* Try it out button */
 .swagger-ui .btn.try-out__btn {
-    border-radius: 6px;
-    font-weight: 600;
-    padding: 4px 14px;
+  border-radius: 6px;
+  font-weight: 500;
 }
 
-/* Schemes & Tables */
+.swagger-ui .btn.authorize {
+  color: #1e3d30;
+  border-color: #1e3d30;
+}
+
 .swagger-ui section.models {
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
+  border-radius: 4px;
+  border: 1px solid #d7dad0;
+  background: #fbfbf7;
+}
+
+.swagger-ui section.models .model-container {
+  background: #fbfbf7;
+}
+
+.swagger-ui .model-box {
+  background: #f2f3ee;
+}
+
+.swagger-ui .highlight-code,
+.swagger-ui .microlight {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.swagger-ui .response-col_status,
+.swagger-ui .response-col_links {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.swagger-ui table thead tr td,
+.swagger-ui table thead tr th {
+  color: #5b6860;
+  font-family: "Geist", "Segoe UI", system-ui, sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #d7dad0;
+}
+
+.swagger-ui .parameters-col_description input[type="text"],
+.swagger-ui .parameters-col_description select,
+.swagger-ui .body-param textarea {
+  border-radius: 4px;
+  border: 1px solid #b9bfb3;
+  background: #fbfbf7;
+  color: #101713;
+}
+
+.swagger-ui .model-title,
+.swagger-ui .model {
+  color: #101713;
+  font-family: "Geist", "Segoe UI", system-ui, sans-serif;
+}
+
+.swagger-ui a {
+  color: #1e3d30;
+}
+
+.swagger-ui .markdown p,
+.swagger-ui .markdown li {
+  color: #344139;
+}
+
+.swagger-ui .opblock-tag:hover,
+.swagger-ui .opblock .opblock-summary:hover {
+  background: #f2f3ee;
 }

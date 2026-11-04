@@ -1,91 +1,124 @@
-# Vacation Rental & Booking API (StayHub / FatiHomes)
+# FatiHomes
 
-An enterprise-grade, high-performance REST API combining key features from **Airbnb** (home sharing, host messaging, user reviews, dynamic amenities) and **Booking.com** (real-time booked date conflict checking, daily calendar availability matrices, length-of-stay discounts, occupancy taxes).
+A stays catalogue for Kosovo and Albania. Built with .NET 10 and plain HTML, CSS and JavaScript. Demo data is stored in memory; payments are simulated.
 
----
+## Open the project
 
-## 📁 Project Structure
+Install the .NET 10 SDK, then run from this folder:
 
-```text
-Api/
-├── Controllers/
-│   ├── ListingsController.cs       # Search, CRUD, reviews, and reservation-aware availability
-│   ├── HostsController.cs          # Host profiles, host properties, and trust verification
-│   ├── ReservationsController.cs   # Booking execution, conflict detection, discounts, cancellations
-│   ├── FavoritesController.cs      # User wishlist and favorite property toggles
-│   └── SystemController.cs         # System health check, platform stats, and uptime
-├── Middleware/
-│   ├── ExceptionHandlingMiddleware.cs # RFC 7807 standardized error handling
-│   ├── RateLimitMiddleware.cs         # IP sliding window rate limiting
-│   └── SecurityHeadersMiddleware.cs   # OWASP secure headers (CSP, HSTS, frame protection)
-├── Models/
-│   └── RentalModels.cs             # Strongly-typed domain models, requests, and DTOs
-├── Services/
-│   └── MockDataStore.cs            # Thread-safe in-memory database with pre-seeded listings, reviews & bookings
-├── wwwroot/                        # Integrated web application frontend & Swagger assets
-├── Program.cs                      # Application pipeline, SwaggerGen, and middleware
-└── StayHubApi.csproj               # .NET 10 project definition with XML docs enabled
+```powershell
+dotnet run
 ```
 
----
+[Website](http://localhost:5047/) · [Swagger API](http://localhost:5047/swagger) · [GitHub repository](https://github.com/Artik-Osmani/Api)
 
-## 🚀 How to Run the Project
+Checks: `dotnet build -warnaserror` and `dotnet test`.
 
-1. Open your terminal in this directory:
-   ```bash
-   dotnet run
-   ```
-2. Open your browser and navigate to:
-   ```text
-   http://localhost:5000/swagger
-   ```
-   This opens the interactive **Swagger UI** with live testing and XML documentation for all endpoints.
+## Where is the code?
 
----
+Click a file to open it at the relevant code. On GitHub, `#L` jumps to the line. If lines move, search for the symbol shown in the link.
 
-## 🔌 Core API Endpoints
+### Page and navigation
 
-### 🏡 Listings
-| Method | Path | Description |
-| :--- | :--- | :--- |
-| `GET` | `/v1/listings` | Fetch all properties (supports `limit`) |
-| `POST` | `/v1/listings/search` | Search with text query, price range, bedrooms/baths, amenities, sorting, and pagination |
-| `GET` | `/v1/listings/{id}` | Retrieve property details |
-| `POST` | `/v1/listings` | Create a new property listing |
-| `PUT` | `/v1/listings/{id}` | Update an existing property |
-| `DELETE` | `/v1/listings/{id}` | Delete a listing |
-| `GET` | `/v1/listings/{id}/availability` | Real-time calendar availability (calculates active booking blocks) |
-| `GET` | `/v1/listings/{id}/reviews` | Fetch reviews and overall listing ratings |
-| `POST` | `/v1/listings/{id}/reviews` | Post a review (automatically updates property star rating & review count) |
+| Part | Code |
+| --- | --- |
+| Page structure | [index.html](wwwroot/index.html#L1) |
+| Logo and header | [index.html · site-header](wwwroot/index.html#L43) |
+| Navbar links | [index.html · primary-nav](wwwroot/index.html#L52) |
+| API button in the navbar | [index.html · api-link](wwwroot/index.html#L61) |
+| Mobile bottom navigation | [index.html · tab-bar](wwwroot/index.html#L111) |
+| Footer | [index.html · site-footer](wwwroot/index.html#L71) |
+| Light / dark / system buttons | [index.html · appearance](wwwroot/index.html#L99) |
+| Theme behaviour | [main.js · initAppearance](wwwroot/js/main.js#L44) |
+| Page links, routing and back button | [router.js · render](wwwroot/js/router.js#L100) |
+| App startup and route registration | [main.js · register](wwwroot/js/main.js#L2) |
 
-### 📅 Reservations & Bookings
-| Method | Path | Description |
-| :--- | :--- | :--- |
-| `GET` | `/v1/reservations` | List all bookings (optional `?status=` filter) |
-| `POST` | `/v1/reservations` | Create booking (enforces double-booking prevention, calculates stay discounts) |
-| `GET` | `/v1/reservations/{id}` | Inspect reservation and fee breakdown |
-| `PATCH` | `/v1/reservations/{id}/status` | Update reservation state (`confirmed`, `checked_in`, `completed`, `cancelled`) |
-| `POST` | `/v1/reservations/{id}/cancel` | Cancel an existing reservation with optional reason |
-| `GET` | `/v1/reservations/{id}/messages` | Get guest/host conversation thread |
-| `POST` | `/v1/reservations/{id}/messages` | Send message in booking thread |
+### Views and interactions
 
-### 👤 Hosts & Favorites
-| Method | Path | Description |
-| :--- | :--- | :--- |
-| `GET` | `/v1/hosts/{id}` | Host profile, total properties, and aggregate host rating |
-| `GET` | `/v1/hosts/{id}/listings` | List all properties managed by this host |
-| `GET` | `/v1/hosts/{id}/verification` | Verification status (ID, background check, response rate) |
-| `GET` | `/v1/favorites` | Get saved favorite properties |
-| `POST` | `/v1/favorites/{id}` | Toggle property favorite on/off |
+| Part | Code |
+| --- | --- |
+| Hero: heading, description and photos | [explore.js · buildHero](wwwroot/js/views/explore.js#L117) |
+| Destination shortcuts and real rates | [destinations.js · destinationNavigator](wwwroot/js/destinations.js#L14) |
+| Advanced filters and active chips | [filters.js · openFilters](wwwroot/js/filters.js#L36) |
+| Search: place, dates and guests | [explore.js · buildSearchConsole](wwwroot/js/views/explore.js#L194) |
+| Category filters and sorting | [explore.js · buildToolbar](wwwroot/js/views/explore.js#L514) |
+| Stay cards and prices | [cards.js · stayCard](wwwroot/js/cards.js#L15) |
+| Heart / save button | [cards.js · heartButton](wwwroot/js/cards.js#L76) |
+| Stay detail page | [stay.js · renderStay](wwwroot/js/views/stay.js#L26) |
+| Photo gallery and lightbox | [stay.js · buildGallery](wwwroot/js/views/stay.js#L236) |
+| Amenities and house rules | [stay.js · buildAmenities / buildRules](wwwroot/js/views/stay.js#L412) |
+| Availability calendar | [calendar.js · createCalendar](wwwroot/js/calendar.js#L23) |
+| Reviews and star ratings | [stay.js · buildReviewsShell](wwwroot/js/views/stay.js#L530) |
+| Reserve panel and live quote | [stay.js · buildRail](wwwroot/js/views/stay.js#L772) |
+| Booking: dates, guest details, confirmation | [booking.js · openBookingSheet](wwwroot/js/booking.js#L30) |
+| Booking dialog HTML | [index.html · tpl-booking](wwwroot/index.html#L184) |
+| Trips and cancellation | [trips.js · renderTrips](wwwroot/js/views/trips.js#L28) |
+| Saved stays | [saved.js · renderSaved](wwwroot/js/views/saved.js#L8) |
+| Host directory | [hosts.js · renderHosts](wwwroot/js/views/hosts.js#L7) |
+| Host details and verification | [host.js · renderHost](wwwroot/js/views/host.js#L8) |
+| Contact page | [contact.js · renderContact](wwwroot/js/views/contact.js#L5) |
+| Message host / chat | [chat.js · openChat](wwwroot/js/chat.js#L11) |
+| 404 page | [notfound.js · renderNotFound](wwwroot/js/views/notfound.js#L6) |
+| Dialogs, focus and close confirmation | [dialog.js · openDialog](wwwroot/js/dialog.js#L10) |
+| Notifications and error messages | [ui.js · toast / errorPanel](wwwroot/js/ui.js#L6) |
 
-### ⚙️ System
-| Method | Path | Description |
-| :--- | :--- | :--- |
-| `GET` | `/v1/system/health` | Health check endpoint |
-| `GET` | `/v1/system/stats` | Platform statistics (total listings, bookings, reviews, uptime) |
+### API and data
 
-## 📄 OpenAPI Specification File
-The complete OpenAPI specification is located at:
-- `docs/openapi.yaml`
+| Part | Code |
+| --- | --- |
+| Frontend requests to the API | [api.js · api](wwwroot/js/api.js#L86) |
+| Backend startup, services and pipeline | [Program.cs](Program.cs#L12) |
+| Swagger API documentation setup | [Program.cs · AddSwaggerGen](Program.cs#L44) |
+| Listings, search, availability and reviews | [ListingsController.cs](Controllers/ListingsController.cs#L14) |
+| Quotes, bookings, status and messages | [ReservationsController.cs](Controllers/ReservationsController.cs#L13) |
+| Hosts and verification endpoints | [HostsController.cs](Controllers/HostsController.cs#L14) |
+| Saved / favorites endpoints | [FavoritesController.cs](Controllers/FavoritesController.cs#L14) |
+| Health, stats, stage and demo reset | [SystemController.cs](Controllers/SystemController.cs#L14) |
+| JSON request and response models | [RentalModels.cs](Models/RentalModels.cs) |
+| Search filtering and sorting rules | [ListingSearchService.cs · Search](Services/ListingSearchService.cs#L6) |
+| Price calculation and discounts | [PricingCalculator.cs · BuildQuote](Services/PricingCalculator.cs#L8) |
+| Double-booking and status rules | [ReservationRules.cs · Overlaps / ValidateTransition](Services/ReservationRules.cs#L45) |
+| Demo listings, hosts and bookings | [SeedData.cs · Build](Services/SeedData.cs#L6) |
+| In-memory storage and locking | [MockDataStore.cs](Services/MockDataStore.cs#L10) |
+| Shared frontend state and cache | [store.js · state](wwwroot/js/store.js#L8) |
+| Error response format | [ApiError.cs](Models/ApiError.cs#L11) |
+| Security headers and CSP | [SecurityHeadersMiddleware.cs](Middleware/SecurityHeadersMiddleware.cs#L9) |
+| API request limits | [RateLimitMiddleware.cs](Middleware/RateLimitMiddleware.cs#L14) |
+| CORS allowed origins | [Program.cs · allowedOrigins](Program.cs#L86) |
 
-## This project is made by Artik Osmani, Arber Miftari, Dalmat Ademi, Arber Beqiri, Jon Ferizi
+### Design and assets
+
+| Part | Code |
+| --- | --- |
+| Colours, dark mode, fonts and spacing | [tokens.css](wwwroot/css/tokens.css) |
+| Base typography and keyboard focus | [base.css](wwwroot/css/base.css) |
+| Navbar, mobile tabs and footer layout | [layout.css](wwwroot/css/layout.css) |
+| Buttons, cards, inputs and dialogs | [components.css](wwwroot/css/components.css) |
+| Hero and individual page layouts | [pages.css](wwwroot/css/pages.css) |
+| Animations and reduced motion | [motion.css](wwwroot/css/motion.css) |
+| Native animation behaviour | [motion.js · reveal](wwwroot/js/motion.js#L25) |
+| Prices, dates and booking references | [format.js · money / bookingCode](wwwroot/js/format.js#L28) |
+| Safe text rendering | [dom.js · el](wwwroot/js/dom.js#L8) |
+| Photos | [images/stays/](wwwroot/images/stays) |
+| Fonts | [fonts/](wwwroot/fonts) |
+| Icons | [icons.svg](wwwroot/images/icons.svg) |
+
+### Run, test and supporting files
+
+| Part | Code |
+| --- | --- |
+| Ports and launch profiles | [launchSettings.json](Properties/launchSettings.json) |
+| App settings, CORS and rate limits | [appsettings.json](appsettings.json) |
+| Tests | [StayHubApi.Tests/](tests/StayHubApi.Tests) |
+| CI build and test workflow | [ci.yml](.github/workflows/ci.yml) |
+| Example API requests | [StayHubApi.http](StayHubApi.http) |
+| Full technical reference | [Technical reference](docs/TECHNICAL_REFERENCE.md) |
+| Test, Lighthouse and browser evidence | [Verification report](docs/VERIFICATION.md) |
+| Code review and improvement plan | [UI / UX review](docs/UI_UX_REVIEW.md) |
+| Detailed implementation prompt | [Upgrade prompt v2](docs/UPGRADE_PROMPT_V2.md) |
+| Current UI verification and recording | [UI / UX v2 results](docs/UI_UX_V2_RESULTS.md) |
+| Albanian project guide | [read.md](read.md) |
+| Photo and font licences | [Image credits](docs/IMAGE_CREDITS.md) · [Font licences](docs/FONT_LICENSES.md) |
+| Code licence | [MIT licence](LICENSE) |
+
+Current UI upgrade: destination shortcuts, real advanced filters, eight-stay pagination, shared-image transitions, animated sheets and preserved search choices through booking. [Review and results](docs/UI_UX_V2_RESULTS.md).
