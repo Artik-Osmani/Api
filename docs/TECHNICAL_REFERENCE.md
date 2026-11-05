@@ -4,7 +4,7 @@
 
 A small, finished stays catalogue for Kosovo, Albania and the coast, with a booking API served from the same .NET process. The web client is static HTML, CSS and JavaScript with no build step. The data layer is an in-memory singleton seeded on start.
 
-**Status:** working end to end. `dotnet build -warnaserror` reports 0 warnings, `dotnet test` passes 73 tests, the final browser audit reports zero axe violations across 60 captures, and the app runs with `dotnet run` alone. Lighthouse desktop scores 100 in all four requested categories. See [verification evidence](../docs/VERIFICATION.md).
+**Archived verification (before UI/UX v2):** `dotnet build -warnaserror` reported 0 warnings, `dotnet test` passed 73 tests, and the browser audit reported zero axe violations across 60 captures. Lighthouse desktop scored 100 in all four categories in that run. See the [archived evidence](VERIFICATION.md). For the current code explanation and latest test result, use the [code walkthrough](CODE_WALKTHROUGH.md).
 
 - **Stack:** .NET 10, ASP.NET Core controllers, Swashbuckle 10.2.3, native CSS, ES modules
 - **Catalogue:** 18 stays in 9 places, 4 hosts, 4 reservations, 15 reviews, 5 messages, 2 favorites

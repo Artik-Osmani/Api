@@ -14,6 +14,16 @@ dotnet run
 
 Checks: `dotnet build -warnaserror` and `dotnet test`.
 
+Latest verification: **78 tests passed, 0 build warnings**. [Logs and walkthrough](docs/CODE_WALKTHROUGH.md#3-explain-the-checks).
+
+## Explain the project
+
+The browser calls the controllers through `api.js`. Controllers delegate to services for search, pricing and booking rules; `MockDataStore` holds the demo data. The server calculates the booking total and checks availability again before creating a reservation.
+
+[Three-minute code walkthrough](docs/CODE_WALKTHROUGH.md) · [Tests and examples](tests/StayHubApi.Tests) · [Interactive API](http://localhost:5047/swagger)
+
+For a presentation, show search → stay details → a demo booking → the matching service and test. Data resets when the server restarts. There is no authentication or real payment processing.
+
 ## Team contributions
 
 These credits follow the actual Git history of [Scrum-18](https://github.com/Artik-Osmani/Api/tree/Scrum-18). Original work has since been refactored into the linked files; these are historical contributions, not claims that every current line has the same author.
@@ -26,9 +36,9 @@ These credits follow the actual Git history of [Scrum-18](https://github.com/Art
 | Etnik Haziri | Albanian project documentation and correction of the OpenAPI documentation link; branch integration | [Documentation](https://github.com/Artik-Osmani/Api/commit/6c880c8), [OpenAPI link](https://github.com/Artik-Osmani/Api/commit/d349019) · [read.md](read.md), [OpenAPI](docs/openapi.yaml) |
 | Artik Osmani | PHP practice-page and README edits; merged the Contact and exercise pull requests | [PHP edit](https://github.com/Artik-Osmani/Api/commit/380348f), [README edit](https://github.com/Artik-Osmani/Api/commit/646d420), [Contact PR](https://github.com/Artik-Osmani/Api/pull/3) · [php/index.php](php/index.php) |
 | shefkidallku4-bit / Shefki Dallku | Merged the classroom exercise contribution through PR #5; the exercise includes his name | [Recorded merge](https://github.com/Artik-Osmani/Api/commit/31fa568), [original exercise](https://github.com/Artik-Osmani/Api/blob/3349589/UshtrimiAdili.md) |
-| Lowland | Merged the logo, SCRUM-14 and practice-page pull requests | [Logo PR](https://github.com/Artik-Osmani/Api/pull/2), [SCRUM-14 PR](https://github.com/Artik-Osmani/Api/pull/1), [practice PR](https://github.com/Artik-Osmani/Api/pull/6) |
+| Jon Ferizi | Merged the logo, SCRUM-14 and practice-page pull requests | [Logo PR](https://github.com/Artik-Osmani/Api/pull/2), [SCRUM-14 PR](https://github.com/Artik-Osmani/Api/pull/1), [practice PR](https://github.com/Artik-Osmani/Api/pull/6) |
 
-Git records seven author identities here. Accounts may belong to the same person; identities are left separate rather than guessing. PR integration is credited separately from implementation. The current rose visual refresh builds on the team's Scrum-18 design while retaining the tested modular API/client.
+Jon Ferizi's display name is confirmed by the team. PR integration is credited separately from implementation. The current visual refresh builds on the team's Scrum-18 design while retaining the tested modular API/client.
 
 ## Where is the code?
 
@@ -100,7 +110,7 @@ Click a file to open it at the relevant code. On GitHub, `#L` jumps to the line.
 | Error response format | [ApiError.cs](Models/ApiError.cs#L11) |
 | Security headers and CSP | [SecurityHeadersMiddleware.cs](Middleware/SecurityHeadersMiddleware.cs#L9) |
 | API request limits | [RateLimitMiddleware.cs](Middleware/RateLimitMiddleware.cs#L14) |
-| CORS allowed origins | [Program.cs · allowedOrigins](Program.cs#L86) |
+| CORS allowed origins | [Program.cs · allowedOrigins](Program.cs#L87) |
 
 ### Design and assets
 

@@ -10,13 +10,18 @@ namespace StayHubApi.Services;
 public class MockDataStore
 {
     private readonly object _lock = new();
+    private readonly TimeProvider _timeProvider;
+    private readonly long _startedAt;
 
-    public MockDataStore()
+    public MockDataStore(TimeProvider? timeProvider = null)
     {
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        ServerStartTimeUtc = _timeProvider.GetUtcNow().UtcDateTime;
+        _startedAt = _timeProvider.GetTimestamp();
         Reset();
     }
 
-    public DateTime ServerStartTimeUtc { get; } = DateTime.UtcNow;
+    public DateTime ServerStartTimeUtc { get; }
 
     public List<ListingDetail> Listings { get; private set; } = [];
 
@@ -30,15 +35,16 @@ public class MockDataStore
 
     public HashSet<Guid> FavoriteIds { get; private set; } = [];
 
-    /// <summary>Whole seconds since the process (not the last reset) started.</summary>
-    public int UptimeSeconds => (int)Math.Max(0, (DateTime.UtcNow - ServerStartTimeUtc).TotalSeconds);
+    /// <summary>Whole seconds since store initialization, unaffected by clock changes or demo resets.</summary>
+    public int UptimeSeconds => (int)Math.Clamp(
+        _timeProvider.GetElapsedTime(_startedAt).TotalSeconds, 0, int.MaxValue);
 
     /// <summary>Replaces every collection with a fresh seed. Idempotent and lock protected.</summary>
     public void Reset()
     {
         lock (_lock)
         {
-            var snapshot = SeedData.Build(DateTime.UtcNow);
+            var snapshot = SeedData.Build(_timeProvider.GetUtcNow().UtcDateTime);
             Listings = snapshot.Listings;
             Hosts = snapshot.Hosts;
             Reservations = snapshot.Reservations;

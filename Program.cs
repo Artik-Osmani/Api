@@ -72,6 +72,7 @@ builder.Services.AddSwaggerGen(options =>
     }
 });
 
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<MockDataStore>();
 builder.Services.AddSingleton<PricingCalculator>();
 builder.Services.AddSingleton<CatalogService>();
@@ -119,6 +120,9 @@ builder.Services.Configure<GzipCompressionProviderOptions>(
 
 var app = builder.Build();
 
+// Initialize the demo store at startup so uptime includes time before the first API request.
+_ = app.Services.GetRequiredService<MockDataStore>();
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Configuration.GetValue("ReverseProxy:Enabled", false))
@@ -154,7 +158,9 @@ app.UseStaticFiles(new StaticFileOptions
         headers.CacheControl = extension switch
         {
             ".woff2" or ".webp" or ".png" or ".ico" => "public, max-age=2592000",
-            ".css" or ".js" or ".svg" => "public, max-age=3600",
+            // These filenames are not content-hashed: revalidate after an update instead of
+            // combining a new page with hour-old scripts/styles. ETags still permit HTTP 304.
+            ".css" or ".js" or ".svg" => "no-cache",
             _ => "no-cache"
         };
     }

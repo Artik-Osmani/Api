@@ -49,4 +49,21 @@ public class SecurityHeaderTests : ApiTestBase
         Assert.False(response.Headers.Contains("X-RateLimit-Limit"));
         Assert.True(response.Headers.CacheControl?.NoCache);
     }
+
+    [Theory]
+    [InlineData("/css/pages.css")]
+    [InlineData("/js/main.js")]
+    [InlineData("/images/logo.svg")]
+    public async Task UnversionedAssets_RevalidateAndSupportConditionalRequests(string path)
+    {
+        using var response = await Client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.CacheControl?.NoCache);
+        Assert.NotNull(response.Headers.ETag);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.IfNoneMatch.Add(response.Headers.ETag!);
+        using var unchanged = await Client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.NotModified, unchanged.StatusCode);
+    }
 }
