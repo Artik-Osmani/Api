@@ -1,0 +1,209 @@
+@layer reset, tokens, base, layout, components, pages, utilities;
+
+/* Self-hosted fonts. Latin subset, which covers ë and ç. */
+@font-face {
+  font-family: "Schibsted Grotesk";
+  src: url("/fonts/schibsted-grotesk-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Schibsted Grotesk";
+  src: url("/fonts/schibsted-grotesk-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* Surfaces - Modernized with better contrast */
+    --canvas: #faf9f6;
+    --surface: #ffffff;
+    --surface-2: #f0efe9;
+    --ink: #1a1a1a;
+    --ink-2: #2d3436;
+    --muted: #636e72;
+    --line: #e0e0e0;
+    --line-strong: #b2bec3;
+
+    /* Brand - Vibrant teal-inspired brand color */
+    --brand: #00a896;
+    --brand-soft: #e0f7f4;
+    --accent: #ff6b6b;
+    --accent-text: #e85555;
+    --accent-soft: #ffe5e5;
+
+    /* Semantics - Modern palette */
+    --success: #00b894;
+    --danger: #d63031;
+    --danger-soft: #ffe5e5;
+
+    /* Actions - High contrast, modern */
+    --action-bg: #1a1a1a;
+    --action-fg: #ffffff;
+    --action-bg-hover: #2d3436;
+
+    /* Type - Enhanced hierarchy */
+    --font-display: "Schibsted Grotesk", "Archivo", "Segoe UI", system-ui, sans-serif;
+    --font-ui: "Geist", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "Cascadia Mono", monospace;
+
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.5rem;
+    --text-2xl: 1.875rem;
+    --text-3xl: 2.5rem;
+    --display-1: clamp(3rem, 7vw, 5rem);
+    --display-2: clamp(2.25rem, 5vw, 3.5rem);
+
+    /* Space. The scale is 4, 8, 12, 16, 24, 32, 40, 48, 64, 80, 96, 128. */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    --space-20: 5rem;
+    --space-24: 6rem;
+    --space-32: 8rem;
+
+    --gutter: clamp(1.25rem, 4vw, 3.5rem);
+    --container: 1400px;
+    --grid-gap: clamp(1.5rem, 2.5vw, 2.5rem);
+    --section-y: clamp(4rem, 8vw, 8rem);
+
+    /* Shape */
+    --r-xs: 2px;
+    --r-sm: 4px;
+    --r-md: 6px;
+    --r-pill: 999px;
+
+    /* Elevation is reserved for sheets, dialogs and the sticky rail. */
+    --shadow-sheet: 0 24px 64px -24px rgb(10 22 15 / 0.55);
+    --shadow-rail: 0 18px 40px -30px rgb(10 22 15 / 0.45);
+    --scrim: rgb(8 14 11 / 0.55);
+
+    /* Layers */
+    --z-base: 0;
+    --z-rail: 10;
+    --z-header: 20;
+    --z-bottom-bar: 30;
+    --z-sheet: 40;
+    --z-toast: 50;
+    --z-skip: 100;
+
+    /* Motion */
+    --dur-1: 120ms;
+    --dur-2: 220ms;
+    --dur-3: 340ms;
+    --dur-4: 560ms;
+    --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
+
+    --header-h: 72px;
+    --tab-h: 56px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --canvas: #0f1214;
+      --surface: #1a1d21;
+      --surface-2: #24282e;
+      --ink: #f5f6fa;
+      --ink-2: #dfe6e9;
+      --muted: #b2bec3;
+      --line: #2d3436;
+      --line-strong: #636e72;
+      --brand: #00cec9;
+      --brand-soft: #0f3d3b;
+      --accent: #ff7675;
+      --accent-text: #ff7675;
+      --accent-soft: #3d1f1f;
+      --success: #55efc4;
+      --danger: #ff7675;
+      --danger-soft: #3d1f1f;
+      --action-bg: #f5f6fa;
+      --action-fg: #0f1214;
+      --action-bg-hover: #ffffff;
+      --shadow-sheet: 0 24px 64px -20px rgb(0 0 0 / 0.7);
+      --shadow-rail: 0 18px 40px -30px rgb(0 0 0 / 0.8);
+      --scrim: rgb(3 6 4 / 0.7);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --canvas: #0f1214;
+    --surface: #1a1d21;
+    --surface-2: #24282e;
+    --ink: #f5f6fa;
+    --ink-2: #dfe6e9;
+    --muted: #b2bec3;
+    --line: #2d3436;
+    --line-strong: #636e72;
+    --brand: #00cec9;
+    --brand-soft: #0f3d3b;
+    --accent: #ff7675;
+    --accent-text: #ff7675;
+    --accent-soft: #3d1f1f;
+    --success: #55efc4;
+    --danger: #ff7675;
+    --danger-soft: #3d1f1f;
+    --action-bg: #f5f6fa;
+    --action-fg: #0f1214;
+    --action-bg-hover: #ffffff;
+    --shadow-sheet: 0 24px 64px -20px rgb(0 0 0 / 0.7);
+    --shadow-rail: 0 18px 40px -30px rgb(0 0 0 / 0.8);
+    --scrim: rgb(3 6 4 / 0.7);
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+}

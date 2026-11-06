@@ -1,0 +1,11 @@
+{
+  "generatedAt": "2026-11-03T21:27:15.983Z",
+  "checks": [
+    "Empty Saved renders the supplied copy and Browse stays action",
+    "320px search sheet excludes background controls from Tab navigation and Escape closes",
+    "Dirty booking close requires confirmation; Keep editing preserves the sheet; Leave closes it",
+    "200% zoom-equivalent metrics at 1440 physical pixels: no horizontal overflow",
+    "At 4x CPU throttle, cold load and Prizren search remain responsive within the 15-second check budget",
+    "Swagger Try it out executes health and displays HTTP 200"
+  ]
+}

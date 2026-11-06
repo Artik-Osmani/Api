@@ -1,0 +1,380 @@
+{
+  "generatedAt": "2026-11-03T21:21:07.711Z",
+  "reports": [
+    {
+      "name": "explore-light-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 26
+    },
+    {
+      "name": "stay-light-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 28
+    },
+    {
+      "name": "booking-light-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 20
+    },
+    {
+      "name": "trips-light-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "saved-light-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "hosts-light-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "explore-light-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 26
+    },
+    {
+      "name": "stay-light-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 28
+    },
+    {
+      "name": "booking-light-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 20
+    },
+    {
+      "name": "trips-light-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "saved-light-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "hosts-light-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "explore-light-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "stay-light-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 27
+    },
+    {
+      "name": "booking-light-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 20
+    },
+    {
+      "name": "trips-light-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "saved-light-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "hosts-light-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "explore-light-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "stay-light-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 27
+    },
+    {
+      "name": "booking-light-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 20
+    },
+    {
+      "name": "trips-light-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "saved-light-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "hosts-light-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "explore-dark-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 26
+    },
+    {
+      "name": "stay-dark-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 28
+    },
+    {
+      "name": "booking-dark-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 20
+    },
+    {
+      "name": "trips-dark-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "saved-dark-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "hosts-dark-1440",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "explore-dark-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 26
+    },
+    {
+      "name": "stay-dark-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 28
+    },
+    {
+      "name": "booking-dark-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 20
+    },
+    {
+      "name": "trips-dark-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "saved-dark-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "hosts-dark-1024",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "explore-dark-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "stay-dark-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 27
+    },
+    {
+      "name": "booking-dark-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 20
+    },
+    {
+      "name": "trips-dark-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "saved-dark-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "hosts-dark-768",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "explore-dark-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "stay-dark-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 27
+    },
+    {
+      "name": "booking-dark-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 20
+    },
+    {
+      "name": "trips-dark-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "saved-dark-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "hosts-dark-375",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "explore-reduced-320",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "stay-reduced-320",
+      "violations": [],
+      "overflow": false,
+      "passes": 27
+    },
+    {
+      "name": "trips-reduced-320",
+      "violations": [],
+      "overflow": false,
+      "passes": 25
+    },
+    {
+      "name": "saved-reduced-320",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "hosts-reduced-320",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "host-reduced-320",
+      "violations": [],
+      "overflow": false,
+      "passes": 24
+    },
+    {
+      "name": "contact-reduced-320",
+      "violations": [],
+      "overflow": false,
+      "passes": 24
+    },
+    {
+      "name": "notfound-reduced-320",
+      "violations": [],
+      "overflow": false,
+      "passes": 22
+    },
+    {
+      "name": "chat-keyboard",
+      "violations": [],
+      "overflow": false,
+      "passes": 16
+    },
+    {
+      "name": "booking-guest-details",
+      "violations": [],
+      "overflow": false,
+      "passes": 18
+    },
+    {
+      "name": "booking-review-weekly",
+      "violations": [],
+      "overflow": false,
+      "passes": 17
+    },
+    {
+      "name": "booking-confirmed-weekly",
+      "violations": [],
+      "overflow": false,
+      "passes": 16
+    }
+  ],
+  "checks": [
+    "Eight routes at 320px with reduced motion",
+    "Calendar PageDown and Enter retain focus after asynchronous month rendering",
+    "Skip link moves focus without changing the route",
+    "Search Prizren returns two stays; saved stay survives a filter excluding it",
+    "Message host sends with Enter; Escape closes and restores focus",
+    "Cancellation dialog submits a reason and refreshes Trips",
+    "One-night booking blocked with inline minimum stay error",
+    "Booked range blocked with inline conflict error",
+    "Weekly booking: one reservation from double click, discount 66.5, total 646.75",
+    "One-star review accepted, XSS payload rendered as literal text",
+    "Cold reload with external networking blocked: shell, fonts and local imagery load"
+  ],
+  "errors": [],
+  "externalRequests": []
+}

@@ -1,0 +1,5 @@
+Test run for C:\Users\dalma\Downloads\projekti_unity\Api\tests\StayHubApi.Tests\bin\Debug\net10.0\StayHubApi.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\dalma\Downloads\projekti_unity\Api\tests\StayHubApi.Tests\TestResults\ui-ux-v2.trx
+
+Passed!  - Failed:     0, Passed:    73, Skipped:     0, Total:    73, Duration: 653 ms - StayHubApi.Tests.dll (net10.0)

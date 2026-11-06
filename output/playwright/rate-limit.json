@@ -1,0 +1,16 @@
+{
+  "successfulRequests": 120,
+  "limitedRequests": 1,
+  "lastStatus": 429,
+  "retryAfter": [
+    "60"
+  ],
+  "staticStatus": 200,
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Too many requests from this address. Wait a moment and try again.",
+    "traceId": "0HNPPT5G4TGMU:00000001",
+    "fieldErrors": null,
+    "details": null
+  }
+}
