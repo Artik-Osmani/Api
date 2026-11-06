@@ -13,6 +13,7 @@ namespace StayHubApi.Controllers;
 [Produces("application/json")]
 public class FavoritesController : ControllerBase
 {
+    //ndryshimi i gjuhes
     private readonly FavoriteService _favorites;
 
     public FavoritesController(FavoriteService favorites)
