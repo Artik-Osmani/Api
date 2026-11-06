@@ -118,6 +118,7 @@ Click a file to open it at the relevant code. On GitHub, `#L` jumps to the line.
 | Detailed implementation prompt | [Upgrade prompt v2](docs/UPGRADE_PROMPT_V2.md) |
 | Current UI verification and recording | [UI / UX v2 results](docs/UI_UX_V2_RESULTS.md) |
 | Albanian project guide | [read.md](read.md) |
+| Contribution report (Dalmat Ademi) | [Kontributet e Dalmat Ademit](docs/CONTRIBUTIONS_DALMAT.md) |
 | Photo and font licences | [Image credits](docs/IMAGE_CREDITS.md) · [Font licences](docs/FONT_LICENSES.md) |
 | Code licence | [MIT licence](LICENSE) |
 
