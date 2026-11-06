@@ -12,7 +12,7 @@ $requestData = [
     "check_out_date" => $_GET['check_out'] ?? "2026-10-20",
     "guests_count" => isset($_GET['guests']) ? (int)$_GET['guests'] : 2
 ];
-
+//artik test
 $ch = curl_init("$apiBaseUrl/v1/listings/search");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
