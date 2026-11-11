@@ -116,6 +116,74 @@ function triggerCardReveals() {
   });
 }
 
+// ---------- Language Switcher (SCRUM-28) ----------
+const I18N = {
+  en: {
+    'meta.title': 'FatiHomes & StayHub — Luxury Vacation Rentals & Hotels',
+    'stats.stays': 'stays',
+    'stats.bookings': 'bookings',
+    'stats.reviews': 'reviews',
+    'nav.explore': 'Explore',
+    'nav.wishlist': 'Wishlist',
+    'nav.bookings': 'Bookings',
+    'nav.hosts': 'Hosts',
+    'nav.contact': 'Contact',
+    'hero.title': 'Find unforgettable stays everywhere',
+    'hero.subtitle': 'Discover handpicked villas, mountain cabins, lofts, and boutique homes.',
+    'search.where': 'Where',
+    'search.checkin': 'Check in',
+    'search.checkout': 'Check out',
+    'search.guests': 'Guests',
+    'search.placeholder': 'Search city, cabin, villa...',
+    'search.cta': '🔍 Search'
+  },
+  sq: {
+    'meta.title': 'FatiHomes & StayHub — Qira pushimi & hotele',
+    'stats.stays': 'qëndrime',
+    'stats.bookings': 'rezervime',
+    'stats.reviews': 'vlerësime',
+    'nav.explore': 'Eksploro',
+    'nav.wishlist': 'Lista',
+    'nav.bookings': 'Rezervimet',
+    'nav.hosts': 'Pritësit',
+    'nav.contact': 'Kontakti',
+    'hero.title': 'Gjej qëndrime të paharrueshme kudo',
+    'hero.subtitle': 'Zbuloni vila të përzgjedhura, kabina maleje, loft-e dhe shtëpi butik.',
+    'search.where': 'Ku',
+    'search.checkin': 'Mbërritja',
+    'search.checkout': 'Nisja',
+    'search.guests': 'Mysafirë',
+    'search.placeholder': 'Kërko qytet, kabinë, vilë...',
+    'search.cta': '🔍 Kërko'
+  }
+};
+const LANG_KEY = 'fatihomes:lang';
+
+function currentLang() {
+  try { return localStorage.getItem(LANG_KEY) || 'en'; }
+  catch { return 'en'; }
+}
+
+function applyLanguage(lang) {
+  const dict = I18N[lang] || I18N.en;
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-lang-key]').forEach(node => {
+    const value = dict[node.dataset.langKey];
+    if (value !== undefined) node.textContent = value;
+  });
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.placeholder = dict['search.placeholder'];
+  document.title = dict['meta.title'];
+  document.querySelectorAll('[data-lang-btn]').forEach(btn =>
+    btn.setAttribute('aria-pressed', String(btn.dataset.langBtn === lang)));
+}
+
+function setLanguage(lang) {
+  if (!I18N[lang]) return;
+  try { localStorage.setItem(LANG_KEY, lang); } catch {}
+  applyLanguage(lang);
+}
+
 // ---------- Dark Mode ----------
 function initDarkMode() {
   const saved = localStorage.getItem('sh-theme') || 'light';
@@ -1499,6 +1567,7 @@ function closeModal(id) {
 // ---------- Initializer ----------
 async function initApp() {
   initDarkMode();
+  applyLanguage(currentLang());
   initNavigation();
   initScrollEffects();
   renderCategories();
