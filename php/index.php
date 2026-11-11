@@ -11,7 +11,7 @@ $requestData = [
     "check_in_date" => $_GET['check_in'] ?? "2026-10-15",
     "check_out_date" => $_GET['check_out'] ?? "2026-10-20",
     "guests_count" => isset($_GET['guests']) ? (int)$_GET['guests'] : 2
-];
+];//artik
 
 $ch = curl_init("$apiBaseUrl/v1/listings/search");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
