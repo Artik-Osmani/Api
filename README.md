@@ -37,9 +37,9 @@ Api/
    ```
 2. Open your browser and navigate to:
    ```text
-   http://localhost:5000/swagger
+   http://localhost:5000
    ```
-   This opens the interactive **Swagger UI** with live testing and XML documentation for all endpoints.
+   The home page is the listing search. Interactive **Swagger UI** (live testing and XML docs) is at `http://localhost:5000/swagger`.
 
 ---
 
@@ -91,3 +91,11 @@ The complete OpenAPI specification is located at:
 - `docs/openapi.yaml`
 
 ## This project is made by Artik Osmani, Arber Miftari, Dalmat Ademi, Arber Beqiri, Jon Ferizi
+
+## Ndryshime të vogla
+
+Ndryshime të vogla mbi `main`, të dokumentuara për pull request:
+
+- Faqja kryesore ka një `meta description` të shkurtër për kërkimet dhe disponueshmërinë.
+- Nëntitulli i hero-s tregon që disponueshmëria përditësohet në kohë reale.
+- Udhëzimet e nisjes tregojnë fillimisht faqen kryesore (`http://localhost:5000`), pastaj Swagger.
