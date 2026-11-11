@@ -224,6 +224,10 @@
       align-self: flex-end;
       border-bottom-right-radius: 2px;
     }
+    /* Language switcher (SCRUM-28) */
+    .lang-switch { display: inline-flex; align-items: center; gap: 2px; background: var(--surface-alt, #f3f3f3); border: 1px solid var(--border, #e4e4e4); border-radius: 999px; padding: 2px; margin-right: 6px; }
+    .lang-btn { border: none; background: transparent; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--text-muted, #717171); transition: all 0.2s ease; }
+    .lang-btn[aria-pressed="true"] { background: var(--primary, #ff385c); color: #fff; }
   </style>
 </head>
 <body>
@@ -240,23 +244,27 @@
           <span class="brand-stage" id="stageBadge">DEV</span>
         </a>
         <div class="stats-ribbon" id="statsRibbon" aria-label="Platform statistics">
-          <span class="stat-pill"><span id="statProperties">6</span><span>stays</span></span>
-          <span class="stat-pill"><span id="statReservations">1</span><span>bookings</span></span>
-          <span class="stat-pill"><span id="statReviews">4</span><span>reviews</span></span>
+          <span class="stat-pill"><span id="statProperties">6</span><span data-lang-key="stats.stays">stays</span></span>
+          <span class="stat-pill"><span id="statReservations">1</span><span data-lang-key="stats.bookings">bookings</span></span>
+          <span class="stat-pill"><span id="statReviews">4</span><span data-lang-key="stats.reviews">reviews</span></span>
         </div>
       </div>
 
       <nav class="nav-tabs" id="primaryNavigation" aria-label="Main navigation">
-        <button class="nav-pill active" id="pill-listings" type="button" data-view="listings" aria-current="page" onclick="switchView('listings')">Explore</button>
+        <button class="nav-pill active" id="pill-listings" type="button" data-view="listings" aria-current="page" onclick="switchView('listings')"><span data-lang-key="nav.explore">Explore</span></button>
         <button class="nav-pill" id="pill-wishlist" type="button" data-view="wishlist" onclick="switchView('wishlist')">
-          Wishlist <span class="nav-badge" id="favCountBadge">0</span>
+          <span data-lang-key="nav.wishlist">Wishlist</span> <span class="nav-badge" id="favCountBadge">0</span>
         </button>
-        <button class="nav-pill" id="pill-reservations" type="button" data-view="reservations" onclick="switchView('reservations')">Bookings</button>
-        <button class="nav-pill" id="pill-hosts" type="button" data-view="hosts" onclick="switchView('hosts')">Hosts</button>
-        <button class="nav-pill" id="pill-contact" type="button" data-view="contact" onclick="switchView('contact')">Contact</button>
+        <button class="nav-pill" id="pill-reservations" type="button" data-view="reservations" onclick="switchView('reservations')"><span data-lang-key="nav.bookings">Bookings</span></button>
+        <button class="nav-pill" id="pill-hosts" type="button" data-view="hosts" onclick="switchView('hosts')"><span data-lang-key="nav.hosts">Hosts</span></button>
+        <button class="nav-pill" id="pill-contact" type="button" data-view="contact" onclick="switchView('contact')"><span data-lang-key="nav.contact">Contact</span></button>
       </nav>
 
       <div class="nav-right">
+        <div class="lang-switch" role="group" aria-label="Language selector" title="Gjuha / Language">
+          <button class="lang-btn" type="button" data-lang-btn="sq" onclick="setLanguage('sq')" aria-pressed="false">SQ</button>
+          <button class="lang-btn" type="button" data-lang-btn="en" onclick="setLanguage('en')" aria-pressed="true">EN</button>
+        </div>
         <a href="/swagger" target="_blank" rel="noopener noreferrer" class="swagger-pill" title="Open Interactive API Docs">API Docs</a>
         <button class="theme-btn" id="themeToggle" type="button" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">&#x1F319;</button>
         <button class="nav-menu-toggle" id="navMenuToggle" type="button" aria-controls="primaryNavigation" aria-expanded="false" aria-label="Open navigation menu">
@@ -276,28 +284,28 @@
     <section class="hero-section">
       <div class="hero-overlay"></div>
       <div class="hero-content">
-        <h1 class="hero-title">Find unforgettable stays everywhere</h1>
-        <p class="hero-subtitle">Discover handpicked villas, mountain cabins, lofts, and boutique homes.</p>
+        <h1 class="hero-title" data-lang-key="hero.title">Find unforgettable stays everywhere</h1>
+        <p class="hero-subtitle" data-lang-key="hero.subtitle">Discover handpicked villas, mountain cabins, lofts, and boutique homes.</p>
 
         <!-- Floating Search Console -->
         <div class="search-console">
           <div class="search-cell">
-            <span class="cell-label">Where</span>
+            <span class="cell-label" data-lang-key="search.where">Where</span>
             <input type="text" id="searchInput" placeholder="Search city, cabin, villa..." />
           </div>
           <div class="search-divider"></div>
           <div class="search-cell">
-            <span class="cell-label">Check in</span>
+            <span class="cell-label" data-lang-key="search.checkin">Check in</span>
             <input type="date" id="checkIn" value="2026-10-15" />
           </div>
           <div class="search-divider"></div>
           <div class="search-cell">
-            <span class="cell-label">Check out</span>
+            <span class="cell-label" data-lang-key="search.checkout">Check out</span>
             <input type="date" id="checkOut" value="2026-10-20" />
           </div>
           <div class="search-divider"></div>
           <div class="search-cell">
-            <span class="cell-label">Guests</span>
+            <span class="cell-label" data-lang-key="search.guests">Guests</span>
             <select id="guestsCount">
               <option value="1">1 Guest</option>
               <option value="2" selected>2 Guests</option>
@@ -307,7 +315,7 @@
             </select>
           </div>
           <button class="btn-search-cta" onclick="executeSearch()">
-            <span>🔍 Search</span>
+            <span data-lang-key="search.cta">🔍 Search</span>
           </button>
         </div>
       </div>
