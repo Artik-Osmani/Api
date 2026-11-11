@@ -27,3 +27,5 @@ Arber
 
 Licenca
 Ky projekt është krijuar për qëllime edukative.
+
+Test note.
