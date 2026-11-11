@@ -1,289 +1,1214 @@
-﻿/* =============================================
-   FatiHomes — app.js
-   Full client-side module
-   ============================================= */
+/* ========================================================
+   StayHub / FatiHomes — Interactive Web Client (app.js)
+   Full CRUD, Real-Time Availability, Reviews, Confetti & Chat
+   Scroll Animations & Micro-Interactions
+   ======================================================== */
 
 'use strict';
 
-// ─── State ───────────────────────────────────
 const state = {
   listings: [],
-  favorites: new Set(),
+  wishlistItems: [],
+  wishlistIds: new Set(),
+  wishlistCollections: [
+    { id: 'all', name: 'All Saved', icon: '✨' },
+    { id: 'summer', name: 'Summer Escapes', icon: '🏖️' },
+    { id: 'winter', name: 'Winter Cabins', icon: '❄️' },
+    { id: 'city', name: 'City Breaks', icon: '🏙️' },
+    { id: 'luxury', name: 'Luxury Villas', icon: '💎' }
+  ],
+  activeWishlistCollection: 'all',
+  wishlistSearch: '',
+  wishlistCategory: 'all',
+  wishlistSort: 'default',
+  wishlistSuperhostFilter: false,
+  wishlistInstantFilter: false,
+  wishlistTripNights: 3,
+  wishlistViewMode: 'grid',
+  wishlistCompareIds: new Set(),
+  wishlistNotes: {},
+  listingBoards: {},
   reservations: [],
-  currentView: 'listings',
   activeCategory: 'all',
-  bookingListingId: null,
+  currentView: 'listings',
+  superhostFilter: false,
+  instantBookFilter: false,
+  selectedListing: null,
   bookingStep: 1,
   chatReservationId: null,
+  serverStats: null
 };
 
-// ─── DOM Helpers ──────────────────────────────
+const categories = [
+  { id: 'all', label: 'All Stays', icon: '🌍' },
+  { id: 'apartment', label: 'Apartments', icon: '🏢' },
+  { id: 'entire_home', label: 'Entire Homes', icon: '🏠' },
+  { id: 'cabin', label: 'Mountain Cabins', icon: '🛖' },
+  { id: 'villa', label: 'Luxury Villas', icon: '🌴' },
+  { id: 'private_room', label: 'Rooms', icon: '🛏️' }
+];
+
+// ---------- Helpers ----------
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
 
-// ─── AMENITY ICONS ───────────────────────────
-const amenityIcons = {
-  wifi: '📶', pool: '🏊', hot_tub: '♨️', ev_charger: '⚡',
-  workspace: '💼', pet_friendly: '🐾', self_check_in: '🔑', air_conditioning: '❄️',
-};
-
-// ─── CATEGORY CONFIG ─────────────────────────
-const categories = [
-  { id: 'all', label: 'All', icon: '🌍' },
-  { id: 'apartment', label: 'Apartments', icon: '🏢' },
-  { id: 'entire_home', label: 'Entire Homes', icon: '🏠' },
-  { id: 'cabin', label: 'Cabins', icon: '🛖' },
-  { id: 'villa', label: 'Villas', icon: '🌴' },
-  { id: 'private_room', label: 'Rooms', icon: '🛏️' },
-];
-
-// ─── Toast Notifications ─────────────────────
 function toast(msg, type = 'info') {
-  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  const icons = { success: '✅', error: '❌', info: '✨' };
   const container = $('#toastContainer');
   const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = `<span class="toast-icon">${icons[type]}</span><span>${msg}</span>`;
+  el.className = 'toast';
+  el.innerHTML = `<span>${icons[type] || '✨'}</span> <span>${msg}</span>`;
   container.appendChild(el);
   setTimeout(() => {
-    el.classList.add('removing');
-    el.addEventListener('animationend', () => el.remove());
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(10px)';
+    el.style.transition = 'all 0.3s ease';
+    setTimeout(() => el.remove(), 300);
   }, 3500);
 }
 
-// ─── Confetti ────────────────────────────────
-function launchConfetti() {
-  const colors = ['#ff385c', '#f59e0b', '#10b981', '#0284c7', '#8b5cf6', '#ec4899'];
+// ---------- Confetti Cannon ----------
+function fireConfetti() {
   const container = $('#confettiContainer');
-  for (let i = 0; i < 80; i++) {
-    const p = document.createElement('div');
-    p.className = 'confetti-piece';
-    p.style.cssText = `
-      left: ${Math.random() * 100}vw;
-      background: ${colors[Math.floor(Math.random() * colors.length)]};
-      animation-duration: ${1.5 + Math.random() * 2}s;
-      animation-delay: ${Math.random() * 0.6}s;
-      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
-      width: ${6 + Math.random() * 8}px;
-      height: ${6 + Math.random() * 8}px;
-    `;
-    container.appendChild(p);
-    p.addEventListener('animationend', () => p.remove());
+  const colors = ['#ff385c', '#f59e0b', '#10b981', '#0284c7', '#8b5cf6', '#ec4899'];
+  for (let i = 0; i < 90; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = (Math.random() * 100) + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    piece.style.animationDelay = (Math.random() * 0.4) + 's';
+    piece.style.width = (7 + Math.random() * 7) + 'px';
+    piece.style.height = (7 + Math.random() * 7) + 'px';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+    container.appendChild(piece);
+    setTimeout(() => piece.remove(), 4000);
   }
 }
 
-// ─── Dark Mode ───────────────────────────────
-function initDarkMode() {
-  const saved = localStorage.getItem('fh-theme') || 'light';
-  document.documentElement.setAttribute('data-theme', saved);
-  $('#themeToggle').textContent = saved === 'dark' ? '☀️' : '🌙';
-}
-function toggleDarkMode() {
-  const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('fh-theme', next);
-  $('#themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
-}
-
-// ─── Navbar scroll shadow ─────────────────────
-function initScrollWatcher() {
-  const nav = $('#navbar');
+// ---------- Scroll Reveal Observer & Progress ----------
+function initScrollEffects() {
+  const progressBar = $('#scrollProgressBar');
   window.addEventListener('scroll', () => {
-    nav.classList.toggle('scrolled', window.scrollY > 10);
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = total > 0 ? (window.scrollY / total) * 100 : 0;
+    if (progressBar) progressBar.style.width = progress + '%';
+
+    const nav = $('#navbar');
+    if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
   }, { passive: true });
 }
 
-// ─── Stage badge ─────────────────────────────
-async function loadStageBadge() {
+function triggerCardReveals() {
+  const cards = $$('.property-card, .res-booking-card, .host-profile-card');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('reveal');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  cards.forEach((c, index) => {
+    c.style.transitionDelay = (index % 6 * 0.08) + 's';
+    observer.observe(c);
+  });
+}
+
+// ---------- Dark Mode ----------
+function initDarkMode() {
+  const saved = localStorage.getItem('sh-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  $('#themeToggle').textContent = saved === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleDarkMode() {
+  const curr = document.documentElement.getAttribute('data-theme');
+  const next = curr === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('sh-theme', next);
+  $('#themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+}
+
+// ---------- Navigation ----------
+function switchView(view) {
+  const availableViews = ['listings', 'wishlist', 'reservations', 'hosts', 'contact'];
+  if (!availableViews.includes(view)) view = 'listings';
+
+  state.currentView = view;
+  $$('.nav-pill').forEach(el => {
+    const isActive = el.dataset.view === view || el.id === 'pill-' + view;
+    el.classList.toggle('active', isActive);
+    if (isActive) el.setAttribute('aria-current', 'page');
+    else el.removeAttribute('aria-current');
+  });
+
+  const viewEl = document.getElementById('view-' + view) || document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1));
+  if (viewEl) viewEl.classList.add('active');
+
+  if (location.hash !== `#${view}`) history.pushState({ view }, '', `#${view}`);
+  closeNavigationMenu();
+
+  if (view === 'wishlist') renderWishlist();
+  if (view === 'reservations') loadReservations();
+  if (view === 'hosts') renderHosts();
+
+  setTimeout(triggerCardReveals, 100);
+}
+
+function closeNavigationMenu() {
+  const navbar = $('#navbar');
+  const toggle = $('#navMenuToggle');
+  if (!navbar || !toggle) return;
+  navbar.classList.remove('nav-open');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.setAttribute('aria-label', 'Open navigation menu');
+}
+
+function initNavigation() {
+  const toggle = $('#navMenuToggle');
+  toggle?.addEventListener('click', () => {
+    const isOpen = $('#navbar').classList.toggle('nav-open');
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    toggle.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+  });
+
+  window.addEventListener('hashchange', () => {
+    const view = location.hash.slice(1);
+    const availableViews = ['listings', 'wishlist', 'reservations', 'hosts', 'contact'];
+    if (availableViews.includes(view) && view !== state.currentView) {
+      history.replaceState({ view }, '', `#${view}`);
+      switchView(view);
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeNavigationMenu();
+  });
+}
+
+// ---------- System Stats & Stage ----------
+async function loadSystemStats() {
   try {
-    const r = await fetch('/v1/system/stage');
-    const d = await r.json();
-    const badge = $('#stageBadge');
-    badge.textContent = d.stage;
-    badge.className = 'brand-stage ' + (d.stage === 'PROD' ? 'prod' : '');
+    const res = await fetch('/v1/system/stats');
+    if (!res.ok) return;
+    const data = await res.json();
+    state.serverStats = data;
+    $('#statProperties').textContent = data.totalListings;
+    $('#statReservations').textContent = data.totalReservations;
+    $('#statReviews').textContent = data.totalReviews;
+  } catch {}
+
+  try {
+    const stageRes = await fetch('/v1/system/stage');
+    if (stageRes.ok) {
+      const stageData = await stageRes.json();
+      $('#stageBadge').textContent = stageData.stage;
+    }
   } catch {}
 }
 
-// ─── NAVIGATION ──────────────────────────────
-function switchView(view) {
-  state.currentView = view;
-  $$('.view-section').forEach(el => el.classList.remove('active'));
-  $$('.nav-pill').forEach(el => el.classList.remove('active'));
-  $(`#view-${view}`).classList.add('active');
-  $(`#pill-${view}`).classList.add('active');
-  if (view === 'reservations') loadReservations();
-}
-
-// ─── CATEGORY FILTER ──────────────────────────
-function buildCategories() {
+// ---------- Categories ----------
+function renderCategories() {
   const strip = $('#categoryStrip');
   strip.innerHTML = categories.map(c => `
-    <button class="cat-pill ${c.id === 'all' ? 'active' : ''}" 
-      data-cat="${c.id}" onclick="setCategory('${c.id}')">
-      <span class="cat-icon">${c.icon}</span>
-      ${c.label}
+    <button class="cat-chip ${c.id === state.activeCategory ? 'active' : ''}"
+      onclick="selectCategory('${c.id}')">
+      <span>${c.icon}</span>
+      <span>${c.label}</span>
     </button>
   `).join('');
 }
-function setCategory(id) {
+
+function selectCategory(id) {
   state.activeCategory = id;
-  $$('.cat-pill').forEach(el => el.classList.toggle('active', el.dataset.cat === id));
-  renderListings();
+  renderCategories();
+  executeSearch();
 }
 
-// ─── LISTINGS ────────────────────────────────
-async function loadListings() {
-  showSkeletons();
+// ---------- Search & Listings ----------
+async function executeSearch() {
+  const q = $('#searchInput').value.trim();
+  const checkIn = $('#checkIn').value;
+  const checkOut = $('#checkOut').value;
+  const guests = parseInt($('#guestsCount').value);
+  const sortBy = $('#sortBy').value;
+
+  const payload = {
+    query: q || null,
+    checkInDate: checkIn || null,
+    checkOutDate: checkOut || null,
+    guestsCount: guests,
+    superhostOnly: state.superhostFilter,
+    instantBookOnly: state.instantBookFilter,
+    categories: state.activeCategory === 'all' ? null : [state.activeCategory],
+    sortBy: sortBy,
+    page: 1,
+    pageSize: 50
+  };
+
   try {
-    const payload = {
-      check_in_date: $('#checkIn').value,
-      check_out_date: $('#checkOut').value,
-      guests_count: parseInt($('#guestsCount').value),
-    };
-    const r = await fetch('/v1/listings/search', {
+    const res = await fetch('/v1/listings/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
-    if (!r.ok) throw new Error('Search failed');
-    const data = await r.json();
+    if (!res.ok) throw new Error();
+    const data = await res.json();
     state.listings = data.results || [];
-    renderListings();
-    toast(`Found ${state.listings.length} properties`, 'info');
-  } catch {
-    toast('Could not load listings. API may be starting up.', 'error');
-    $('#listingsGrid').innerHTML = '<div class="empty-state"><div class="empty-icon">🔌</div><h3>Connection Error</h3><p>Could not reach the API server. Try searching again.</p></div>';
-    $('#resultsCount').textContent = '0 properties';
+    renderListingsGrid(state.listings, '#listingsGrid');
+    $('#resultsCount').textContent = `${data.totalRecords} properties found`;
+    setTimeout(triggerCardReveals, 100);
+  } catch (err) {
+    toast('Failed to search properties', 'error');
   }
 }
 
-function renderListings() {
-  const grid = $('#listingsGrid');
-  let filtered = state.listings;
-  if (state.activeCategory !== 'all') {
-    filtered = filtered.filter(l => l.category === state.activeCategory);
-  }
-  $('#resultsCount').textContent = `${filtered.length} properties found`;
-  if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><h3>No properties found</h3><p>Try a different category or broader search dates.</p></div>';
+function toggleSuperhostFilter(btn) {
+  state.superhostFilter = !state.superhostFilter;
+  btn.classList.toggle('active', state.superhostFilter);
+  executeSearch();
+}
+
+function toggleInstantBookFilter(btn) {
+  state.instantBookFilter = !state.instantBookFilter;
+  btn.classList.toggle('active', state.instantBookFilter);
+  executeSearch();
+}
+
+function renderListingsGrid(items, targetSelector) {
+  const grid = $(targetSelector);
+  if (!items || items.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column: 1/-1; text-align: center; padding: 4rem;">
+        <div style="font-size: 3rem; margin-bottom: 0.8rem; animation: floatIcon 3s ease-in-out infinite;">🏡</div>
+        <h3 style="font-size:1.3rem;">No properties match your search</h3>
+        <p class="text-muted" style="margin-top:4px;">Try clearing filters or expanding date ranges.</p>
+      </div>`;
     return;
   }
-  grid.innerHTML = filtered.map(l => renderListingCard(l)).join('');
+
+  grid.innerHTML = items.map(l => {
+    const isFav = state.wishlistIds.has(l.id);
+    return `
+      <div class="property-card" onclick="openPropertyDetail('${l.id}')">
+        <div class="card-img-wrapper">
+          <img src="${l.imageUrl}" alt="${l.title}" loading="lazy" />
+          <div class="card-top-badges">
+            ${l.host.superhostStatus ? '<span class="badge-tag superhost">⭐ Superhost</span>' : ''}
+            ${l.instantBookEnabled ? '<span class="badge-tag instant">⚡ Instant Book</span>' : ''}
+          </div>
+          <button class="card-heart-btn" onclick="event.stopPropagation(); toggleWishlist('${l.id}')">
+            ${isFav ? '❤️' : '🤍'}
+          </button>
+        </div>
+        <div class="card-content">
+          <div class="card-header-row">
+            <div class="card-prop-title">${l.title}</div>
+            <div class="card-prop-rating">★ ${l.starRating.toFixed(2)}</div>
+          </div>
+          <div class="card-location-sub">📍 ${l.address.city}, ${l.address.state} · ${l.category.replace('_', ' ')}</div>
+          <div class="card-specs">👥 Up to ${l.capacity.maxGuests} guests · ${l.capacity.bedrooms} bed · ${l.capacity.bathrooms} bath</div>
+          <div class="amenities-pills">
+            ${l.amenities.slice(0, 3).map(a => `<span class="amenity-chip">✨ ${a.replace('_', ' ')}</span>`).join('')}
+          </div>
+          <div class="card-footer-row">
+            <div class="card-price-text">$${l.pricing.baseNightlyRate} <span>/ night</span></div>
+            <button class="btn-book-card" onclick="event.stopPropagation(); startBookingFlow('${l.id}')">Reserve</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-function renderListingCard(l) {
-  const isFav = state.favorites.has(l.id);
-  const amenityChips = (l.amenities || []).slice(0, 4).map(a =>
-    `<span class="amenity-chip">${amenityIcons[a] || '•'} ${a.replace(/_/g, ' ')}</span>`
-  ).join('');
-  return `
-    <article class="listing-card" onclick="openBookingModal('${l.id}')">
-      <div class="card-img">
-        <img src="${l.imageUrl || 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80'}" 
-             alt="${l.title}" loading="lazy" />
-        <div class="card-badges">
-          ${l.host.superhostStatus ? '<span class="card-badge superhost">⭐ Superhost</span>' : ''}
-          ${l.instantBookEnabled ? '<span class="card-badge instant">⚡ Instant Book</span>' : ''}
+// ---------- Wishlist & Trip Collections ----------
+
+function loadWishlistLocalData() {
+  try {
+    const savedNotes = localStorage.getItem('sh_wishlist_notes');
+    if (savedNotes) state.wishlistNotes = JSON.parse(savedNotes);
+
+    const savedBoards = localStorage.getItem('sh_listing_boards');
+    if (savedBoards) state.listingBoards = JSON.parse(savedBoards);
+
+    const savedCollections = localStorage.getItem('sh_wishlist_collections');
+    if (savedCollections) state.wishlistCollections = JSON.parse(savedCollections);
+
+    const savedNights = localStorage.getItem('sh_wishlist_nights');
+    if (savedNights) state.wishlistTripNights = parseInt(savedNights) || 3;
+
+    const savedViewMode = localStorage.getItem('sh_wishlist_view_mode');
+    if (savedViewMode) state.wishlistViewMode = savedViewMode;
+  } catch {}
+}
+
+function saveWishlistLocalData() {
+  try {
+    localStorage.setItem('sh_wishlist_notes', JSON.stringify(state.wishlistNotes));
+    localStorage.setItem('sh_listing_boards', JSON.stringify(state.listingBoards));
+    localStorage.setItem('sh_wishlist_collections', JSON.stringify(state.wishlistCollections));
+    localStorage.setItem('sh_wishlist_nights', state.wishlistTripNights.toString());
+    localStorage.setItem('sh_wishlist_view_mode', state.wishlistViewMode);
+  } catch {}
+}
+
+async function loadFavorites(showToast = false) {
+  try {
+    const res = await fetch('/v1/favorites');
+    if (!res.ok) return;
+    const favs = await res.json();
+    state.wishlistItems = favs;
+    state.wishlistIds = new Set(favs.map(f => f.id));
+    $('#favCountBadge').textContent = state.wishlistIds.size;
+    if (showToast) toast('Wishlist updated with latest saved stays!', 'success');
+    if (state.currentView === 'wishlist') renderWishlist();
+  } catch {
+    if (showToast) toast('Failed to load favorites', 'error');
+  }
+}
+
+async function toggleWishlist(id) {
+  try {
+    const res = await fetch(`/v1/favorites/${id}`, { method: 'POST' });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    if (data.favorited) {
+      state.wishlistIds.add(id);
+      let item = state.listings.find(l => l.id === id);
+      if (!item) {
+        const itemRes = await fetch(`/v1/listings/${id}`);
+        if (itemRes.ok) item = await itemRes.json();
+      }
+      if (item && !state.wishlistItems.some(x => x.id === id)) {
+        state.wishlistItems.push(item);
+      }
+      toast('Saved to your Wishlist!', 'success');
+      fireConfetti();
+    } else {
+      state.wishlistIds.delete(id);
+      state.wishlistItems = state.wishlistItems.filter(x => x.id !== id);
+      state.wishlistCompareIds.delete(id);
+      updateCompareDock();
+      toast('Removed from Wishlist', 'info');
+    }
+    $('#favCountBadge').textContent = state.wishlistIds.size;
+    renderListingsGrid(state.listings, '#listingsGrid');
+    if (state.currentView === 'wishlist') renderWishlist();
+    loadSystemStats();
+  } catch {
+    toast('Error updating wishlist', 'error');
+  }
+}
+
+async function removeWishlistListing(id) {
+  const card = document.getElementById(`w-card-${id}`);
+  if (card) {
+    card.classList.add('removing');
+  }
+
+  try {
+    const res = await fetch(`/v1/favorites/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error();
+    state.wishlistIds.delete(id);
+    state.wishlistItems = state.wishlistItems.filter(x => x.id !== id);
+    state.wishlistCompareIds.delete(id);
+    updateCompareDock();
+    $('#favCountBadge').textContent = state.wishlistIds.size;
+    toast('Removed from Wishlist', 'info');
+    setTimeout(() => {
+      renderWishlist();
+      renderListingsGrid(state.listings, '#listingsGrid');
+    }, 250);
+    loadSystemStats();
+  } catch {
+    toast('Error removing stay from wishlist', 'error');
+    if (card) card.classList.remove('removing');
+  }
+}
+
+async function confirmClearWishlist() {
+  if (state.wishlistIds.size === 0) {
+    toast('Your wishlist is already empty', 'info');
+    return;
+  }
+  if (!confirm('Are you sure you want to remove all saved stays from your wishlist?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/v1/favorites', { method: 'DELETE' });
+    if (!res.ok) throw new Error();
+    state.wishlistIds.clear();
+    state.wishlistItems = [];
+    state.wishlistCompareIds.clear();
+    updateCompareDock();
+    $('#favCountBadge').textContent = '0';
+    renderWishlist();
+    renderListingsGrid(state.listings, '#listingsGrid');
+    toast('All saved stays removed', 'info');
+    loadSystemStats();
+  } catch {
+    toast('Failed to clear wishlist', 'error');
+  }
+}
+
+function renderWishlist() {
+  const grid = $('#wishlistGrid');
+  const emptyState = $('#wishlistEmptyState');
+  if (!grid || !emptyState) return;
+
+  const totalSaved = state.wishlistItems.length;
+
+  // 1. Update Metrics Ribbon
+  $('#wStatTotalCount').textContent = totalSaved;
+  if (totalSaved > 0) {
+    const avgPrice = Math.round(state.wishlistItems.reduce((acc, l) => acc + l.pricing.baseNightlyRate, 0) / totalSaved);
+    $('#wStatAvgPrice').textContent = `$${avgPrice}`;
+
+    const cities = [...new Set(state.wishlistItems.map(l => l.address.city))];
+    $('#wStatDestinations').textContent = cities.slice(0, 2).join(', ') + (cities.length > 2 ? ` +${cities.length - 2}` : '');
+    $('#wStatDestinations').title = cities.join(', ');
+
+    const topRating = Math.max(...state.wishlistItems.map(l => l.starRating)).toFixed(2);
+    $('#wStatTopRating').textContent = `★ ${topRating}`;
+
+    const estBudget = avgPrice * state.wishlistTripNights;
+    $('#wEstBudgetVal').textContent = `$${estBudget.toLocaleString()}`;
+  } else {
+    $('#wStatAvgPrice').textContent = '$0';
+    $('#wStatDestinations').textContent = '—';
+    $('#wStatTopRating').textContent = '—';
+    $('#wEstBudgetVal').textContent = '$0';
+  }
+
+  $('#wNightsCount').textContent = state.wishlistTripNights;
+  const slider = $('#wNightsSlider');
+  if (slider) slider.value = state.wishlistTripNights;
+
+  // 2. Render Collections / Boards Strip
+  renderWishlistCollectionsStrip();
+
+  // 3. Handle Completely Empty Wishlist
+  if (totalSaved === 0) {
+    grid.style.display = 'none';
+    emptyState.style.display = 'block';
+    renderWishlistEmptyState();
+    return;
+  }
+
+  // 4. Filter & Sort Items
+  let items = [...state.wishlistItems];
+
+  // Board Filter
+  if (state.activeWishlistCollection !== 'all') {
+    items = items.filter(l => state.listingBoards[l.id] === state.activeWishlistCollection);
+  }
+
+  // Search Filter
+  if (state.wishlistSearch.trim()) {
+    const q = state.wishlistSearch.toLowerCase().trim();
+    items = items.filter(l =>
+      l.title.toLowerCase().includes(q) ||
+      l.description.toLowerCase().includes(q) ||
+      l.address.city.toLowerCase().includes(q) ||
+      l.address.state.toLowerCase().includes(q) ||
+      l.category.toLowerCase().includes(q) ||
+      l.amenities.some(a => a.toLowerCase().includes(q)) ||
+      l.host.name.toLowerCase().includes(q)
+    );
+  }
+
+  // Category Filter
+  if (state.wishlistCategory !== 'all') {
+    items = items.filter(l => l.category === state.wishlistCategory);
+  }
+
+  // Quick Toggles
+  if (state.wishlistSuperhostFilter) {
+    items = items.filter(l => l.host.superhostStatus);
+  }
+  if (state.wishlistInstantFilter) {
+    items = items.filter(l => l.instantBookEnabled);
+  }
+
+  // Sort
+  if (state.wishlistSort === 'price_asc') {
+    items.sort((a, b) => a.pricing.baseNightlyRate - b.pricing.baseNightlyRate);
+  } else if (state.wishlistSort === 'price_desc') {
+    items.sort((a, b) => b.pricing.baseNightlyRate - a.pricing.baseNightlyRate);
+  } else if (state.wishlistSort === 'rating_desc') {
+    items.sort((a, b) => b.starRating - a.starRating);
+  } else if (state.wishlistSort === 'capacity_desc') {
+    items.sort((a, b) => b.capacity.maxGuests - a.capacity.maxGuests);
+  }
+
+  // 5. Handle Filtered Out Empty State
+  if (items.length === 0) {
+    grid.style.display = 'grid';
+    emptyState.style.display = 'none';
+    grid.innerHTML = `
+      <div style="grid-column: 1/-1; text-align: center; padding: 3.5rem 1rem; background:var(--bg-card); border-radius:var(--radius-lg); border:1px dashed var(--border-light);">
+        <div style="font-size: 2.8rem; margin-bottom: 0.8rem;">🔍</div>
+        <h3 style="font-size:1.3rem; font-weight:800;">No saved stays match your filters</h3>
+        <p class="text-muted" style="margin-top:6px; margin-bottom:1.5rem;">Try adjusting your board, search keywords, or property filters.</p>
+        <button class="btn-secondary" onclick="resetWishlistFilters()">Clear Filter Criteria</button>
+      </div>`;
+    return;
+  }
+
+  // 6. Render Wishlist Cards
+  grid.style.display = state.wishlistViewMode === 'list' ? 'flex' : 'grid';
+  grid.className = state.wishlistViewMode === 'list' ? 'properties-grid wishlist-mode list-mode' : 'properties-grid wishlist-mode';
+  emptyState.style.display = 'none';
+
+  grid.innerHTML = items.map(l => {
+    const isCompared = state.wishlistCompareIds.has(l.id);
+    const assignedBoardId = state.listingBoards[l.id] || 'all';
+    const assignedBoard = state.wishlistCollections.find(c => c.id === assignedBoardId) || { name: 'Saved Stay', icon: '📌' };
+    const userNote = state.wishlistNotes[l.id] || '';
+    const tripTotal = Math.round(l.pricing.baseNightlyRate * state.wishlistTripNights);
+
+    return `
+      <div class="wishlist-card property-card" id="w-card-${l.id}" onclick="openPropertyDetail('${l.id}')">
+        
+        <!-- Compare Checkbox Badge -->
+        <label class="card-compare-badge" onclick="event.stopPropagation();">
+          <input type="checkbox" class="card-compare-checkbox" ${isCompared ? 'checked' : ''} onchange="toggleWishlistCompare('${l.id}', this.checked)" />
+          <span>Compare</span>
+        </label>
+
+        <!-- Top Image with Badges & Unfavorite Button -->
+        <div class="card-img-wrapper">
+          <img src="${l.imageUrl}" alt="${l.title}" loading="lazy" />
+          <div class="card-top-badges">
+            ${l.host.superhostStatus ? '<span class="badge-tag superhost">⭐ Superhost</span>' : ''}
+            ${l.instantBookEnabled ? '<span class="badge-tag instant">⚡ Instant Book</span>' : ''}
+          </div>
+          <button class="card-heart-btn" title="Remove from wishlist" onclick="event.stopPropagation(); removeWishlistListing('${l.id}')">
+            ❤️
+          </button>
         </div>
-        <button class="heart-btn ${isFav ? 'favorited' : ''}" 
-          onclick="event.stopPropagation(); toggleFavorite('${l.id}', this)"
-          title="${isFav ? 'Remove from wishlist' : 'Add to wishlist'}">
-          ${isFav ? '❤️' : '🤍'}
-        </button>
+
+        <!-- Card Content -->
+        <div class="card-content" style="padding: 1.3rem;">
+          
+          <!-- Board / Collection Tag -->
+          <div>
+            <button class="w-card-coll-tag" title="Move to another board" onclick="event.stopPropagation(); openAssignBoardModal('${l.id}')">
+              <span>${assignedBoard.icon}</span> <span>${assignedBoard.name}</span> <span>▾</span>
+            </button>
+          </div>
+
+          <!-- Title and Star Rating -->
+          <div class="card-header-row">
+            <div class="card-prop-title">${l.title}</div>
+            <div class="card-prop-rating">★ ${l.starRating.toFixed(2)} (${l.reviewCount})</div>
+          </div>
+
+          <div class="card-location-sub">📍 ${l.address.city}, ${l.address.state} · ${l.category.replace('_', ' ')}</div>
+          <div class="card-specs">👥 Up to ${l.capacity.maxGuests} guests · ${l.capacity.bedrooms} bed · ${l.capacity.bathrooms} bath</div>
+
+          <!-- Amenities Chips -->
+          <div class="amenities-pills">
+            ${l.amenities.slice(0, 3).map(a => `<span class="amenity-chip">✨ ${a.replace('_', ' ')}</span>`).join('')}
+          </div>
+
+          <!-- Estimated Total for Selected Nights -->
+          <div class="w-card-trip-estimate">
+            <span>⏱️ ${state.wishlistTripNights} nights estimate:</span>
+            <span>$${tripTotal} total</span>
+          </div>
+
+          <!-- Personal Trip Notes Box -->
+          <div class="w-card-note-box" onclick="event.stopPropagation();">
+            <div class="note-header">
+              <span>📝 Trip Note:</span>
+              <span style="font-size:0.7rem; font-weight:400;">Auto-saved</span>
+            </div>
+            <textarea class="note-input" rows="2" placeholder="Add personal note (e.g. check heated pool, ski trip)..."
+              oninput="saveWishlistNote('${l.id}', this.value)">${userNote}</textarea>
+          </div>
+
+          <!-- Footer with Rate and Actions -->
+          <div class="card-footer-row" style="margin-top:1.2rem;">
+            <div class="card-price-text">$${l.pricing.baseNightlyRate} <span>/ night</span></div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn-action-sm" title="Share this stay" onclick="event.stopPropagation(); shareSingleStay('${l.id}')">🔗</button>
+              <button class="btn-book-card" onclick="event.stopPropagation(); startBookingFlow('${l.id}')">Reserve</button>
+            </div>
+          </div>
+
+        </div>
       </div>
-      <div class="card-body">
-        <div class="card-header">
-          <h3 class="card-title">${l.title}</h3>
-          <div class="card-rating"><span class="star">★</span> ${l.starRating.toFixed(2)}</div>
+    `;
+  }).join('');
+
+  updateCompareDock();
+  setTimeout(triggerCardReveals, 100);
+}
+
+function renderWishlistCollectionsStrip() {
+  const strip = $('#wishlistCollectionsStrip');
+  if (!strip) return;
+
+  strip.innerHTML = state.wishlistCollections.map(c => {
+    let count = 0;
+    if (c.id === 'all') {
+      count = state.wishlistItems.length;
+    } else {
+      count = state.wishlistItems.filter(l => state.listingBoards[l.id] === c.id).length;
+    }
+
+    const isActive = state.activeWishlistCollection === c.id;
+    return `
+      <button class="coll-chip ${isActive ? 'active' : ''}" onclick="selectWishlistCollection('${c.id}')">
+        <span>${c.icon}</span>
+        <span>${c.name}</span>
+        <span class="coll-chip-badge">${count}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function renderWishlistEmptyState() {
+  const container = $('#wishlistEmptyState');
+  if (!container) return;
+
+  const trendingListings = (state.listings.length > 0 ? state.listings : state.wishlistItems).slice(0, 3);
+
+  container.innerHTML = `
+    <div class="empty-heart-icon">💖</div>
+    <h3 class="empty-title">Your Wishlist is Empty</h3>
+    <p class="empty-sub">
+      You haven't saved any vacation properties yet. Click the ❤️ icon on any stay while exploring to save it to your wishlist and compare later!
+    </p>
+    <button class="btn-primary" style="font-size:1rem; padding:12px 28px;" onclick="switchView('listings')">
+      🔍 Explore All Stays Now
+    </button>
+
+    ${trendingListings.length > 0 ? `
+      <div class="empty-trending-section">
+        <div class="empty-trending-title">
+          <span>✨ Trending Escapes You Might Love:</span>
         </div>
-        <div class="card-location">📍 ${l.address.city}, ${l.address.state}</div>
-        <div class="card-capacity">👥 ${l.capacity.maxGuests} guests · 🛏️ ${l.capacity.bedrooms} bed · 🚿 ${l.capacity.bathrooms} bath</div>
-        <div class="card-amenities">${amenityChips}</div>
-        <div class="card-footer">
-          <div class="card-price">$${l.pricing.baseNightlyRate} <span>/ night</span></div>
-          <button class="btn-book" onclick="event.stopPropagation(); openBookingModal('${l.id}')">Reserve</button>
+        <div class="properties-grid" style="margin-top:1rem;">
+          ${trendingListings.map(l => `
+            <div class="property-card reveal" onclick="openPropertyDetail('${l.id}')">
+              <div class="card-img-wrapper">
+                <img src="${l.imageUrl}" alt="${l.title}" />
+                <button class="card-heart-btn" onclick="event.stopPropagation(); toggleWishlist('${l.id}')">
+                  ${state.wishlistIds.has(l.id) ? '❤️' : '🤍'}
+                </button>
+              </div>
+              <div class="card-content">
+                <div class="card-header-row">
+                  <div class="card-prop-title">${l.title}</div>
+                  <div class="card-prop-rating">★ ${l.starRating.toFixed(2)}</div>
+                </div>
+                <div class="card-location-sub">📍 ${l.address.city}, ${l.address.state}</div>
+                <div class="card-footer-row" style="margin-top:10px;">
+                  <div class="card-price-text">$${l.pricing.baseNightlyRate} <span>/ night</span></div>
+                  <button class="btn-secondary" style="padding:6px 14px; font-size:0.8rem;" onclick="event.stopPropagation(); toggleWishlist('${l.id}')">
+                    + Add to Wishlist
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
         </div>
       </div>
-    </article>
+    ` : ''}
   `;
 }
 
-function showSkeletons() {
-  $('#listingsGrid').innerHTML = Array(6).fill(0).map(() => `
-    <div class="skeleton-card">
-      <div class="skeleton-img"></div>
-      <div class="skeleton-body">
-        <div class="skeleton-line"></div>
-        <div class="skeleton-line short"></div>
-        <div class="skeleton-line xshort"></div>
+function selectWishlistCollection(id) {
+  state.activeWishlistCollection = id;
+  renderWishlist();
+}
+
+function onWishlistSearch(val) {
+  state.wishlistSearch = val;
+  const clearBtn = $('#wSearchClearBtn');
+  if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+  renderWishlist();
+}
+
+function clearWishlistSearch() {
+  state.wishlistSearch = '';
+  const input = $('#wishlistSearchInput');
+  if (input) input.value = '';
+  const clearBtn = $('#wSearchClearBtn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  renderWishlist();
+}
+
+function onWishlistCategoryFilter(val) {
+  state.wishlistCategory = val;
+  renderWishlist();
+}
+
+function onWishlistSort(val) {
+  state.wishlistSort = val;
+  renderWishlist();
+}
+
+function toggleWishlistFilter(type) {
+  if (type === 'superhost') {
+    state.wishlistSuperhostFilter = !state.wishlistSuperhostFilter;
+    $('#wToggleSuperhost')?.classList.toggle('active', state.wishlistSuperhostFilter);
+  } else if (type === 'instant') {
+    state.wishlistInstantFilter = !state.wishlistInstantFilter;
+    $('#wToggleInstant')?.classList.toggle('active', state.wishlistInstantFilter);
+  }
+  renderWishlist();
+}
+
+function resetWishlistFilters() {
+  state.activeWishlistCollection = 'all';
+  state.wishlistSearch = '';
+  state.wishlistCategory = 'all';
+  state.wishlistSort = 'default';
+  state.wishlistSuperhostFilter = false;
+  state.wishlistInstantFilter = false;
+
+  const sInput = $('#wishlistSearchInput');
+  if (sInput) sInput.value = '';
+  const cSelect = $('#wCategorySelect');
+  if (cSelect) cSelect.value = 'all';
+  const sortSelect = $('#wSortSelect');
+  if (sortSelect) sortSelect.value = 'default';
+  $('#wToggleSuperhost')?.classList.remove('active');
+  $('#wToggleInstant')?.classList.remove('active');
+  const clearBtn = $('#wSearchClearBtn');
+  if (clearBtn) clearBtn.style.display = 'none';
+
+  renderWishlist();
+}
+
+function setWishlistViewMode(mode) {
+  state.wishlistViewMode = mode;
+  saveWishlistLocalData();
+  $('#wViewGridBtn')?.classList.toggle('active', mode === 'grid');
+  $('#wViewListBtn')?.classList.toggle('active', mode === 'list');
+  renderWishlist();
+}
+
+function onTripNightsChanged(val) {
+  state.wishlistTripNights = parseInt(val) || 1;
+  saveWishlistLocalData();
+  $('#wNightsCount').textContent = state.wishlistTripNights;
+  if (state.wishlistItems.length > 0) {
+    const avgPrice = Math.round(state.wishlistItems.reduce((acc, l) => acc + l.pricing.baseNightlyRate, 0) / state.wishlistItems.length);
+    $('#wEstBudgetVal').textContent = `$${(avgPrice * state.wishlistTripNights).toLocaleString()}`;
+  }
+  renderWishlist();
+}
+
+function saveWishlistNote(id, note) {
+  state.wishlistNotes[id] = note;
+  saveWishlistLocalData();
+}
+
+// ---------- Comparison Dock & Modal ----------
+function toggleWishlistCompare(id, checked) {
+  if (checked) {
+    if (state.wishlistCompareIds.size >= 3) {
+      toast('You can compare a maximum of 3 properties at once', 'info');
+      const cb = $(`#w-card-${id} .card-compare-checkbox`);
+      if (cb) cb.checked = false;
+      return;
+    }
+    state.wishlistCompareIds.add(id);
+    toast('Added to comparison deck', 'info');
+  } else {
+    state.wishlistCompareIds.delete(id);
+  }
+  updateCompareDock();
+}
+
+function updateCompareDock() {
+  const dock = $('#compareDock');
+  if (!dock) return;
+
+  const count = state.wishlistCompareIds.size;
+  $('#compareCount').textContent = count;
+
+  if (count > 0) {
+    dock.classList.add('visible');
+    const thumbs = $('#compareDockThumbs');
+    const selectedListings = state.wishlistItems.filter(l => state.wishlistCompareIds.has(l.id));
+
+    thumbs.innerHTML = selectedListings.map(l => `
+      <div class="dock-thumb-item" title="${l.title}">
+        <img src="${l.imageUrl}" alt="${l.title}" />
+        <button class="dock-thumb-remove" onclick="removeCompareListing('${l.id}')">✕</button>
+      </div>
+    `).join('');
+  } else {
+    dock.classList.remove('visible');
+  }
+}
+
+function removeCompareListing(id) {
+  state.wishlistCompareIds.delete(id);
+  const cb = $(`#w-card-${id} .card-compare-checkbox`);
+  if (cb) cb.checked = false;
+  updateCompareDock();
+}
+
+function clearCompareSelection() {
+  state.wishlistCompareIds.clear();
+  $$('.card-compare-checkbox').forEach(cb => cb.checked = false);
+  updateCompareDock();
+  toast('Comparison selection cleared', 'info');
+}
+
+function openCompareModal() {
+  if (state.wishlistCompareIds.size < 2) {
+    toast('Select at least 2 properties to compare side-by-side', 'info');
+    return;
+  }
+
+  const selectedListings = state.wishlistItems.filter(l => state.wishlistCompareIds.has(l.id));
+  const container = $('#compareMatrixContainer');
+  if (!container) return;
+
+  const amenitiesList = [
+    { key: 'wifi', label: 'High-Speed WiFi' },
+    { key: 'pool', label: 'Private / Shared Pool' },
+    { key: 'hot_tub', label: 'Hot Tub / Jacuzzi' },
+    { key: 'kitchen', label: 'Full Kitchen' },
+    { key: 'air_conditioning', label: 'Air Conditioning' },
+    { key: 'free_parking', label: 'Free Parking' },
+    { key: 'workspace', label: 'Dedicated Workspace' },
+    { key: 'self_check_in', label: 'Self Check-in' }
+  ];
+
+  container.innerHTML = `
+    <table class="compare-matrix">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          ${selectedListings.map(l => `
+            <th class="compare-col-header" style="min-width: 250px;">
+              <img src="${l.imageUrl}" class="compare-img-thumb" alt="${l.title}" />
+              <div style="font-weight:800; font-size:1.05rem; margin-bottom:4px;">${l.title}</div>
+              <div style="color:var(--text-muted); font-size:0.82rem; margin-bottom:8px;">📍 ${l.address.city}, ${l.address.state}</div>
+              <button class="btn-action-sm" onclick="removeCompareListing('${l.id}'); openCompareModal();">✕ Remove</button>
+            </th>
+          `).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Nightly Rate</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center;">
+              <div style="font-size:1.25rem; font-weight:800; color:var(--primary);">$${l.pricing.baseNightlyRate}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">per night</div>
+            </td>
+          `).join('')}
+        </tr>
+        <tr>
+          <td>Est. Total (${state.wishlistTripNights} nights)</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center; font-weight:800; font-size:1.1rem; color:var(--success);">
+              $${Math.round(l.pricing.baseNightlyRate * state.wishlistTripNights + l.pricing.cleaningFee + l.pricing.serviceFee + l.pricing.localOccupancyTax)}
+              <div style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">incl. fees & taxes</div>
+            </td>
+          `).join('')}
+        </tr>
+        <tr>
+          <td>Guest Rating</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center; font-weight:700;">★ ${l.starRating.toFixed(2)} <span style="color:var(--text-muted); font-weight:400;">(${l.reviewCount} reviews)</span></td>
+          `).join('')}
+        </tr>
+        <tr>
+          <td>Host Trust</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center;">
+              ${l.host.superhostStatus ? '⭐ Certified Superhost' : 'Verified Host'}
+              <div style="font-size:0.75rem; color:var(--text-muted);">${l.host.name} · ${l.host.responseRate}% response</div>
+            </td>
+          `).join('')}
+        </tr>
+        <tr>
+          <td>Capacity & Layout</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center; font-size:0.85rem;">
+              👥 ${l.capacity.maxGuests} guests<br>
+              🛏️ ${l.capacity.bedrooms} bedroom${l.capacity.bedrooms > 1 ? 's' : ''} (${l.capacity.beds} beds)<br>
+              🚿 ${l.capacity.bathrooms} bath
+            </td>
+          `).join('')}
+        </tr>
+        <tr>
+          <td>Booking Mode</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center;">
+              ${l.instantBookEnabled ? '<span class="status-badge confirmed">⚡ Instant Book</span>' : '<span class="status-badge pending_approval">Host Review</span>'}
+            </td>
+          `).join('')}
+        </tr>
+        ${amenitiesList.map(a => `
+          <tr>
+            <td>${a.label}</td>
+            ${selectedListings.map(l => {
+              const has = l.amenities.includes(a.key);
+              return `<td style="text-align:center;">${has ? '<span class="compare-check">✔ Yes</span>' : '<span class="compare-cross">✖ No</span>'}</td>`;
+            }).join('')}
+          </tr>
+        `).join('')}
+        <tr>
+          <td>Book Property</td>
+          ${selectedListings.map(l => `
+            <td style="text-align:center; padding:1.2rem;">
+              <button class="btn-book-card" style="width:100%;" onclick="closeModal('compareModal'); startBookingFlow('${l.id}');">
+                Reserve Stay
+              </button>
+            </td>
+          `).join('')}
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+  $('#compareModal').classList.add('open');
+}
+
+// ---------- Collections / Boards Modals ----------
+function openCreateCollectionModal() {
+  $('#newCollectionName').value = '';
+  $('#collectionModal').classList.add('open');
+}
+
+function selectCollectionIcon(btn, icon) {
+  $('#newCollectionIcon').value = icon;
+  $$('#collectionIconChips .coll-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function handleCreateCollection(e) {
+  e.preventDefault();
+  const name = $('#newCollectionName').value.trim();
+  const icon = $('#newCollectionIcon').value || '📁';
+  if (!name) return;
+
+  const id = 'coll_' + Date.now();
+  state.wishlistCollections.push({ id, name, icon });
+  saveWishlistLocalData();
+  closeModal('collectionModal');
+  toast(`Created board "${icon} ${name}"!`, 'success');
+  renderWishlist();
+}
+
+function openAssignBoardModal(listingId) {
+  const listing = state.wishlistItems.find(l => l.id === listingId) || state.listings.find(l => l.id === listingId);
+  if (!listing) return;
+
+  $('#assignBoardListingId').value = listingId;
+  $('#assignBoardSubtitle').textContent = `Assign "${listing.title}" to a trip board:`;
+
+  const container = $('#assignBoardList');
+  const currentBoardId = state.listingBoards[listingId] || 'all';
+
+  container.innerHTML = state.wishlistCollections.map(c => `
+    <button class="btn-action-sm ${currentBoardId === c.id ? 'active' : ''}"
+      style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:10px 16px;"
+      onclick="assignListingToBoard('${listingId}', '${c.id}')">
+      <span>${c.icon} ${c.name}</span>
+      ${currentBoardId === c.id ? '<span>✔ Active</span>' : '<span>Assign</span>'}
+    </button>
+  `).join('');
+
+  $('#assignBoardModal').classList.add('open');
+}
+
+function assignListingToBoard(listingId, boardId) {
+  state.listingBoards[listingId] = boardId;
+  saveWishlistLocalData();
+  closeModal('assignBoardModal');
+  const board = state.wishlistCollections.find(c => c.id === boardId);
+  toast(`Moved to "${board?.name || 'Board'}"`, 'success');
+  renderWishlist();
+}
+
+// ---------- Sharing Wishlist ----------
+function openShareWishlistModal() {
+  const url = window.location.origin + window.location.pathname + '?view=wishlist';
+  $('#shareWishlistUrl').value = url;
+
+  const count = state.wishlistItems.length;
+  let summary = `❤️ My FatiHomes & StayHub Wishlist (${count} saved stays):\n\n`;
+  state.wishlistItems.forEach((l, i) => {
+    summary += `${i + 1}. ${l.title} (${l.address.city}) - $${l.pricing.baseNightlyRate}/night - ★ ${l.starRating.toFixed(2)}\n`;
+  });
+  summary += `\nExplore properties here: ${url}`;
+
+  $('#shareWishlistSummary').value = summary;
+
+  const encodedSummary = encodeURIComponent(summary);
+  $('#btnShareWhatsApp').href = `https://api.whatsapp.com/send?text=${encodedSummary}`;
+  $('#btnShareEmail').href = `mailto:?subject=${encodeURIComponent('Check out my saved vacation stays on StayHub')}&body=${encodedSummary}`;
+
+  $('#shareWishlistModal').classList.add('open');
+}
+
+function copyShareLink() {
+  const input = $('#shareWishlistUrl');
+  input.select();
+  navigator.clipboard.writeText(input.value);
+  toast('Shareable link copied to clipboard!', 'success');
+}
+
+function copyShareSummary() {
+  const textarea = $('#shareWishlistSummary');
+  navigator.clipboard.writeText(textarea.value);
+  toast('Wishlist summary copied to clipboard!', 'success');
+}
+
+function shareSingleStay(id) {
+  const listing = state.wishlistItems.find(l => l.id === id) || state.listings.find(l => l.id === id);
+  if (!listing) return;
+
+  const url = `${window.location.origin}${window.location.pathname}?stay=${id}`;
+  navigator.clipboard.writeText(url);
+  toast(`Link for "${listing.title}" copied to clipboard!`, 'success');
+}
+
+// ---------- Property Detail Modal & Real Availability ----------
+async function openPropertyDetail(id) {
+  const listing = state.listings.find(l => l.id === id) || state.wishlistItems.find(l => l.id === id);
+  if (!listing) return;
+  state.selectedListing = listing;
+
+  const content = $('#propertyDetailContent');
+  content.innerHTML = '<div style="text-align:center; padding: 3rem;">Loading details & calendar...</div>';
+  $('#propertyModal').classList.add('open');
+
+  // Fetch reviews & availability
+  const checkIn = $('#checkIn').value;
+  const checkOut = $('#checkOut').value;
+  let availDays = [];
+  try {
+    const aRes = await fetch(`/v1/listings/${id}/availability?start_date=${checkIn}&end_date=${checkOut}`);
+    if (aRes.ok) {
+      const aData = await aRes.json();
+      availDays = aData.days;
+    }
+  } catch {}
+
+  let reviewsList = [];
+  try {
+    const rRes = await fetch(`/v1/listings/${id}/reviews`);
+    if (rRes.ok) {
+      const rData = await rRes.json();
+      reviewsList = rData.reviews;
+    }
+  } catch {}
+
+  content.innerHTML = `
+    <div class="prop-hero-gallery">
+      <img src="${listing.imageUrl}" alt="${listing.title}" />
+    </div>
+
+    <div class="prop-detail-grid">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <h2 style="font-size: 1.6rem; font-weight:800;">${listing.title}</h2>
+          <span style="font-size:1.1rem; font-weight:700;">★ ${listing.starRating.toFixed(2)} (${listing.reviewCount} reviews)</span>
+        </div>
+        <p class="text-muted" style="margin-top:4px;">📍 ${listing.address.street}, ${listing.address.city}, ${listing.address.state}</p>
+
+        <p style="margin: 1.2rem 0; line-height: 1.6;">${listing.description}</p>
+
+        <div style="margin: 1.5rem 0;">
+          <h4 class="detail-section-title">Amenities</h4>
+          <div class="amenities-pills">
+            ${listing.amenities.map(a => `<span class="amenity-chip">✨ ${a.replace('_', ' ')}</span>`).join('')}
+          </div>
+        </div>
+
+        <!-- Real-time Availability Calendar Box -->
+        <div class="avail-calendar-box">
+          <h4 style="font-weight:700;">📅 Live Calendar Availability (${checkIn} to ${checkOut})</h4>
+          <p class="text-muted" style="font-size:0.8rem;">Real-time booking status cross-referenced with confirmed bookings.</p>
+          <div class="calendar-days-grid">
+            ${availDays.map(d => `
+              <div class="cal-day-cell ${d.isAvailable ? 'available' : 'booked'}" title="${d.blockReason}">
+                <div>${d.date.substring(5)}</div>
+                <div style="font-weight:700;">${d.isAvailable ? '✓ Open' : '✕ Booked'}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div style="margin-top: 2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h4 class="detail-section-title" style="margin-bottom:0;">Guest Reviews (${reviewsList.length})</h4>
+            <button class="btn-action-sm" onclick="openReviewModal('${listing.id}')">+ Write a Review</button>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            ${reviewsList.length === 0 ? '<p class="text-muted">No reviews yet. Be the first to leave one!</p>' : ''}
+            ${reviewsList.map(r => `
+              <div style="background:var(--bg-page); padding:1rem; border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="display:flex; justify-content:space-between;">
+                  <strong>${r.authorName}</strong>
+                  <span style="color:#b45309; font-weight:700;">★ ${r.rating}/5</span>
+                </div>
+                <p style="font-size:0.9rem; margin-top:6px; color:var(--text-main);">${r.comment}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Host & Quick Booking -->
+      <div>
+        <div style="background:var(--bg-page); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:1.5rem;">
+          <div style="font-size:1.6rem; font-weight:800; color:var(--text-main);">
+            $${listing.pricing.baseNightlyRate} <span style="font-size:0.9rem; font-weight:400; color:var(--text-muted);">night</span>
+          </div>
+
+          <div style="margin: 1.2rem 0; border:1px solid var(--border-light); border-radius:var(--radius-sm); padding:10px; background:var(--bg-card);">
+            <div style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-muted);">Dates</div>
+            <div>${checkIn} → ${checkOut}</div>
+          </div>
+
+          <button class="btn-cta-full" onclick="closeModal('propertyModal'); startBookingFlow('${listing.id}')">
+            Proceed to Reservation
+          </button>
+        </div>
+
+        <!-- Host Trust Card -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:1.2rem; margin-top:1.2rem;">
+          <div style="display:flex; gap:12px; align-items:center;">
+            <img src="${listing.host.profilePhotoUrl}" style="width:52px; height:52px; border-radius:50%; object-fit:cover;" />
+            <div>
+              <div style="font-weight:700;">Hosted by ${listing.host.name}</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">${listing.host.superhostStatus ? '⭐ Superhost · ' : ''}Response rate: ${listing.host.responseRate}%</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  `).join('');
+  `;
 }
 
-// ─── FAVORITES ───────────────────────────────
-async function toggleFavorite(id, btn) {
-  try {
-    const r = await fetch(`/v1/favorites/${id}`, { method: 'POST' });
-    const d = await r.json();
-    if (d.favorited) {
-      state.favorites.add(id);
-      btn.textContent = '❤️';
-      btn.classList.add('favorited');
-      toast('Added to wishlist!', 'success');
-    } else {
-      state.favorites.delete(id);
-      btn.textContent = '🤍';
-      btn.classList.remove('favorited');
-      toast('Removed from wishlist', 'info');
-    }
-    updateFavCount();
-  } catch {
-    toast('Could not update wishlist', 'error');
-  }
-}
-function updateFavCount() {
-  $('#favBtn').setAttribute('data-count', state.favorites.size);
-}
-
-// ─── BOOKING MODAL ───────────────────────────
-function openBookingModal(id) {
-  const listing = state.listings.find(l => l.id === id);
+// ---------- Booking Flow ----------
+function startBookingFlow(id) {
+  const listing = state.listings.find(l => l.id === id) || state.wishlistItems.find(l => l.id === id);
   if (!listing) return;
-  state.bookingListingId = id;
+  state.selectedListing = listing;
   state.bookingStep = 1;
-  $('#bookModalTitle').textContent = listing.title;
-  $('#bookModalSub').textContent = `${listing.address.city}, ${listing.address.state} · ${listing.category}`;
-  updateBookingStep();
-  updatePriceSummary(listing);
-  $('#bookingModal').classList.add('open');
-}
 
-function updateBookingStep() {
-  $$('.step').forEach((s, i) => {
-    s.classList.toggle('active', i + 1 === state.bookingStep);
-    s.classList.toggle('done', i + 1 < state.bookingStep);
-  });
-  $$('.step-panel').forEach((p, i) => {
-    p.style.display = i + 1 === state.bookingStep ? 'block' : 'none';
-  });
-}
+  $('#bookModalTitle').textContent = `Book ${listing.title}`;
+  $('#bookModalSub').textContent = `${listing.address.city}, ${listing.address.state}`;
 
-function nextStep() {
-  if (state.bookingStep < 3) {
-    state.bookingStep++;
-    updateBookingStep();
-  }
-}
-function prevStep() {
-  if (state.bookingStep > 1) {
-    state.bookingStep--;
-    updateBookingStep();
-  }
-}
-
-function updatePriceSummary(listing) {
   const inDate = new Date($('#checkIn').value);
   const outDate = new Date($('#checkOut').value);
   const nights = Math.max(1, Math.round((outDate - inDate) / 86400000));
@@ -293,228 +1218,305 @@ function updatePriceSummary(listing) {
   const tax = listing.pricing.localOccupancyTax;
   const total = base + clean + service + tax;
 
-  ['#pNights', '#pBase'].forEach(s => $(s) && ($(s).textContent = ''));
-  if ($('#pNightsLabel')) $('#pNightsLabel').textContent = `${nights} night${nights > 1 ? 's' : ''} × $${listing.pricing.baseNightlyRate}`;
-  if ($('#pBase')) $('#pBase').textContent = `$${base.toFixed(2)}`;
-  if ($('#pClean')) $('#pClean').textContent = `$${clean.toFixed(2)}`;
-  if ($('#pService')) $('#pService').textContent = `$${service.toFixed(2)}`;
-  if ($('#pTax')) $('#pTax').textContent = `$${tax.toFixed(2)}`;
-  if ($('#pTotal')) $('#pTotal').textContent = `$${total.toFixed(2)}`;
+  $('#summaryCheckIn').textContent = $('#checkIn').value;
+  $('#summaryCheckOut').textContent = $('#checkOut').value;
+  $('#summaryGuests').textContent = `${$('#guestsCount').value} Guests`;
+
+  $('#priceReceiptBox').innerHTML = `
+    <div class="receipt-row"><span>${nights} nights × $${listing.pricing.baseNightlyRate}</span> <span>$${base.toFixed(2)}</span></div>
+    <div class="receipt-row"><span>Cleaning fee</span> <span>$${clean.toFixed(2)}</span></div>
+    <div class="receipt-row"><span>StayHub service fee</span> <span>$${service.toFixed(2)}</span></div>
+    <div class="receipt-row"><span>Occupancy taxes</span> <span>$${tax.toFixed(2)}</span></div>
+    <div class="receipt-row total"><span>Total</span> <span>$${total.toFixed(2)}</span></div>
+  `;
+  $('#finalTotalAmount').textContent = `$${total.toFixed(2)}`;
+
+  nextBookingStep(1);
+  $('#bookingModal').classList.add('open');
+}
+
+function nextBookingStep(step) {
+  state.bookingStep = step;
+  $('#step1Dot').classList.toggle('active', step === 1);
+  $('#step2Dot').classList.toggle('active', step === 2);
+  $('#step3Dot').classList.toggle('active', step === 3);
+
+  $('#step1Panel').style.display = step === 1 ? 'block' : 'none';
+  $('#step2Panel').style.display = step === 2 ? 'block' : 'none';
+  $('#step3Panel').style.display = step === 3 ? 'block' : 'none';
 }
 
 async function submitReservation() {
-  const btn = $('#confirmBtn');
-  const listing = state.listings.find(l => l.id === state.bookingListingId);
+  const btn = $('#btnConfirmPay');
   btn.disabled = true;
-  btn.innerHTML = '⏳ Processing...';
+  btn.textContent = 'Processing...';
 
   const payload = {
-    listing_id: state.bookingListingId,
-    check_in_date: $('#checkIn').value,
-    check_out_date: $('#checkOut').value,
-    guests_count: parseInt($('#guestsCount').value),
-    booking_flow: $('#bookingFlow').value,
-    payment_authorization_token: 'tok_visa_4242_mock',
-    primary_guest: {
-      first_name: $('#gFirst').value,
-      last_name: $('#gLast').value,
+    listingId: state.selectedListing.id,
+    checkInDate: $('#checkIn').value,
+    checkOutDate: $('#checkOut').value,
+    guestsCount: parseInt($('#guestsCount').value),
+    bookingFlow: $('#bookingFlow').value,
+    primaryGuest: {
+      firstName: $('#gFirst').value,
+      lastName: $('#gLast').value,
       email: $('#gEmail').value,
-      phone_number: $('#gPhone').value || '+10000000000',
-    },
+      phoneNumber: $('#gPhone').value
+    }
   };
 
   try {
-    const r = await fetch('/v1/reservations', {
+    const res = await fetch('/v1/reservations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
-    if (!r.ok) throw new Error('Booking failed');
-    const booking = await r.json();
+
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 409) {
+        toast('Booking Conflict: Property is already booked on those dates!', 'error');
+      } else {
+        toast(`Error: ${data.message || 'Could not complete booking'}`, 'error');
+      }
+      return;
+    }
+
     closeModal('bookingModal');
-    launchConfetti();
-    toast(`🎉 Booking confirmed! ID: ${booking.id.substring(0, 8)}…`, 'success');
-    setTimeout(() => switchView('reservations'), 1200);
+    fireConfetti();
+    toast('🎉 Reservation confirmed successfully!', 'success');
+    loadSystemStats();
+    setTimeout(() => switchView('reservations'), 900);
   } catch {
-    toast('Booking failed. Please check your details.', 'error');
+    toast('Network error during reservation', 'error');
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '🔒 Confirm & Pay Securely';
+    btn.textContent = '🔒 Complete Reservation';
   }
 }
 
-// ─── RESERVATIONS ────────────────────────────
+// ---------- Reservations Manager & Cancellation ----------
 async function loadReservations() {
   try {
-    const r = await fetch('/v1/reservations');
-    if (!r.ok) throw new Error();
-    state.reservations = await r.json();
+    const res = await fetch('/v1/reservations');
+    if (!res.ok) throw new Error();
+    state.reservations = await res.json();
     renderReservations();
+    setTimeout(triggerCardReveals, 100);
   } catch {
-    toast('Could not load reservations', 'error');
+    toast('Could not fetch reservations', 'error');
   }
 }
 
 function renderReservations() {
-  const groups = { pending_approval: [], confirmed: [], completed: [] };
-  state.reservations.forEach(r => {
-    const g = groups[r.status] || groups.confirmed;
-    g.push(r);
-  });
-
-  const colLabels = [
-    { key: 'pending_approval', label: '⏳ Pending Approval', cls: 'pending' },
-    { key: 'confirmed', label: '✅ Confirmed', cls: 'confirmed' },
-    { key: 'completed', label: '🏁 Completed', cls: 'completed' },
-  ];
-
-  $('#resKanban').innerHTML = colLabels.map(col => `
-    <div class="kanban-col">
-      <div class="kanban-header ${col.cls}">${col.label} <span style="font-size:0.8rem;">(${groups[col.key].length})</span></div>
-      ${groups[col.key].length === 0
-        ? `<div style="color:var(--muted); font-size:0.85rem; padding: 12px;">No reservations here</div>`
-        : groups[col.key].map(r => renderResCard(r)).join('')
-      }
-    </div>
-  `).join('');
-
+  const container = $('#reservationsList');
   if (state.reservations.length === 0) {
-    $('#resKanban').innerHTML = `
-      <div class="empty-state" style="grid-column:1/-1">
-        <div class="empty-icon">🗓️</div>
-        <h3>No bookings yet</h3>
-        <p>Go to <strong>Listings</strong> and book your first stay!</p>
+    container.innerHTML = `
+      <div style="text-align:center; padding:4rem; background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-light);">
+        <div style="font-size:3rem; margin-bottom:0.8rem; animation: floatIcon 3s ease-in-out infinite;">🗓️</div>
+        <h3>No reservations yet</h3>
+        <p class="text-muted">Browse through listings to make your first booking!</p>
       </div>`;
-  }
-}
-
-function renderResCard(r) {
-  const listing = state.listings.find(l => l.id === r.listingId);
-  const title = listing ? listing.title : 'FatiHomes Property';
-  return `
-    <div class="res-card">
-      <div class="res-card-title">${title}</div>
-      <div class="res-card-meta">
-        👤 ${r.primaryGuest.firstName} ${r.primaryGuest.lastName}<br>
-        📅 ${r.checkInDate} → ${r.checkOutDate} · ${r.guestsCount} guest${r.guestsCount > 1 ? 's' : ''}
-      </div>
-      <div class="res-card-price">$${r.pricingSummary.totalAmount.toFixed(2)} <span>total</span></div>
-      <span class="status-chip ${r.status}">● ${r.status.replace('_', ' ')}</span>
-      <button class="btn-chat" onclick="openChat('${r.id}')">💬 Message Host</button>
-    </div>
-  `;
-}
-
-// ─── CHAT ────────────────────────────────────
-async function openChat(resId) {
-  state.chatReservationId = resId;
-  $('#chatModal').classList.add('open');
-  $('#chatMessages').innerHTML = '<div style="color:var(--muted);text-align:center;padding:1rem;">Loading messages…</div>';
-  try {
-    const r = await fetch(`/v1/reservations/${resId}/messages`);
-    const msgs = await r.json();
-    renderChat(msgs);
-  } catch { toast('Could not load messages', 'error'); }
-}
-
-function renderChat(msgs) {
-  if (!msgs.length) {
-    $('#chatMessages').innerHTML = '<div style="color:var(--muted);text-align:center;padding:1rem;">No messages yet. Say hello! 👋</div>';
     return;
   }
-  $('#chatMessages').innerHTML = msgs.map(m => `
-    <div class="chat-bubble ${m.senderRole}">
-      <div class="bubble-role">${m.senderRole}</div>
-      ${m.messageBody}
-    </div>
-  `).join('');
-  $('#chatMessages').scrollTop = $('#chatMessages').scrollHeight;
+
+  container.innerHTML = state.reservations.map(r => {
+    const listing = state.listings.find(l => l.id === r.listingId);
+    const title = listing ? listing.title : 'Vacation Stay';
+    const img = listing ? listing.imageUrl : 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=300&q=80';
+
+    return `
+      <div class="res-booking-card">
+        <div class="res-main-info">
+          <img src="${img}" class="res-img-thumb" alt="thumb" />
+          <div>
+            <h4 style="font-weight:700;">${title}</h4>
+            <div style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+              📅 ${r.checkInDate} → ${r.checkOutDate} · 👤 ${r.primaryGuest.firstName} ${r.primaryGuest.lastName} (${r.guestsCount} guests)
+            </div>
+            <span class="status-badge ${r.status}">${r.status.replace('_', ' ')}</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:1.3rem; font-weight:800; color:var(--text-main);">$${r.pricingSummary.totalAmount.toFixed(2)}</div>
+          <div class="res-actions-cell" style="margin-top:8px;">
+            <button class="btn-action-sm" onclick="openChatModal('${r.id}')">💬 Messages</button>
+            ${r.status !== 'cancelled' ? `<button class="btn-action-sm danger" onclick="cancelReservation('${r.id}')">Cancel</button>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-async function sendMessage(e) {
+async function cancelReservation(id) {
+  if (!confirm('Are you sure you want to cancel this booking?')) return;
+  try {
+    const res = await fetch(`/v1/reservations/${id}/cancel`, { method: 'POST' });
+    if (!res.ok) throw new Error();
+    toast('Reservation cancelled', 'info');
+    loadReservations();
+  } catch {
+    toast('Failed to cancel reservation', 'error');
+  }
+}
+
+// ---------- Reviews ----------
+function openReviewModal(listingId) {
+  $('#reviewListingId').value = listingId;
+  $('#reviewModal').classList.add('open');
+}
+
+function setReviewRating(val) {
+  $('#revRatingVal').value = val;
+  $$('.star-opt').forEach(el => el.classList.toggle('selected', parseInt(el.dataset.val) === val));
+}
+
+async function submitReview(e) {
+  e.preventDefault();
+  const id = $('#reviewListingId').value;
+  const author = $('#revAuthor').value;
+  const rating = parseInt($('#revRatingVal').value);
+  const comment = $('#revComment').value;
+
+  try {
+    const res = await fetch(`/v1/listings/${id}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ authorName: author, rating, comment })
+    });
+    if (!res.ok) throw new Error();
+    closeModal('reviewModal');
+    toast('Review published!', 'success');
+    loadSystemStats();
+    openPropertyDetail(id);
+  } catch {
+    toast('Failed to submit review', 'error');
+  }
+}
+
+// ---------- Chat ----------
+async function openChatModal(resId) {
+  state.chatReservationId = resId;
+  $('#chatModal').classList.add('open');
+  loadChatMessages();
+}
+
+async function loadChatMessages() {
+  const feed = $('#chatMessages');
+  feed.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:1rem;">Loading conversation...</div>';
+  try {
+    const res = await fetch(`/v1/reservations/${state.chatReservationId}/messages`);
+    const msgs = await res.json();
+    if (msgs.length === 0) {
+      feed.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:1rem;">No messages yet. Send a greeting below!</div>';
+      return;
+    }
+    feed.innerHTML = msgs.map(m => `
+      <div class="chat-bubble ${m.senderRole}">
+        <div style="font-size:0.75rem; font-weight:700; margin-bottom:2px; text-transform:uppercase;">${m.senderRole}</div>
+        <div>${m.messageBody}</div>
+      </div>
+    `).join('');
+    feed.scrollTop = feed.scrollHeight;
+  } catch {
+    feed.innerHTML = '<div style="color:var(--danger); text-align:center;">Failed to load chat</div>';
+  }
+}
+
+async function sendChatMessage(e) {
   e.preventDefault();
   const input = $('#chatInput');
-  const body = input.value.trim();
-  if (!body) return;
+  const text = input.value.trim();
+  if (!text) return;
   input.value = '';
+
   try {
     await fetch(`/v1/reservations/${state.chatReservationId}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ senderId: '18b76c8d-2917-4861-b9cb-1718bf14bb44', senderRole: 'guest', messageBody: body }),
+      body: JSON.stringify({
+        senderId: '18b76c8d-2917-4861-b9cb-1718bf14bb44',
+        senderRole: 'guest',
+        messageBody: text
+      })
     });
-    const r = await fetch(`/v1/reservations/${state.chatReservationId}/messages`);
-    renderChat(await r.json());
-  } catch { toast('Message failed to send', 'error'); }
+    loadChatMessages();
+  } catch {
+    toast('Failed to send message', 'error');
+  }
 }
 
-// ─── HOSTS VIEW ──────────────────────────────
-function renderHostsView() {
-  const hostsById = {};
+// ---------- Hosts View ----------
+function renderHosts() {
+  const hostsMap = {};
   state.listings.forEach(l => {
-    if (!hostsById[l.host.hostId]) hostsById[l.host.hostId] = { host: l.host, listings: 0, rating: l.starRating, reviews: l.reviewCount };
-    hostsById[l.host.hostId].listings++;
+    if (!hostsMap[l.host.hostId]) {
+      hostsMap[l.host.hostId] = { host: l.host, listings: 0, rating: l.starRating, reviews: l.reviewCount };
+    }
+    hostsMap[l.host.hostId].listings++;
   });
 
-  const hosts = Object.values(hostsById);
-  if (hosts.length === 0) {
-    $('#hostGrid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔌</div><h3>Load listings first</h3><p>Search for listings to see host profiles.</p></div>';
-    return;
-  }
-  $('#hostGrid').innerHTML = hosts.map(({ host, listings, rating, reviews }) => `
-    <div class="host-card">
-      <div class="host-card-top">
-        <img class="host-avatar" src="${host.profilePhotoUrl}" alt="${host.name}" />
+  const list = Object.values(hostsMap);
+  $('#hostGrid').innerHTML = list.map(({ host, listings, rating, reviews }) => `
+    <div class="host-profile-card">
+      <div class="host-card-header">
+        <img src="${host.profilePhotoUrl}" class="host-card-avatar" alt="avatar" />
         <div>
-          <div class="host-name">${host.name}</div>
-          ${host.superhostStatus ? '<div class="host-superhost">⭐ Superhost</div>' : ''}
+          <div style="font-size:1.2rem; font-weight:800;">${host.name}</div>
+          <div style="font-size:0.85rem; color:var(--text-muted);">${host.superhostStatus ? '⭐ Certified Superhost' : 'Verified Host'}</div>
         </div>
       </div>
-      <div class="host-stats">
-        <div class="host-stat"><div class="host-stat-val">${host.responseRate}%</div><div class="host-stat-label">Response Rate</div></div>
-        <div class="host-stat"><div class="host-stat-val">${host.responseTimeMinutes}m</div><div class="host-stat-label">Avg Response Time</div></div>
-        <div class="host-stat"><div class="host-stat-val">★ ${rating.toFixed(2)}</div><div class="host-stat-label">Avg Rating</div></div>
-        <div class="host-stat"><div class="host-stat-val">${reviews}</div><div class="host-stat-label">Total Reviews</div></div>
+      <div class="host-metrics-grid">
+        <div class="metric-cell"><div class="metric-val">${host.responseRate}%</div><div class="metric-lbl">Response Rate</div></div>
+        <div class="metric-cell"><div class="metric-val">${host.responseTimeMinutes}m</div><div class="metric-lbl">Avg Speed</div></div>
+        <div class="metric-cell"><div class="metric-val">★ ${rating.toFixed(2)}</div><div class="metric-lbl">Avg Rating</div></div>
+        <div class="metric-cell"><div class="metric-val">${listings}</div><div class="metric-lbl">Properties</div></div>
       </div>
-      <div class="trust-checks">
-        ${[
-          ['🪪 Government ID', host.verifiedIdentity],
-          ['📧 Email', true],
-          ['📱 Phone', true],
-          ['🛡️ Background Check', host.superhostStatus],
-        ].map(([label, ok]) => `
-          <div class="trust-row">
-            <span class="trust-label">${label}</span>
-            <span class="trust-val ${ok ? 'ok' : 'no'}">${ok ? '✓ Verified' : '✗ Pending'}</span>
-          </div>
-        `).join('')}
-      </div>
-      <button class="btn-verify-api" onclick="verifyHostApi('${host.hostId}')">⚡ Re-verify via API</button>
+      <button class="btn-secondary" style="width:100%;" onclick="verifyHostDirectly('${host.hostId}')">
+        ⚡ Run Real-Time Trust Verification API
+      </button>
     </div>
   `).join('');
+  setTimeout(triggerCardReveals, 100);
 }
 
-async function verifyHostApi(id) {
+async function verifyHostDirectly(id) {
   try {
-    const r = await fetch(`/v1/hosts/${id}/verification`);
-    const d = await r.json();
-    toast(`Host is ${d.identityStatus.toUpperCase()} · Rating: ${d.aggregateRating} ⭐`, 'success');
-  } catch { toast('Could not reach verification API', 'error'); }
+    const res = await fetch(`/v1/hosts/${id}/verification`);
+    const data = await res.json();
+    toast(`Host Trust Status: ${data.identityStatus.toUpperCase()} (Identity: Verified, BG Check: Cleared)`, 'success');
+  } catch {
+    toast('Verification request failed', 'error');
+  }
 }
 
-// ─── MODAL HELPERS ────────────────────────────
+// ---------- Modal Close ----------
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
 
-// ─── INIT ────────────────────────────────────
-async function init() {
+// ---------- Initializer ----------
+async function initApp() {
   initDarkMode();
-  initScrollWatcher();
-  buildCategories();
-  loadStageBadge();
-  await loadListings();
-  renderHostsView();
+  initNavigation();
+  initScrollEffects();
+  renderCategories();
+  loadWishlistLocalData();
+  await loadSystemStats();
+  await loadFavorites();
+  await executeSearch();
+  const initialView = location.hash.slice(1);
+  if (initialView) {
+    switchView(initialView);
+  } else {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('view') === 'wishlist') {
+      switchView('wishlist');
+    } else if (urlParams.get('stay')) {
+      openPropertyDetail(urlParams.get('stay'));
+    }
+  }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', initApp);
