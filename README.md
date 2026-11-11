@@ -90,4 +90,13 @@ Api/
 The complete OpenAPI specification is located at:
 - `docs/openapi.yaml`
 
+## 🌍 Frontend i integruar
+- `wwwroot/` përmban aplikacionin web FatiHomes/StayHub.
+- Butoni i gjuhës **SQ/EN** në header (Jira SCRUM-28) lejon kalimin mes shqipes dhe anglishtes; zgjedhja ruhet në `localStorage`.
+
+## 🌿 Rrjedha e branch-eve
+- `Dev` — zhvillimi ditor; çdo anëtar hap PR nga branch-i i vet drejt `Dev`.
+- `qa` — verifikimi; ndryshimet e aprovuara në `Dev` promovohen këtu.
+- `main` — versioni final; hyn vetëm pas kalimit nëpër `qa`.
+
 ## This project is made by Artik Osmani, Arber Miftari, Dalmat Ademi, Arber Beqiri, Jon Ferizi
