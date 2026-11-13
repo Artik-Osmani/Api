@@ -25,6 +25,7 @@ public class SystemController : ControllerBase
             status = "Healthy",
             service = "StayHub Vacation Rental API",
             version = "2.0.0",
+            dotnet = Environment.Version.ToString(),
             timestamp = DateTime.UtcNow
         });
     }
