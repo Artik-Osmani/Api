@@ -36,6 +36,9 @@ const state = {
   selectedListing: null,
   bookingStep: 1,
   chatReservationId: null,
+  bookingStatusFilter: 'all',
+  bookingUpcomingOnly: false,
+  openBookingId: null,
   serverStats: null
 };
 
@@ -51,6 +54,12 @@ const categories = [
 // ---------- Helpers ----------
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
+
+const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch]);
+
+const formatStamp = (value) =>
+  value ? new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 
 function toast(msg, type = 'info') {
   const icons = { success: '✅', error: '❌', info: '✨' };
@@ -1363,70 +1372,343 @@ async function submitReservation() {
   }
 }
 
-// ---------- Reservations Manager & Cancellation ----------
+// ---------- Reservations Manager: options, filters, actions ----------
+const bookingStatusTabs = [
+  { id: 'all', label: 'All bookings', icon: '🎫' },
+  { id: 'confirmed', label: 'Confirmed', icon: '✅' },
+  { id: 'pending_approval', label: 'Pending', icon: '⏳' },
+  { id: 'checked_in', label: 'Checked in', icon: '🔑' },
+  { id: 'completed', label: 'Completed', icon: '🏁' },
+  { id: 'cancelled', label: 'Cancelled', icon: '🚫' }
+];
+
+const editableStatuses = ['pending_approval', 'confirmed', 'checked_in', 'completed', 'cancelled'];
+
+function statusLabel(status) {
+  const tab = bookingStatusTabs.find(s => s.id === status);
+  return tab && tab.id !== 'all' ? tab.label : String(status).replace(/_/g, ' ');
+}
+
+function todayIso() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function nightsBetween(checkIn, checkOut) {
+  return Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
+}
+
+function bookingMatchesSearch(reservation, term) {
+  const listing = state.listings.find(l => l.id === reservation.listingId);
+  const haystack = [
+    listing?.title,
+    listing?.address?.city,
+    listing?.host?.name,
+    reservation.primaryGuest?.firstName,
+    reservation.primaryGuest?.lastName,
+    reservation.primaryGuest?.email,
+    reservation.status,
+    reservation.id
+  ].filter(Boolean).join(' ').toLowerCase();
+  return haystack.includes(term);
+}
+
+function getVisibleReservations() {
+  const term = $('#bookingSearch').value.trim().toLowerCase();
+  const sorter = $('#bookingSort').value;
+  const today = todayIso();
+
+  const filtered = state.reservations.filter(r => {
+    if (state.bookingStatusFilter !== 'all' && r.status !== state.bookingStatusFilter) return false;
+    if (state.bookingUpcomingOnly && (r.status === 'cancelled' || r.checkOutDate < today)) return false;
+    if (term && !bookingMatchesSearch(r, term)) return false;
+    return true;
+  });
+
+  const sorters = {
+    recent: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    checkin_soon: (a, b) => a.checkInDate.localeCompare(b.checkInDate),
+    checkin_desc: (a, b) => b.checkInDate.localeCompare(a.checkInDate),
+    amount_desc: (a, b) => b.pricingSummary.totalAmount - a.pricingSummary.totalAmount,
+    amount_asc: (a, b) => a.pricingSummary.totalAmount - b.pricingSummary.totalAmount
+  };
+
+  return filtered.sort(sorters[sorter] || sorters.recent);
+}
+
+function setBookingStatusFilter(status) {
+  state.bookingStatusFilter = status;
+  renderReservations();
+}
+
+function toggleUpcomingFilter(btn) {
+  state.bookingUpcomingOnly = !state.bookingUpcomingOnly;
+  btn.classList.toggle('active', state.bookingUpcomingOnly);
+  renderReservations();
+}
+
+function clearBookingFilters() {
+  state.bookingStatusFilter = 'all';
+  state.bookingUpcomingOnly = false;
+  $('#bookingSearch').value = '';
+  $('#bookingSort').value = 'recent';
+  $('#btnUpcomingOnly').classList.remove('active');
+  renderReservations();
+}
+
+function replaceReservation(updated) {
+  const index = state.reservations.findIndex(r => r.id === updated.id);
+  if (index >= 0) state.reservations[index] = updated;
+}
+
+function renderBookingStatusTabs() {
+  const strip = $('#bookingStatusTabs');
+  if (!strip) return;
+
+  strip.innerHTML = bookingStatusTabs.map(tab => {
+    const count = tab.id === 'all'
+      ? state.reservations.length
+      : state.reservations.filter(r => r.status === tab.id).length;
+    const isActive = state.bookingStatusFilter === tab.id;
+    return `
+      <button type="button" class="booking-tab ${isActive ? 'active' : ''}" aria-pressed="${isActive}"
+        onclick="setBookingStatusFilter('${tab.id}')">
+        <span>${tab.icon}</span>
+        <span>${tab.label}</span>
+        <span class="tab-count">${count}</span>
+      </button>`;
+  }).join('');
+}
+
 async function loadReservations() {
   try {
     const res = await fetch('/v1/reservations');
     if (!res.ok) throw new Error();
     state.reservations = await res.json();
     renderReservations();
-    setTimeout(triggerCardReveals, 100);
   } catch {
     toast('Could not fetch reservations', 'error');
   }
 }
 
+function bookingActionButtons(r) {
+  const buttons = [
+    `<button class="btn-action-sm" onclick="openChatModal('${r.id}')">💬 Messages</button>`,
+    `<button class="btn-action-sm" onclick="openBookingDetails('${r.id}')">🧾 Details</button>`
+  ];
+
+  if (r.status === 'pending_approval') {
+    buttons.push(`<button class="btn-action-sm primary" onclick="updateBookingStatus('${r.id}', 'confirmed')">✔ Approve</button>`);
+  }
+  if (r.status === 'confirmed') {
+    buttons.push(`<button class="btn-action-sm primary" onclick="updateBookingStatus('${r.id}', 'checked_in')">🔑 Check in</button>`);
+  }
+  if (r.status === 'checked_in') {
+    buttons.push(`<button class="btn-action-sm primary" onclick="updateBookingStatus('${r.id}', 'completed')">🏁 Complete</button>`);
+  }
+  if (r.status === 'completed' || r.status === 'cancelled') {
+    buttons.push(`<button class="btn-action-sm" onclick="rebookListing('${r.listingId}')">↺ Re-book</button>`);
+  }
+  if (r.status !== 'cancelled' && r.status !== 'completed') {
+    buttons.push(`<button class="btn-action-sm danger" onclick="cancelReservation('${r.id}')">Cancel</button>`);
+  }
+
+  return buttons.join('');
+}
+
 function renderReservations() {
+  renderBookingStatusTabs();
   const container = $('#reservationsList');
-  if (state.reservations.length === 0) {
-    container.innerHTML = `
-      <div style="text-align:center; padding:4rem; background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-light);">
-        <div style="font-size:3rem; margin-bottom:0.8rem; animation: floatIcon 3s ease-in-out infinite;">🗓️</div>
+  const visible = getVisibleReservations();
+  const total = state.reservations.length;
+
+  $('#bookingResultsMeta').innerHTML = `Showing <strong>${visible.length}</strong> of ${total} booking${total === 1 ? '' : 's'}`;
+
+  if (visible.length === 0) {
+    container.innerHTML = total === 0 ? `
+      <div class="bookings-empty">
+        <div class="bookings-empty-icon">🗓️</div>
         <h3>No reservations yet</h3>
         <p class="text-muted">Browse through listings to make your first booking!</p>
+      </div>` : `
+      <div class="bookings-empty">
+        <div class="bookings-empty-icon">🔍</div>
+        <h3>No bookings match these filters</h3>
+        <p class="text-muted">Try another status tab, clear the search, or switch off "Upcoming only".</p>
+        <button class="btn-secondary" onclick="clearBookingFilters()">Clear filters</button>
       </div>`;
     return;
   }
 
-  container.innerHTML = state.reservations.map(r => {
+  container.innerHTML = visible.map(r => {
     const listing = state.listings.find(l => l.id === r.listingId);
     const title = listing ? listing.title : 'Vacation Stay';
     const img = listing ? listing.imageUrl : 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=300&q=80';
+    const nights = nightsBetween(r.checkInDate, r.checkOutDate);
 
     return `
       <div class="res-booking-card">
         <div class="res-main-info">
-          <img src="${img}" class="res-img-thumb" alt="thumb" />
+          <img src="${esc(img)}" class="res-img-thumb" alt="thumb" />
           <div>
-            <h4 style="font-weight:700;">${title}</h4>
-            <div style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
-              📅 ${r.checkInDate} → ${r.checkOutDate} · 👤 ${r.primaryGuest.firstName} ${r.primaryGuest.lastName} (${r.guestsCount} guests)
+            <h4 style="font-weight:700;">${esc(title)}</h4>
+            <div class="res-booking-meta">
+              📅 ${esc(r.checkInDate)} → ${esc(r.checkOutDate)} · ${nights} night${nights === 1 ? '' : 's'} · 👤 ${esc(r.primaryGuest.firstName)} ${esc(r.primaryGuest.lastName)} (${r.guestsCount} guests)
             </div>
-            <span class="status-badge ${r.status}">${r.status.replace('_', ' ')}</span>
+            <div class="res-booking-tags">
+              <span class="status-badge ${esc(r.status)}">${esc(statusLabel(r.status))}</span>
+              <span class="flow-chip">${r.bookingFlow === 'instant_book' ? '⚡ Instant book' : '📩 Request to book'}</span>
+            </div>
+            ${r.status === 'cancelled' && r.cancellationReason ? `<div class="res-cancel-reason">Reason: ${esc(r.cancellationReason)}</div>` : ''}
           </div>
         </div>
-        <div style="text-align:right;">
-          <div style="font-size:1.3rem; font-weight:800; color:var(--text-main);">$${r.pricingSummary.totalAmount.toFixed(2)}</div>
-          <div class="res-actions-cell" style="margin-top:8px;">
-            <button class="btn-action-sm" onclick="openChatModal('${r.id}')">💬 Messages</button>
-            ${r.status !== 'cancelled' ? `<button class="btn-action-sm danger" onclick="cancelReservation('${r.id}')">Cancel</button>` : ''}
-          </div>
+        <div class="res-booking-side">
+          <div class="res-booking-amount">$${r.pricingSummary.totalAmount.toFixed(2)}</div>
+          <div class="res-actions-cell">${bookingActionButtons(r)}</div>
         </div>
       </div>
     `;
   }).join('');
+
+  setTimeout(triggerCardReveals, 100);
+}
+
+async function updateBookingStatus(id, status, reason = '') {
+  try {
+    const res = await fetch(`/v1/reservations/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, reason: reason || null })
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    replaceReservation(data);
+    toast(`Booking marked as ${statusLabel(status)}`, 'success');
+    renderReservations();
+    if (state.openBookingId === id) renderBookingDetails(data);
+  } catch {
+    toast('Could not update booking status', 'error');
+  }
 }
 
 async function cancelReservation(id) {
-  if (!confirm('Are you sure you want to cancel this booking?')) return;
+  const reason = prompt('Cancel this booking? You can add a reason:', 'Change of plans');
+  if (reason === null) return;
+
   try {
-    const res = await fetch(`/v1/reservations/${id}/cancel`, { method: 'POST' });
+    const res = await fetch(`/v1/reservations/${id}/cancel?reason=${encodeURIComponent(reason)}`, { method: 'POST' });
     if (!res.ok) throw new Error();
+    const data = await res.json();
+    replaceReservation(data);
     toast('Reservation cancelled', 'info');
-    loadReservations();
+    renderReservations();
+    if (state.openBookingId === id) renderBookingDetails(data);
   } catch {
     toast('Failed to cancel reservation', 'error');
   }
+}
+
+async function rebookListing(listingId) {
+  let listing = state.listings.find(l => l.id === listingId);
+  if (!listing) {
+    try {
+      const res = await fetch(`/v1/listings/${listingId}`);
+      if (res.ok) {
+        listing = await res.json();
+        state.listings.push(listing);
+      }
+    } catch {}
+  }
+
+  if (!listing) {
+    toast('This property is no longer available', 'error');
+    return;
+  }
+
+  closeModal('bookingDetailsModal');
+  switchView('listings');
+  startBookingFlow(listingId);
+}
+
+// ---------- Booking Details, Receipt & Status Modal ----------
+async function openBookingDetails(id) {
+  state.openBookingId = id;
+  $('#bookingDetailsSub').textContent = 'Loading reservation...';
+  $('#bookingDetailsBody').innerHTML = '<p class="text-muted">Fetching receipt and status options...</p>';
+  $('#bookingDetailsModal').classList.add('open');
+
+  try {
+    const res = await fetch(`/v1/reservations/${id}`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    replaceReservation(data);
+    renderBookingDetails(data);
+  } catch {
+    $('#bookingDetailsBody').innerHTML = '<p class="text-muted">Could not load this booking.</p>';
+  }
+}
+
+function renderBookingDetails(r) {
+  const listing = state.listings.find(l => l.id === r.listingId);
+  const price = r.pricingSummary;
+  const nights = nightsBetween(r.checkInDate, r.checkOutDate);
+
+  $('#bookingDetailsSub').textContent = `${listing ? listing.title : 'Vacation Stay'} · Reference ${r.id.slice(0, 8)}`;
+
+  $('#bookingDetailsBody').innerHTML = `
+    <div class="details-meta">
+      <span class="status-badge ${esc(r.status)}">${esc(statusLabel(r.status))}</span>
+      <span class="flow-chip">${r.bookingFlow === 'instant_book' ? '⚡ Instant book' : '📩 Request to book'}</span>
+      <span class="flow-chip">${nights} night${nights === 1 ? '' : 's'} · ${r.guestsCount} guests</span>
+    </div>
+
+    <div class="price-receipt">
+      ${price.items.map(item => `
+        <div class="receipt-row"><span>${esc(item.description)}</span><span>$${item.amount.toFixed(2)}</span></div>
+      `).join('')}
+      <div class="receipt-row receipt-row-note"><span>Refundable security deposit</span><span>$${price.securityDeposit.toFixed(2)}</span></div>
+      <div class="receipt-row total"><span>Total due (${esc(price.currency)})</span><span>$${price.totalAmount.toFixed(2)}</span></div>
+    </div>
+
+    <div class="details-grid">
+      <div>
+        <h5 class="details-block-title">Lead guest</h5>
+        <p>${esc(r.primaryGuest.firstName)} ${esc(r.primaryGuest.lastName)}</p>
+        <p>${esc(r.primaryGuest.email)}</p>
+        <p>${esc(r.primaryGuest.phoneNumber)}</p>
+      </div>
+      <div>
+        <h5 class="details-block-title">Stay</h5>
+        <p>Check-in ${esc(r.checkInDate)} · Check-out ${esc(r.checkOutDate)}</p>
+        <p>Created ${esc(formatStamp(r.createdAt))}</p>
+        <p>Updated ${esc(formatStamp(r.updatedAt))}</p>
+      </div>
+    </div>
+
+    ${r.cancellationReason ? `<div class="details-note">Reason on file: ${esc(r.cancellationReason)}</div>` : ''}
+
+    <div class="form-group">
+      <label for="bookingStatusSelect">Change booking status</label>
+      <select id="bookingStatusSelect">
+        ${editableStatuses.map(s => `<option value="${s}" ${s === r.status ? 'selected' : ''}>${esc(statusLabel(s))}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="bookingStatusReason">Reason (optional)</label>
+      <input type="text" id="bookingStatusReason" placeholder="Stored with the reservation note" />
+    </div>
+
+    <div class="modal-actions-split">
+      <button class="btn-secondary" onclick="openChatModal('${r.id}')">💬 Message host</button>
+      <button class="btn-cta-full" onclick="applyBookingStatusChange('${r.id}')">Save status</button>
+    </div>
+  `;
+}
+
+function applyBookingStatusChange(id) {
+  const status = $('#bookingStatusSelect').value;
+  const reason = $('#bookingStatusReason').value.trim();
+  updateBookingStatus(id, status, reason);
 }
 
 // ---------- Reviews ----------

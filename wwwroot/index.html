@@ -515,6 +515,29 @@
         </div>
       </div>
 
+      <!-- SCRUM-22: Bookings toolbar - status filter, search, sort, upcoming toggle -->
+      <div class="bookings-toolbar">
+        <div class="booking-status-tabs" id="bookingStatusTabs" aria-label="Filter bookings by status">
+          <!-- Injected via JavaScript -->
+        </div>
+        <div class="booking-toolbar-controls">
+          <input type="search" id="bookingSearch" class="booking-search" placeholder="🔍 Search property, host or guest..."
+                 oninput="renderReservations()" aria-label="Search bookings" />
+          <select id="bookingSort" class="select-sort" onchange="renderReservations()" aria-label="Sort bookings">
+            <option value="recent">🆕 Recently created</option>
+            <option value="checkin_soon">📅 Check-in: Soonest first</option>
+            <option value="checkin_desc">📅 Check-in: Newest first</option>
+            <option value="amount_desc">💎 Amount: High to Low</option>
+            <option value="amount_asc">💵 Amount: Low to High</option>
+          </select>
+          <button class="btn-pill-filter" id="btnUpcomingOnly" type="button" onclick="toggleUpcomingFilter(this)">
+            🗓 Upcoming only
+          </button>
+          <button class="btn-pill-filter" type="button" onclick="clearBookingFilters()">✕ Clear</button>
+        </div>
+        <div class="booking-results-meta" id="bookingResultsMeta" aria-live="polite"></div>
+      </div>
+
       <!-- Reservations List -->
       <div class="reservations-container" id="reservationsList">
         <!-- Injected via JavaScript -->
@@ -655,6 +678,21 @@
           <button class="btn-secondary" onclick="nextBookingStep(2)">← Back</button>
           <button class="btn-cta-full" id="btnConfirmPay" onclick="submitReservation()">🔒 Complete Reservation</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRUM-22: Booking Details, Payment Receipt & Status Management Modal -->
+  <div class="modal" id="bookingDetailsModal">
+    <div class="modal-backdrop" onclick="closeModal('bookingDetailsModal')"></div>
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="closeModal('bookingDetailsModal')">✕</button>
+      <div class="modal-header">
+        <h3>🧾 Booking details</h3>
+        <p class="text-muted" id="bookingDetailsSub">Loading reservation...</p>
+      </div>
+      <div class="booking-details-body" id="bookingDetailsBody">
+        <!-- Injected via JavaScript -->
       </div>
     </div>
   </div>
