@@ -31,4 +31,4 @@ Ky projekt është krijuar për qëllime edukative.
 Test note.
 Ushtrime ne github pr me profen adil
 
-Artik1
+ArtikMain
