@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Nxensi\\Documents\\GitHub\\Api\\StayHubApi.csproj": {}
+    "C:\\Users\\arber\\OneDrive\\Documents\\GitHub\\Api\\StayHubApi.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Nxensi\\Documents\\GitHub\\Api\\StayHubApi.csproj": {
+    "C:\\Users\\arber\\OneDrive\\Documents\\GitHub\\Api\\StayHubApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Nxensi\\Documents\\GitHub\\Api\\StayHubApi.csproj",
+        "projectUniqueName": "C:\\Users\\arber\\OneDrive\\Documents\\GitHub\\Api\\StayHubApi.csproj",
         "projectName": "StayHubApi",
-        "projectPath": "C:\\Users\\Nxensi\\Documents\\GitHub\\Api\\StayHubApi.csproj",
-        "packagesPath": "C:\\Users\\Nxensi\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Nxensi\\Documents\\GitHub\\Api\\obj\\",
+        "projectPath": "C:\\Users\\arber\\OneDrive\\Documents\\GitHub\\Api\\StayHubApi.csproj",
+        "packagesPath": "C:\\Users\\arber\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\arber\\OneDrive\\Documents\\GitHub\\Api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Nxensi\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\arber\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -30,6 +30,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -44,10 +45,11 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.400"
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "Swashbuckle.AspNetCore": {
@@ -74,7 +76,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
