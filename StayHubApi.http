@@ -1,6 +1,11 @@
 @StayHubApi_HostAddress = http://localhost:5047
 
-GET {{StayHubApi_HostAddress}}/weatherforecast/
+GET {{StayHubApi_HostAddress}}/v1/system/health
+Accept: application/json
+
+###
+
+GET {{StayHubApi_HostAddress}}/v1/system/stats
 Accept: application/json
 
 ###
