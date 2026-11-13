@@ -24,6 +24,7 @@ public class SystemController : ControllerBase
         {
             status = "Healthy",
             service = "StayHub Vacation Rental API",
+            message = "API po funksionon normalisht",
             version = "2.0.0",
             timestamp = DateTime.UtcNow
         });
