@@ -98,5 +98,6 @@ The complete OpenAPI specification is located at:
 - `Dev` — zhvillimi ditor; çdo anëtar hap PR nga branch-i i vet drejt `Dev`.
 - `qa` — verifikimi; ndryshimet e aprovuara në `Dev` promovohen këtu.
 - `main` — versioni final; hyn vetëm pas kalimit nëpër `qa`.
+- hotfix — branch direkt nga main për ndryshime të vogla; bëhet merge vetëm në main, pa prekur Dev dhe qa.
 
 ## This project is made by Artik Osmani, Arber Miftari, Dalmat Ademi, Arber Beqiri, Jon Ferizi
